@@ -5,7 +5,7 @@ Billing and usage tracking for SaaS applications.
 ## Installation
 
 ```bash
-pip install commet
+pip install commet-sdk
 ```
 
 ## Quick start
