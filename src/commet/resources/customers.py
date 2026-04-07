@@ -13,7 +13,7 @@ class CustomersResource:
         self,
         *,
         email: str,
-        external_id: str | None = None,
+        id: str | None = None,
         full_name: str | None = None,
         domain: str | None = None,
         website: str | None = None,
@@ -28,7 +28,7 @@ class CustomersResource:
             "/customers",
             build_body(
                 billing_email=email,
-                external_id=external_id,
+                external_id=id,
                 full_name=full_name,
                 domain=domain,
                 website=website,
@@ -50,7 +50,7 @@ class CustomersResource:
         mapped = [
             build_body(
                 billing_email=c.get("email"),
-                external_id=c.get("external_id"),
+                external_id=c.get("id"),
                 full_name=c.get("full_name"),
                 domain=c.get("domain"),
                 website=c.get("website"),
@@ -74,7 +74,6 @@ class CustomersResource:
         customer_id: str,
         *,
         email: str | None = None,
-        external_id: str | None = None,
         full_name: str | None = None,
         domain: str | None = None,
         website: str | None = None,
@@ -89,7 +88,6 @@ class CustomersResource:
             f"/customers/{customer_id}",
             build_body(
                 billing_email=email,
-                external_id=external_id,
                 full_name=full_name,
                 domain=domain,
                 website=website,
@@ -105,7 +103,6 @@ class CustomersResource:
     def list(
         self,
         *,
-        customer_id: str | None = None,
         is_active: bool | None = None,
         search: str | None = None,
         limit: int | None = None,
@@ -114,7 +111,6 @@ class CustomersResource:
         return self._http.get(
             "/customers",
             build_body(
-                customer_id=customer_id,
                 is_active=is_active,
                 search=search,
                 limit=limit,
