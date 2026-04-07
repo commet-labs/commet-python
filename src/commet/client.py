@@ -31,7 +31,7 @@ class Commet:
 
         # Direct resource access
         commet.customers.create(email="user@example.com")
-        commet.usage.track(feature="api_calls", external_id="user_123")
+        commet.usage.track(feature="api_calls", customer_id="user_123")
 
         # Customer-scoped context
         customer = commet.customer("user_123")
@@ -39,7 +39,7 @@ class Commet:
 
         # Context manager
         with Commet(api_key="ck_xxx") as commet:
-            commet.usage.track(feature="api_calls", external_id="user_123")
+            commet.usage.track(feature="api_calls", customer_id="user_123")
     """
 
     def __init__(
@@ -87,10 +87,10 @@ class Commet:
     def __exit__(self, *args: object) -> None:
         self.close()
 
-    def customer(self, external_id: str) -> CustomerContext:
+    def customer(self, customer_id: str) -> CustomerContext:
         """Create a customer-scoped context for cleaner API usage."""
         return CustomerContext(
-            external_id,
+            customer_id,
             features=self.features,
             seats=self.seats,
             usage=self.usage,

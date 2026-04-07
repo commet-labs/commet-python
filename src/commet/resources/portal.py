@@ -11,12 +11,11 @@ class PortalResource:
         self,
         *,
         customer_id: str | None = None,
-        external_id: str | None = None,
         email: str | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse:
         return self._http.post(
             "/portal/request-access",
-            build_body(customer_id=customer_id, external_id=external_id, email=email),
+            build_body(customer_id=customer_id, email=email),
             idempotency_key=idempotency_key,
         )

@@ -11,7 +11,6 @@ class SubscriptionsResource:
         self,
         *,
         customer_id: str | None = None,
-        external_id: str | None = None,
         plan_code: str | None = None,
         plan_id: str | None = None,
         billing_interval: str | None = None,
@@ -26,7 +25,6 @@ class SubscriptionsResource:
             "/subscriptions",
             build_body(
                 customer_id=customer_id,
-                external_id=external_id,
                 plan_code=plan_code,
                 plan_id=plan_id,
                 billing_interval=billing_interval,
@@ -39,8 +37,8 @@ class SubscriptionsResource:
             idempotency_key=idempotency_key,
         )
 
-    def get(self, external_id: str) -> ApiResponse:
-        return self._http.get("/subscriptions/active", {"external_id": external_id})
+    def get(self, customer_id: str) -> ApiResponse:
+        return self._http.get("/subscriptions/active", {"customer_id": customer_id})
 
     def cancel(
         self,

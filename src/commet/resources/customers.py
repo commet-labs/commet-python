@@ -82,6 +82,7 @@ class CustomersResource:
         language: str | None = None,
         industry: str | None = None,
         metadata: dict[str, Any] | None = None,
+        address: dict[str, str] | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse:
         return self._http.put(
@@ -96,6 +97,7 @@ class CustomersResource:
                 language=language,
                 industry=industry,
                 metadata=metadata,
+                address=address,
             ),
             idempotency_key=idempotency_key,
         )
@@ -103,7 +105,7 @@ class CustomersResource:
     def list(
         self,
         *,
-        external_id: str | None = None,
+        customer_id: str | None = None,
         is_active: bool | None = None,
         search: str | None = None,
         limit: int | None = None,
@@ -112,7 +114,7 @@ class CustomersResource:
         return self._http.get(
             "/customers",
             build_body(
-                external_id=external_id,
+                customer_id=customer_id,
                 is_active=is_active,
                 search=search,
                 limit=limit,

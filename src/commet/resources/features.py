@@ -11,17 +11,17 @@ class FeaturesResource:
         self,
         *,
         code: str,
-        external_id: str,
+        customer_id: str,
     ) -> ApiResponse:
-        return self._http.get(f"/features/{code}", {"external_id": external_id})
+        return self._http.get(f"/features/{code}", {"customer_id": customer_id})
 
     def check(
         self,
         *,
         code: str,
-        external_id: str,
+        customer_id: str,
     ) -> ApiResponse:
-        result = self._http.get(f"/features/{code}", {"external_id": external_id})
+        result = self._http.get(f"/features/{code}", {"customer_id": customer_id})
 
         if not result.success or not result.data:
             return ApiResponse(
@@ -40,11 +40,11 @@ class FeaturesResource:
         self,
         *,
         code: str,
-        external_id: str,
+        customer_id: str,
     ) -> ApiResponse:
         return self._http.get(
-            f"/features/{code}", {"external_id": external_id, "action": "canUse"}
+            f"/features/{code}", {"customer_id": customer_id, "action": "canUse"}
         )
 
-    def list(self, external_id: str) -> ApiResponse:
-        return self._http.get("/features", {"external_id": external_id})
+    def list(self, customer_id: str) -> ApiResponse:
+        return self._http.get("/features", {"customer_id": customer_id})

@@ -12,15 +12,14 @@ class SeatsResource:
         *,
         seat_type: str,
         count: int,
-        customer_id: str | None = None,
-        external_id: str | None = None,
+        customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse:
         return self._http.post(
             "/seats",
             build_body(
                 seat_type=seat_type, count=count,
-                customer_id=customer_id, external_id=external_id,
+                customer_id=customer_id,
             ),
             idempotency_key=idempotency_key,
         )
@@ -30,15 +29,14 @@ class SeatsResource:
         *,
         seat_type: str,
         count: int,
-        customer_id: str | None = None,
-        external_id: str | None = None,
+        customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse:
         return self._http.delete(
             "/seats",
             build_body(
                 seat_type=seat_type, count=count,
-                customer_id=customer_id, external_id=external_id,
+                customer_id=customer_id,
             ),
             idempotency_key=idempotency_key,
         )
@@ -48,15 +46,14 @@ class SeatsResource:
         *,
         seat_type: str,
         count: int,
-        customer_id: str | None = None,
-        external_id: str | None = None,
+        customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse:
         return self._http.put(
             "/seats",
             build_body(
                 seat_type=seat_type, count=count,
-                customer_id=customer_id, external_id=external_id,
+                customer_id=customer_id,
             ),
             idempotency_key=idempotency_key,
         )
@@ -65,13 +62,12 @@ class SeatsResource:
         self,
         *,
         seats: dict[str, int],
-        customer_id: str | None = None,
-        external_id: str | None = None,
+        customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse:
         return self._http.put(
             "/seats/bulk",
-            build_body(seats=seats, customer_id=customer_id, external_id=external_id),
+            build_body(seats=seats, customer_id=customer_id),
             idempotency_key=idempotency_key,
         )
 
@@ -79,21 +75,19 @@ class SeatsResource:
         self,
         *,
         seat_type: str,
-        customer_id: str | None = None,
-        external_id: str | None = None,
+        customer_id: str,
     ) -> ApiResponse:
         return self._http.get(
             "/seats/balance",
-            build_body(seat_type=seat_type, customer_id=customer_id, external_id=external_id),
+            build_body(seat_type=seat_type, customer_id=customer_id),
         )
 
     def get_all_balances(
         self,
         *,
-        customer_id: str | None = None,
-        external_id: str | None = None,
+        customer_id: str,
     ) -> ApiResponse:
         return self._http.get(
             "/seats/balances",
-            build_body(customer_id=customer_id, external_id=external_id),
+            build_body(customer_id=customer_id),
         )
