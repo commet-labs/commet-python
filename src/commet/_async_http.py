@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import logging
-import time
-from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any
 from uuid import uuid4
 
 import httpx
 
 from ._exceptions import CommetAPIError
+from ._http import ApiResponse
 from ._shared import (
     _BASE_URLS,
     _RETRYABLE_STATUS_CODES,
@@ -21,20 +21,8 @@ from ._shared import (
 
 logger = logging.getLogger("commet")
 
-T = TypeVar("T")
 
-
-@dataclass
-class ApiResponse(Generic[T]):
-    success: bool
-    data: T | None = None
-    code: str | None = None
-    message: str | None = None
-    has_more: bool | None = None
-    next_cursor: str | None = None
-
-
-class CommetHTTPClient:
+class AsyncCommetHTTPClient:
     def __init__(
         self,
         api_key: str,
@@ -44,17 +32,17 @@ class CommetHTTPClient:
         retries: int = 3,
     ) -> None:
         base_url = _BASE_URLS[environment]
-        self._client = httpx.Client(
+        self._client = httpx.AsyncClient(
             base_url=f"{base_url}/api",
             headers=build_headers(api_key),
             timeout=timeout,
         )
         self._max_retries = retries
 
-    def close(self) -> None:
-        self._client.close()
+    async def close(self) -> None:
+        await self._client.aclose()
 
-    def get(
+    async def get(
         self,
         endpoint: str,
         params: dict[str, Any] | None = None,
@@ -67,11 +55,11 @@ class CommetHTTPClient:
             if params
             else None
         )
-        return self._request(
+        return await self._request(
             "GET", endpoint, params=clean, idempotency_key=idempotency_key, timeout=timeout
         )
 
-    def post(
+    async def post(
         self,
         endpoint: str,
         body: dict[str, Any] | None = None,
@@ -79,11 +67,11 @@ class CommetHTTPClient:
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
-        return self._request(
+        return await self._request(
             "POST", endpoint, body=body, idempotency_key=idempotency_key, timeout=timeout
         )
 
-    def put(
+    async def put(
         self,
         endpoint: str,
         body: dict[str, Any] | None = None,
@@ -91,11 +79,11 @@ class CommetHTTPClient:
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
-        return self._request(
+        return await self._request(
             "PUT", endpoint, body=body, idempotency_key=idempotency_key, timeout=timeout
         )
 
-    def delete(
+    async def delete(
         self,
         endpoint: str,
         body: dict[str, Any] | None = None,
@@ -103,11 +91,11 @@ class CommetHTTPClient:
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
-        return self._request(
+        return await self._request(
             "DELETE", endpoint, body=body, idempotency_key=idempotency_key, timeout=timeout
         )
 
-    def _request(
+    async def _request(
         self,
         method: str,
         endpoint: str,
@@ -127,11 +115,11 @@ class CommetHTTPClient:
         if json_body:
             logger.debug("Body: %s", json_body)
 
-        return self._execute(
+        return await self._execute(
             method, endpoint, json_body=json_body, params=params, headers=headers, timeout=timeout
         )
 
-    def _execute(
+    async def _execute(
         self,
         method: str,
         endpoint: str,
@@ -143,13 +131,13 @@ class CommetHTTPClient:
         attempt: int = 1,
     ) -> ApiResponse[Any]:
         try:
-            resp = self._client.request(
+            resp = await self._client.request(
                 method, endpoint, json=json_body, params=params, headers=headers, timeout=timeout
             )
         except httpx.TimeoutException:
             if attempt <= self._max_retries:
-                self._wait(attempt)
-                return self._execute(
+                await self._wait(attempt)
+                return await self._execute(
                     method, endpoint, json_body=json_body, params=params,
                     headers=headers, timeout=timeout, attempt=attempt + 1,
                 )
@@ -158,8 +146,8 @@ class CommetHTTPClient:
         logger.debug("Response: %d", resp.status_code)
 
         if resp.status_code in _RETRYABLE_STATUS_CODES and attempt <= self._max_retries:
-            self._wait(attempt)
-            return self._execute(
+            await self._wait(attempt)
+            return await self._execute(
                 method, endpoint, json_body=json_body, params=params,
                 headers=headers, timeout=timeout, attempt=attempt + 1,
             )
@@ -186,7 +174,7 @@ class CommetHTTPClient:
             next_cursor=converted.get("next_cursor"),
         )
 
-    def _wait(self, attempt: int) -> None:
+    async def _wait(self, attempt: int) -> None:
         delay = min(1.0 * (2 ** (attempt - 1)), 8.0)
         logger.debug("Retrying in %ss (attempt %d/%d)", delay, attempt, self._max_retries)
-        time.sleep(delay)
+        await asyncio.sleep(delay)

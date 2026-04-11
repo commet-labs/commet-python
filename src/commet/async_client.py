@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+import logging
+from typing import Literal
+
+from ._async_customer import AsyncCustomerContext
+from ._async_http import AsyncCommetHTTPClient
+from ._shared import _BASE_URLS
+from .async_resources.credit_packs import AsyncCreditPacksResource
+from .async_resources.customers import AsyncCustomersResource
+from .async_resources.features import AsyncFeaturesResource
+from .async_resources.plans import AsyncPlansResource
+from .async_resources.portal import AsyncPortalResource
+from .async_resources.seats import AsyncSeatsResource
+from .async_resources.subscriptions import AsyncSubscriptionsResource
+from .async_resources.usage import AsyncUsageResource
+from .resources.webhooks import Webhooks
+
+logger = logging.getLogger("commet")
+
+Environment = Literal["sandbox", "production"]
+
+
+class AsyncCommet:
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        environment: Environment = "sandbox",
+        timeout: float = 30.0,
+        retries: int = 3,
+    ) -> None:
+        if not api_key:
+            raise ValueError("Commet SDK: API key is required")
+
+        if not api_key.startswith("ck_"):
+            raise ValueError("Commet SDK: Invalid API key format. Expected format: ck_xxx...")
+
+        if environment not in _BASE_URLS:
+            raise ValueError(
+                f"Commet SDK: Invalid environment '{environment}'. Must be 'sandbox' or 'production'"
+            )
+
+        self._environment = environment
+        self._http = AsyncCommetHTTPClient(
+            api_key, environment, timeout=timeout, retries=retries
+        )
+
+        self.customers = AsyncCustomersResource(self._http)
+        self.credit_packs = AsyncCreditPacksResource(self._http)
+        self.plans = AsyncPlansResource(self._http)
+        self.usage = AsyncUsageResource(self._http)
+        self.seats = AsyncSeatsResource(self._http)
+        self.subscriptions = AsyncSubscriptionsResource(self._http)
+        self.portal = AsyncPortalResource(self._http)
+        self.features = AsyncFeaturesResource(self._http)
+        self.webhooks = Webhooks()
+
+        logger.debug("Initialized async client in %s mode", environment)
+
+    async def close(self) -> None:
+        await self._http.close()
+
+    async def __aenter__(self) -> AsyncCommet:
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        await self.close()
+
+    def customer(self, customer_id: str) -> AsyncCustomerContext:
+        return AsyncCustomerContext(
+            customer_id,
+            features=self.features,
+            seats=self.seats,
+            usage=self.usage,
+            subscriptions=self.subscriptions,
+            portal=self.portal,
+        )
+
+    @property
+    def environment(self) -> str:
+        return self._environment
+
+    def is_sandbox(self) -> bool:
+        return self._environment == "sandbox"
+
+    def is_production(self) -> bool:
+        return self._environment == "production"

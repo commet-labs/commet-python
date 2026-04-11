@@ -4,7 +4,8 @@ import logging
 from typing import Literal
 
 from ._customer import CustomerContext
-from ._http import CommetHTTPClient, _BASE_URLS
+from ._http import CommetHTTPClient
+from ._shared import _BASE_URLS
 from .resources.credit_packs import CreditPacksResource
 from .resources.customers import CustomersResource
 from .resources.features import FeaturesResource

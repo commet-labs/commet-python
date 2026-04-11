@@ -2,17 +2,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._async_http import AsyncCommetHTTPClient
+from .._http import ApiResponse
 from .._resource_mixins import parse_seat_balance, parse_seat_event
 from .._shared import build_body
 from ..types import SeatBalance, SeatEvent
 
 
-class SeatsResource:
-    def __init__(self, http: CommetHTTPClient) -> None:
+class AsyncSeatsResource:
+    def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
-    def add(
+    async def add(
         self,
         *,
         seat_type: str,
@@ -20,13 +21,13 @@ class SeatsResource:
         customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse[SeatEvent]:
-        return parse_seat_event(self._http.post(
+        return parse_seat_event(await self._http.post(
             "/seats",
             build_body(seat_type=seat_type, count=count, customer_id=customer_id),
             idempotency_key=idempotency_key,
         ))
 
-    def remove(
+    async def remove(
         self,
         *,
         seat_type: str,
@@ -34,13 +35,13 @@ class SeatsResource:
         customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse[SeatEvent]:
-        return parse_seat_event(self._http.delete(
+        return parse_seat_event(await self._http.delete(
             "/seats",
             build_body(seat_type=seat_type, count=count, customer_id=customer_id),
             idempotency_key=idempotency_key,
         ))
 
-    def set(
+    async def set(
         self,
         *,
         seat_type: str,
@@ -48,42 +49,42 @@ class SeatsResource:
         customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse[SeatEvent]:
-        return parse_seat_event(self._http.put(
+        return parse_seat_event(await self._http.put(
             "/seats",
             build_body(seat_type=seat_type, count=count, customer_id=customer_id),
             idempotency_key=idempotency_key,
         ))
 
-    def set_all(
+    async def set_all(
         self,
         *,
         seats: dict[str, int],
         customer_id: str,
         idempotency_key: str | None = None,
     ) -> ApiResponse[Any]:
-        return self._http.put(
+        return await self._http.put(
             "/seats/bulk",
             build_body(seats=seats, customer_id=customer_id),
             idempotency_key=idempotency_key,
         )
 
-    def get_balance(
+    async def get_balance(
         self,
         *,
         seat_type: str,
         customer_id: str,
     ) -> ApiResponse[SeatBalance]:
-        return parse_seat_balance(self._http.get(
+        return parse_seat_balance(await self._http.get(
             "/seats/balance",
             build_body(seat_type=seat_type, customer_id=customer_id),
         ))
 
-    def get_all_balances(
+    async def get_all_balances(
         self,
         *,
         customer_id: str,
     ) -> ApiResponse[dict[str, Any]]:
-        return self._http.get(
+        return await self._http.get(
             "/seats/balances",
             build_body(customer_id=customer_id),
         )

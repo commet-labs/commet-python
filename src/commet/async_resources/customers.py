@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._async_http import AsyncCommetHTTPClient
+from .._http import ApiResponse
 from .._resource_mixins import (
     build_customer_batch_body,
     build_customer_create_body,
@@ -14,11 +15,11 @@ from .._shared import build_body
 from ..types import Customer
 
 
-class CustomersResource:
-    def __init__(self, http: CommetHTTPClient) -> None:
+class AsyncCustomersResource:
+    def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
-    def create(
+    async def create(
         self,
         *,
         email: str,
@@ -38,21 +39,23 @@ class CustomersResource:
             website=website, timezone=timezone, language=language,
             industry=industry, metadata=metadata, address=address,
         )
-        return parse_customer(self._http.post("/customers", body, idempotency_key=idempotency_key))
+        return parse_customer(
+            await self._http.post("/customers", body, idempotency_key=idempotency_key)
+        )
 
-    def create_batch(
+    async def create_batch(
         self,
         customers: list[dict[str, Any]],
         *,
         idempotency_key: str | None = None,
     ) -> ApiResponse[Any]:
         body = build_customer_batch_body(customers)
-        return self._http.post("/customers/batch", body, idempotency_key=idempotency_key)
+        return await self._http.post("/customers/batch", body, idempotency_key=idempotency_key)
 
-    def get(self, customer_id: str) -> ApiResponse[Customer]:
-        return parse_customer(self._http.get(f"/customers/{customer_id}"))
+    async def get(self, customer_id: str) -> ApiResponse[Customer]:
+        return parse_customer(await self._http.get(f"/customers/{customer_id}"))
 
-    def update(
+    async def update(
         self,
         customer_id: str,
         *,
@@ -73,10 +76,12 @@ class CustomersResource:
             metadata=metadata, address=address,
         )
         return parse_customer(
-            self._http.put(f"/customers/{customer_id}", body, idempotency_key=idempotency_key)
+            await self._http.put(
+                f"/customers/{customer_id}", body, idempotency_key=idempotency_key
+            )
         )
 
-    def list(
+    async def list(
         self,
         *,
         is_active: bool | None = None,
@@ -85,16 +90,16 @@ class CustomersResource:
         cursor: str | None = None,
     ) -> ApiResponse[list[Customer]]:
         return parse_customer_list(
-            self._http.get("/customers", build_body(
+            await self._http.get("/customers", build_body(
                 is_active=is_active, search=search, limit=limit, cursor=cursor,
             ))
         )
 
-    def archive(
+    async def archive(
         self, customer_id: str, *, idempotency_key: str | None = None
     ) -> ApiResponse[Customer]:
         return parse_customer(
-            self._http.put(
+            await self._http.put(
                 f"/customers/{customer_id}", {"is_active": False},
                 idempotency_key=idempotency_key,
             )

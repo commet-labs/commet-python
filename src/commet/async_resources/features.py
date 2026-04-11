@@ -1,45 +1,46 @@
 from __future__ import annotations
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._async_http import AsyncCommetHTTPClient
+from .._http import ApiResponse
 from .._resource_mixins import parse_feature_access, parse_feature_access_list, parse_feature_check
 from ..types import FeatureAccess
 
 
-class FeaturesResource:
-    def __init__(self, http: CommetHTTPClient) -> None:
+class AsyncFeaturesResource:
+    def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
-    def get(
+    async def get(
         self,
         *,
         code: str,
         customer_id: str,
     ) -> ApiResponse[FeatureAccess]:
         return parse_feature_access(
-            self._http.get(f"/features/{code}", {"customer_id": customer_id})
+            await self._http.get(f"/features/{code}", {"customer_id": customer_id})
         )
 
-    def check(
+    async def check(
         self,
         *,
         code: str,
         customer_id: str,
     ) -> ApiResponse[dict[str, bool]]:
         return parse_feature_check(
-            self._http.get(f"/features/{code}", {"customer_id": customer_id})
+            await self._http.get(f"/features/{code}", {"customer_id": customer_id})
         )
 
-    def can_use(
+    async def can_use(
         self,
         *,
         code: str,
         customer_id: str,
     ) -> ApiResponse[dict[str, bool | str | None]]:
-        return self._http.get(
+        return await self._http.get(
             f"/features/{code}", {"customer_id": customer_id, "action": "canUse"}
         )
 
-    def list(self, customer_id: str) -> ApiResponse[list[FeatureAccess]]:
+    async def list(self, customer_id: str) -> ApiResponse[list[FeatureAccess]]:
         return parse_feature_access_list(
-            self._http.get("/features", {"customer_id": customer_id})
+            await self._http.get("/features", {"customer_id": customer_id})
         )

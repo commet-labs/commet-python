@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._async_http import AsyncCommetHTTPClient
+from .._http import ApiResponse
 from .._resource_mixins import build_usage_track_body, parse_usage_event
 from ..types import UsageEvent
 
 
-class UsageResource:
-    def __init__(self, http: CommetHTTPClient) -> None:
+class AsyncUsageResource:
+    def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
-    def track(
+    async def track(
         self,
         *,
         feature: str,
@@ -30,4 +31,6 @@ class UsageResource:
             cache_read_tokens=cache_read_tokens, cache_write_tokens=cache_write_tokens,
             idempotency_key=idempotency_key, timestamp=timestamp, properties=properties,
         )
-        return parse_usage_event(self._http.post("/usage/events", body, idempotency_key=idempotency_key))
+        return parse_usage_event(
+            await self._http.post("/usage/events", body, idempotency_key=idempotency_key)
+        )

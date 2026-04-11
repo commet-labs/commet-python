@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._async_http import AsyncCommetHTTPClient
+from .._http import ApiResponse
 from .._resource_mixins import build_subscription_create_body, parse_subscription
 from .._shared import build_body
 from ..types import Subscription
 
 
-class SubscriptionsResource:
-    def __init__(self, http: CommetHTTPClient) -> None:
+class AsyncSubscriptionsResource:
+    def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
-    def create(
+    async def create(
         self,
         *,
         customer_id: str | None = None,
@@ -31,15 +32,15 @@ class SubscriptionsResource:
             success_url=success_url,
         )
         return parse_subscription(
-            self._http.post("/subscriptions", body, idempotency_key=idempotency_key)
+            await self._http.post("/subscriptions", body, idempotency_key=idempotency_key)
         )
 
-    def get(self, customer_id: str) -> ApiResponse[Subscription]:
+    async def get(self, customer_id: str) -> ApiResponse[Subscription]:
         return parse_subscription(
-            self._http.get("/subscriptions/active", {"customer_id": customer_id})
+            await self._http.get("/subscriptions/active", {"customer_id": customer_id})
         )
 
-    def cancel(
+    async def cancel(
         self,
         subscription_id: str,
         *,
@@ -48,7 +49,7 @@ class SubscriptionsResource:
         idempotency_key: str | None = None,
     ) -> ApiResponse[Subscription]:
         return parse_subscription(
-            self._http.post(
+            await self._http.post(
                 f"/subscriptions/{subscription_id}/cancel",
                 build_body(reason=reason, immediate=immediate),
                 idempotency_key=idempotency_key,
