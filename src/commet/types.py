@@ -61,6 +61,7 @@ class Subscription:
     name: str = ""
     description: str | None = None
     status: str = ""
+    consumption_model: str | None = None
     billing_interval: str | None = None
     trial_ends_at: str | None = None
     start_date: str = ""
@@ -72,6 +73,8 @@ class Subscription:
     plan: dict[str, Any] | None = None
     current_period: dict[str, Any] | None = None
     features: list[dict[str, Any]] = field(default_factory=list)
+    credits: dict[str, Any] | None = None
+    balance: dict[str, Any] | None = None
     next_billing_date: str | None = None
     created_at: str = ""
     updated_at: str = ""
