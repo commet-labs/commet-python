@@ -13,7 +13,7 @@ pip install commet-sdk
 ```python
 from commet import Commet
 
-commet = Commet(api_key="ck_xxx", environment="production")
+commet = Commet(api_key="ck_xxx")
 
 # Create a customer
 commet.customers.create(email="user@example.com", external_id="user_123")
@@ -74,14 +74,6 @@ if payload["event"] == "subscription.activated":
 with Commet(api_key="ck_xxx") as commet:
     commet.usage.track(feature="api_calls", external_id="user_123")
 # connection pool is automatically closed
-```
-
-## Environments
-
-The SDK defaults to `sandbox`. Set `environment="production"` for live operations:
-
-```python
-commet = Commet(api_key="ck_xxx", environment="production")
 ```
 
 ## License

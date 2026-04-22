@@ -13,10 +13,7 @@ _LOWER_BEFORE_UPPER = re.compile(r"([a-z0-9])([A-Z])")
 
 _RETRYABLE_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 
-_BASE_URLS: dict[str, str] = {
-    "production": "https://commet.co",
-    "sandbox": "https://sandbox.commet.co",
-}
+_BASE_URL = "https://commet.co"
 
 
 def to_snake(name: str) -> str:

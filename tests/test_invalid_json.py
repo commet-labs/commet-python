@@ -9,7 +9,7 @@ from commet import Commet, CommetAPIError
 
 @pytest.fixture
 def mock_api() -> respx.MockRouter:
-    with respx.mock(base_url="https://sandbox.commet.co/api") as mock:
+    with respx.mock(base_url="https://commet.co/api") as mock:
         yield mock
 
 

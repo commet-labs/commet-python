@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Literal
 
 from ._customer import CustomerContext
 from ._http import CommetHTTPClient
-from ._shared import _BASE_URLS
 from .resources.credit_packs import CreditPacksResource
 from .resources.customers import CustomersResource
 from .resources.features import FeaturesResource
@@ -17,8 +15,6 @@ from .resources.usage import UsageResource
 from .resources.webhooks import Webhooks
 
 logger = logging.getLogger("commet")
-
-Environment = Literal["sandbox", "production"]
 
 
 class Commet:
@@ -47,7 +43,6 @@ class Commet:
         self,
         api_key: str,
         *,
-        environment: Environment = "sandbox",
         timeout: float = 30.0,
         retries: int = 3,
     ) -> None:
@@ -57,15 +52,7 @@ class Commet:
         if not api_key.startswith("ck_"):
             raise ValueError("Commet SDK: Invalid API key format. Expected format: ck_xxx...")
 
-        if environment not in _BASE_URLS:
-            raise ValueError(
-                f"Commet SDK: Invalid environment '{environment}'. Must be 'sandbox' or 'production'"
-            )
-
-        self._environment = environment
-        self._http = CommetHTTPClient(
-            api_key, environment, timeout=timeout, retries=retries
-        )
+        self._http = CommetHTTPClient(api_key, timeout=timeout, retries=retries)
 
         self.customers = CustomersResource(self._http)
         self.credit_packs = CreditPacksResource(self._http)
@@ -77,7 +64,7 @@ class Commet:
         self.features = FeaturesResource(self._http)
         self.webhooks = Webhooks()
 
-        logger.debug("Initialized in %s mode", environment)
+        logger.debug("Commet client initialized")
 
     def close(self) -> None:
         self._http.close()
@@ -98,13 +85,3 @@ class Commet:
             subscriptions=self.subscriptions,
             portal=self.portal,
         )
-
-    @property
-    def environment(self) -> str:
-        return self._environment
-
-    def is_sandbox(self) -> bool:
-        return self._environment == "sandbox"
-
-    def is_production(self) -> bool:
-        return self._environment == "production"

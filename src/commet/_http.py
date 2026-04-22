@@ -10,7 +10,7 @@ import httpx
 
 from ._exceptions import CommetAPIError
 from ._shared import (
-    _BASE_URLS,
+    _BASE_URL,
     _RETRYABLE_STATUS_CODES,
     build_headers,
     convert_keys,
@@ -38,14 +38,12 @@ class CommetHTTPClient:
     def __init__(
         self,
         api_key: str,
-        environment: str,
         *,
         timeout: float = 30.0,
         retries: int = 3,
     ) -> None:
-        base_url = _BASE_URLS[environment]
         self._client = httpx.Client(
-            base_url=f"{base_url}/api",
+            base_url=f"{_BASE_URL}/api",
             headers=build_headers(api_key),
             timeout=timeout,
         )

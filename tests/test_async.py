@@ -10,14 +10,14 @@ from commet.types import Customer
 
 @pytest.fixture
 def mock_api() -> respx.MockRouter:
-    with respx.mock(base_url="https://sandbox.commet.co/api") as mock:
+    with respx.mock(base_url="https://commet.co/api") as mock:
         yield mock
 
 
 @pytest.mark.asyncio
 async def test_async_context_manager(mock_api: respx.MockRouter) -> None:
     async with AsyncCommet(api_key="ck_test_123") as client:
-        assert client.environment == "sandbox"
+        assert client is not None
 
 
 @pytest.mark.asyncio
