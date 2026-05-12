@@ -71,10 +71,15 @@ def get_version() -> str:
         return "0.1.0"
 
 
-def build_headers(api_key: str, api_version: str) -> dict[str, str]:
-    return {
+def build_headers(api_key: str, api_version: str, *, telemetry: bool = True) -> dict[str, str]:
+    from ._telemetry import get_client_info_header, get_user_agent
+
+    headers = {
         "x-api-key": api_key,
         "commet-version": api_version,
         "Content-Type": "application/json",
-        "User-Agent": f"commet-python/{get_version()}",
+        "User-Agent": get_user_agent(),
     }
+    if telemetry:
+        headers["commet-client-info"] = get_client_info_header()
+    return headers

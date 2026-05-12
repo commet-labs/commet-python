@@ -19,6 +19,7 @@ from ._shared import (
     to_camel,
     to_snake,
 )
+from ._telemetry import format_request_metrics
 
 logger = logging.getLogger("commet")
 
@@ -43,11 +44,14 @@ class CommetHTTPClient:
         api_version: str = API_VERSION,
         timeout: float = 30.0,
         retries: int = 3,
+        telemetry: bool = True,
     ) -> None:
         self._api_version = api_version
+        self._telemetry_enabled = telemetry
+        self._last_request_metrics: dict[str, Any] | None = None
         self._client = httpx.Client(
             base_url=f"{_BASE_URL}/api/v1",
-            headers=build_headers(api_key, api_version),
+            headers=build_headers(api_key, api_version, telemetry=telemetry),
             timeout=timeout,
         )
         self._max_retries = retries
@@ -150,6 +154,16 @@ class CommetHTTPClient:
         timeout: float | None = None,
         attempt: int = 1,
     ) -> ApiResponse[Any]:
+        if headers is None:
+            headers = {}
+        if self._telemetry_enabled and self._last_request_metrics is not None:
+            headers["commet-client-telemetry"] = format_request_metrics(
+                self._last_request_metrics["request_id"],
+                self._last_request_metrics["duration_ms"],
+            )
+            self._last_request_metrics = None
+
+        request_start = time.monotonic()
         try:
             resp = self._client.request(
                 method, endpoint, json=json_body, params=params, headers=headers, timeout=timeout
@@ -183,6 +197,11 @@ class CommetHTTPClient:
 
         if resp.is_error:
             handle_error(resp.status_code, data)
+
+        if self._telemetry_enabled:
+            duration_ms = int((time.monotonic() - request_start) * 1000)
+            request_id = resp.headers.get("x-request-id", f"req_{int(time.time())}")
+            self._last_request_metrics = {"request_id": request_id, "duration_ms": duration_ms}
 
         converted = convert_keys(data, to_snake)
         return ApiResponse(

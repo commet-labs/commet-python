@@ -26,6 +26,7 @@ class AsyncCommet:
         api_version: str = API_VERSION,
         timeout: float = 30.0,
         retries: int = 3,
+        telemetry: bool = True,
     ) -> None:
         if not api_key:
             raise ValueError("Commet SDK: API key is required")
@@ -33,7 +34,9 @@ class AsyncCommet:
         if not api_key.startswith("ck_"):
             raise ValueError("Commet SDK: Invalid API key format. Expected format: ck_xxx...")
 
-        self._http = AsyncCommetHTTPClient(api_key, api_version=api_version, timeout=timeout, retries=retries)
+        self._http = AsyncCommetHTTPClient(
+            api_key, api_version=api_version, timeout=timeout, retries=retries, telemetry=telemetry
+        )
 
         self.customers = AsyncCustomersResource(self._http)
         self.credit_packs = AsyncCreditPacksResource(self._http)
