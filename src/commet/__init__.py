@@ -1,5 +1,6 @@
 from ._exceptions import CommetAPIError, CommetError, CommetValidationError
 from ._http import ApiResponse
+from ._shared import API_VERSION
 from .async_client import AsyncCommet
 from .client import Commet
 from .resources.webhooks import Webhooks
@@ -25,6 +26,7 @@ except Exception:
 
 __all__ = [
     "__version__",
+    "API_VERSION",
     "ApiResponse",
     "AsyncCommet",
     "Commet",

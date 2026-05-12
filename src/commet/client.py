@@ -4,6 +4,7 @@ import logging
 
 from ._customer import CustomerContext
 from ._http import CommetHTTPClient
+from ._shared import API_VERSION
 from .resources.credit_packs import CreditPacksResource
 from .resources.customers import CustomersResource
 from .resources.features import FeaturesResource
@@ -43,6 +44,7 @@ class Commet:
         self,
         api_key: str,
         *,
+        api_version: str = API_VERSION,
         timeout: float = 30.0,
         retries: int = 3,
     ) -> None:
@@ -52,7 +54,7 @@ class Commet:
         if not api_key.startswith("ck_"):
             raise ValueError("Commet SDK: Invalid API key format. Expected format: ck_xxx...")
 
-        self._http = CommetHTTPClient(api_key, timeout=timeout, retries=retries)
+        self._http = CommetHTTPClient(api_key, api_version=api_version, timeout=timeout, retries=retries)
 
         self.customers = CustomersResource(self._http)
         self.credit_packs = CreditPacksResource(self._http)

@@ -15,6 +15,8 @@ _RETRYABLE_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 
 _BASE_URL = "https://commet.co"
 
+API_VERSION = "2026-05-01"
+
 
 def to_snake(name: str) -> str:
     return _LOWER_BEFORE_UPPER.sub(r"\1_\2", _UPPER_AFTER_LOWER.sub(r"\1_\2", name)).lower()
@@ -69,9 +71,10 @@ def get_version() -> str:
         return "0.1.0"
 
 
-def build_headers(api_key: str) -> dict[str, str]:
+def build_headers(api_key: str, api_version: str) -> dict[str, str]:
     return {
         "x-api-key": api_key,
+        "commet-version": api_version,
         "Content-Type": "application/json",
         "User-Agent": f"commet-python/{get_version()}",
     }

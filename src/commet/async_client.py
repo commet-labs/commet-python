@@ -4,6 +4,7 @@ import logging
 
 from ._async_customer import AsyncCustomerContext
 from ._async_http import AsyncCommetHTTPClient
+from ._shared import API_VERSION
 from .async_resources.credit_packs import AsyncCreditPacksResource
 from .async_resources.customers import AsyncCustomersResource
 from .async_resources.features import AsyncFeaturesResource
@@ -22,6 +23,7 @@ class AsyncCommet:
         self,
         api_key: str,
         *,
+        api_version: str = API_VERSION,
         timeout: float = 30.0,
         retries: int = 3,
     ) -> None:
@@ -31,7 +33,7 @@ class AsyncCommet:
         if not api_key.startswith("ck_"):
             raise ValueError("Commet SDK: Invalid API key format. Expected format: ck_xxx...")
 
-        self._http = AsyncCommetHTTPClient(api_key, timeout=timeout, retries=retries)
+        self._http = AsyncCommetHTTPClient(api_key, api_version=api_version, timeout=timeout, retries=retries)
 
         self.customers = AsyncCustomersResource(self._http)
         self.credit_packs = AsyncCreditPacksResource(self._http)

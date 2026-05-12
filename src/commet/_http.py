@@ -10,6 +10,7 @@ import httpx
 
 from ._exceptions import CommetAPIError
 from ._shared import (
+    API_VERSION,
     _BASE_URL,
     _RETRYABLE_STATUS_CODES,
     build_headers,
@@ -39,12 +40,14 @@ class CommetHTTPClient:
         self,
         api_key: str,
         *,
+        api_version: str = API_VERSION,
         timeout: float = 30.0,
         retries: int = 3,
     ) -> None:
+        self._api_version = api_version
         self._client = httpx.Client(
-            base_url=f"{_BASE_URL}/api",
-            headers=build_headers(api_key),
+            base_url=f"{_BASE_URL}/api/v1",
+            headers=build_headers(api_key, api_version),
             timeout=timeout,
         )
         self._max_retries = retries
@@ -57,6 +60,7 @@ class CommetHTTPClient:
         endpoint: str,
         params: dict[str, Any] | None = None,
         *,
+        api_version: str | None = None,
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
@@ -66,7 +70,7 @@ class CommetHTTPClient:
             else None
         )
         return self._request(
-            "GET", endpoint, params=clean, idempotency_key=idempotency_key, timeout=timeout
+            "GET", endpoint, params=clean, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
         )
 
     def post(
@@ -74,11 +78,12 @@ class CommetHTTPClient:
         endpoint: str,
         body: dict[str, Any] | None = None,
         *,
+        api_version: str | None = None,
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return self._request(
-            "POST", endpoint, body=body, idempotency_key=idempotency_key, timeout=timeout
+            "POST", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
         )
 
     def put(
@@ -86,11 +91,12 @@ class CommetHTTPClient:
         endpoint: str,
         body: dict[str, Any] | None = None,
         *,
+        api_version: str | None = None,
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return self._request(
-            "PUT", endpoint, body=body, idempotency_key=idempotency_key, timeout=timeout
+            "PUT", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
         )
 
     def delete(
@@ -98,11 +104,12 @@ class CommetHTTPClient:
         endpoint: str,
         body: dict[str, Any] | None = None,
         *,
+        api_version: str | None = None,
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return self._request(
-            "DELETE", endpoint, body=body, idempotency_key=idempotency_key, timeout=timeout
+            "DELETE", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
         )
 
     def _request(
@@ -112,10 +119,13 @@ class CommetHTTPClient:
         *,
         body: dict[str, Any] | None = None,
         params: dict[str, Any] | None = None,
+        api_version: str | None = None,
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         headers: dict[str, str] = {}
+        if api_version is not None:
+            headers["commet-version"] = api_version
         if method == "POST":
             headers["Idempotency-Key"] = idempotency_key or f"sdk_{uuid4().hex}"
 
