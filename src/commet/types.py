@@ -31,7 +31,6 @@ class Customer:
     industry: str | None = None
     employee_count: str | None = None
     metadata: dict[str, Any] | None = None
-    is_active: bool = True
     created_at: str = ""
     updated_at: str = ""
 

@@ -79,23 +79,12 @@ class CustomersResource:
     def list(
         self,
         *,
-        is_active: bool | None = None,
         search: str | None = None,
         limit: int | None = None,
         cursor: str | None = None,
     ) -> ApiResponse[list[Customer]]:
         return parse_customer_list(
             self._http.get("/customers", build_body(
-                is_active=is_active, search=search, limit=limit, cursor=cursor,
+                search=search, limit=limit, cursor=cursor,
             ))
-        )
-
-    def archive(
-        self, customer_id: str, *, idempotency_key: str | None = None
-    ) -> ApiResponse[Customer]:
-        return parse_customer(
-            self._http.put(
-                f"/customers/{customer_id}", {"is_active": False},
-                idempotency_key=idempotency_key,
-            )
         )
