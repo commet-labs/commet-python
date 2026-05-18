@@ -119,6 +119,7 @@ class SeatEvent:
     id: str
     organization_id: str = ""
     customer_id: str = ""
+    feature_code: str = ""
     seat_type: str = ""
     event_type: str = ""
     quantity: int = 0
