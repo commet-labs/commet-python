@@ -1,16 +1,111 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, TypeVar
 
 T = TypeVar("T")
+
+
+class FeatureType(str, Enum):
+    BOOLEAN = "boolean"
+    USAGE = "usage"
+    SEATS = "seats"
+
+
+class BillingInterval(str, Enum):
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    YEARLY = "yearly"
+    ONE_TIME = "one_time"
+
+
+class SubscriptionStatus(str, Enum):
+    DRAFT = "draft"
+    PENDING_PAYMENT = "pending_payment"
+    TRIALING = "trialing"
+    ACTIVE = "active"
+    PAUSED = "paused"
+    PAST_DUE = "past_due"
+    CANCELED = "canceled"
+    EXPIRED = "expired"
+
+
+class ConsumptionModel(str, Enum):
+    METERED = "metered"
+    CREDITS = "credits"
+    BALANCE = "balance"
+
+
+class DiscountType(str, Enum):
+    PERCENTAGE = "percentage"
+    AMOUNT = "amount"
+
+
+class SeatEventType(str, Enum):
+    ADD = "add"
+    REMOVE = "remove"
+    SET = "set"
+
+
+class OverageModel(str, Enum):
+    PER_UNIT = "per_unit"
+    TIERED = "tiered"
+
+
+class Currency(str, Enum):
+    USD = "USD"
+    EUR = "EUR"
+    GBP = "GBP"
+    CAD = "CAD"
+    AUD = "AUD"
+    JPY = "JPY"
+    ARS = "ARS"
+    BRL = "BRL"
+    MXN = "MXN"
+    CLP = "CLP"
+
+
+_ENUM_TYPES: dict[str, type[Enum]] = {
+    cls.__name__: cls
+    for cls in [
+        FeatureType,
+        BillingInterval,
+        SubscriptionStatus,
+        ConsumptionModel,
+        DiscountType,
+        SeatEventType,
+        OverageModel,
+        Currency,
+    ]
+}
+
+
+def _coerce_enums(cls: type[T], kwargs: dict[str, Any]) -> dict[str, Any]:
+    fields_map = cls.__dataclass_fields__  # type: ignore[attr-defined]
+    result = {}
+    for k, v in kwargs.items():
+        if k in fields_map and v is not None:
+            annotation = fields_map[k].type
+            if isinstance(annotation, str):
+                base = annotation.replace(" | None", "").strip()
+                enum_cls = _ENUM_TYPES.get(base)
+                if enum_cls is not None:
+                    try:
+                        v = enum_cls(v)
+                    except ValueError:
+                        pass
+        result[k] = v
+    return result
 
 
 def _from_dict(cls: type[T], data: dict[str, Any]) -> T:
     if not isinstance(data, dict):
         return data  # type: ignore[return-value]
     fields = {f.name for f in cls.__dataclass_fields__.values()}  # type: ignore[attr-defined]
-    return cls(**{k: v for k, v in data.items() if k in fields})
+    filtered = {k: v for k, v in data.items() if k in fields}
+    return cls(**_coerce_enums(cls, filtered))
 
 
 def _from_list(cls: type[T], data: list[dict[str, Any]]) -> list[T]:
@@ -59,9 +154,9 @@ class Subscription:
     plan_name: str | None = None
     name: str = ""
     description: str | None = None
-    status: str = ""
-    consumption_model: str | None = None
-    billing_interval: str | None = None
+    status: SubscriptionStatus = SubscriptionStatus.DRAFT
+    consumption_model: ConsumptionModel | None = None
+    billing_interval: BillingInterval | None = None
     trial_ends_at: str | None = None
     start_date: str = ""
     end_date: str | None = None
@@ -83,7 +178,7 @@ class Subscription:
 class Feature:
     code: str
     name: str = ""
-    type: str = ""
+    type: FeatureType = FeatureType.BOOLEAN
     unit_name: str | None = None
     enabled: bool | None = None
     included_amount: int | None = None
@@ -96,7 +191,7 @@ class Feature:
 class FeatureAccess:
     code: str
     name: str = ""
-    type: str = ""
+    type: FeatureType = FeatureType.BOOLEAN
     allowed: bool = False
     enabled: bool | None = None
     current: int | None = None
@@ -121,7 +216,7 @@ class SeatEvent:
     customer_id: str = ""
     feature_code: str = ""
     seat_type: str = ""
-    event_type: str = ""
+    event_type: SeatEventType = SeatEventType.ADD
     quantity: int = 0
     previous_balance: int | None = None
     new_balance: int = 0
@@ -136,7 +231,7 @@ class CreditPack:
     description: str | None = None
     credits: int = 0
     price: int = 0
-    currency: str = ""
+    currency: Currency = Currency.USD
 
 
 @dataclass
