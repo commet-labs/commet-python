@@ -1,6 +1,6 @@
 [project]
 name = "commet-sdk"
-version = "4.1.0"
+version = "4.2.0"
 description = "Commet SDK for Python - Billing and usage tracking for SaaS"
 readme = "README.md"
 license = "MIT"
