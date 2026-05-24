@@ -54,3 +54,17 @@ class SubscriptionsResource:
                 idempotency_key=idempotency_key,
             )
         )
+
+    def uncancel(
+        self,
+        subscription_id: str,
+        *,
+        idempotency_key: str | None = None,
+    ) -> ApiResponse[Subscription]:
+        return parse_subscription(
+            self._http.post(
+                f"/subscriptions/{subscription_id}/uncancel",
+                {},
+                idempotency_key=idempotency_key,
+            )
+        )
