@@ -5,6 +5,7 @@ import logging
 from ._customer import CustomerContext
 from ._http import CommetHTTPClient
 from ._shared import API_VERSION
+from .resources.addons import AddonsResource
 from .resources.credit_packs import CreditPacksResource
 from .resources.customers import CustomersResource
 from .resources.features import FeaturesResource
@@ -59,6 +60,7 @@ class Commet:
             api_key, api_version=api_version, timeout=timeout, retries=retries, telemetry=telemetry
         )
 
+        self.addons = AddonsResource(self._http)
         self.customers = CustomersResource(self._http)
         self.credit_packs = CreditPacksResource(self._http)
         self.plans = PlansResource(self._http)

@@ -5,6 +5,7 @@ import logging
 from ._async_customer import AsyncCustomerContext
 from ._async_http import AsyncCommetHTTPClient
 from ._shared import API_VERSION
+from .async_resources.addons import AsyncAddonsResource
 from .async_resources.credit_packs import AsyncCreditPacksResource
 from .async_resources.customers import AsyncCustomersResource
 from .async_resources.features import AsyncFeaturesResource
@@ -38,6 +39,7 @@ class AsyncCommet:
             api_key, api_version=api_version, timeout=timeout, retries=retries, telemetry=telemetry
         )
 
+        self.addons = AsyncAddonsResource(self._http)
         self.customers = AsyncCustomersResource(self._http)
         self.credit_packs = AsyncCreditPacksResource(self._http)
         self.plans = AsyncPlansResource(self._http)

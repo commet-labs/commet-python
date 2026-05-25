@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from .._http import ApiResponse, CommetHTTPClient
 from .._resource_mixins import build_usage_track_body, parse_usage_event
 from ..types import UsageEvent
@@ -31,3 +33,15 @@ class UsageResource:
             idempotency_key=idempotency_key, timestamp=timestamp, properties=properties,
         )
         return parse_usage_event(self._http.post("/usage/events", body, idempotency_key=idempotency_key))
+
+    def check(
+        self,
+        *,
+        customer_id: str,
+        feature_code: str,
+        quantity: int,
+    ) -> ApiResponse[dict[str, Any]]:
+        return self._http.post(
+            "/usage/check",
+            {"customer_id": customer_id, "feature_code": feature_code, "quantity": quantity},
+        )

@@ -68,3 +68,19 @@ class SubscriptionsResource:
                 idempotency_key=idempotency_key,
             )
         )
+
+    def change_plan(
+        self,
+        subscription_id: str,
+        *,
+        new_plan_id: str | None = None,
+        new_billing_interval: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> ApiResponse[Subscription]:
+        return parse_subscription(
+            self._http.post(
+                f"/subscriptions/{subscription_id}/change-plan",
+                build_body(new_plan_id=new_plan_id, new_billing_interval=new_billing_interval),
+                idempotency_key=idempotency_key,
+            )
+        )

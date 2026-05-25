@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
 from .._resource_mixins import build_usage_track_body, parse_usage_event
@@ -33,4 +35,16 @@ class AsyncUsageResource:
         )
         return parse_usage_event(
             await self._http.post("/usage/events", body, idempotency_key=idempotency_key)
+        )
+
+    async def check(
+        self,
+        *,
+        customer_id: str,
+        feature_code: str,
+        quantity: int,
+    ) -> ApiResponse[dict[str, Any]]:
+        return await self._http.post(
+            "/usage/check",
+            {"customer_id": customer_id, "feature_code": feature_code, "quantity": quantity},
         )
