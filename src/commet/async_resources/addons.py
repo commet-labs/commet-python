@@ -4,6 +4,7 @@ from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
+from .._shared import build_body
 
 
 class AsyncAddonsResource:
@@ -12,3 +13,68 @@ class AsyncAddonsResource:
 
     async def get_active(self, customer_id: str) -> ApiResponse[list[dict[str, Any]]]:
         return await self._http.get("/addons/active", {"customer_id": customer_id})
+
+    async def list(
+        self,
+        *,
+        limit: int | None = None,
+        cursor: str | None = None,
+    ) -> ApiResponse[Any]:
+        return await self._http.get("/addons", build_body(limit=limit, cursor=cursor))
+
+    async def get(self, addon_id: str) -> ApiResponse[Any]:
+        return await self._http.get(f"/addons/{addon_id}")
+
+    async def create(
+        self,
+        *,
+        name: str,
+        base_price: int,
+        feature_id: str,
+        consumption_model: str,
+        description: str | None = None,
+        included_units: int | None = None,
+        overage_rate: int | None = None,
+        credit_cost: int | None = None,
+        idempotency_key: str | None = None,
+    ) -> ApiResponse[Any]:
+        return await self._http.post(
+            "/addons",
+            build_body(
+                name=name, base_price=base_price, feature_id=feature_id,
+                consumption_model=consumption_model, description=description,
+                included_units=included_units, overage_rate=overage_rate,
+                credit_cost=credit_cost,
+            ),
+            idempotency_key=idempotency_key,
+        )
+
+    async def update(
+        self,
+        addon_id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        base_price: int | None = None,
+        included_units: int | None = None,
+        overage_rate: int | None = None,
+        idempotency_key: str | None = None,
+    ) -> ApiResponse[Any]:
+        return await self._http.put(
+            f"/addons/{addon_id}",
+            build_body(
+                name=name, description=description, base_price=base_price,
+                included_units=included_units, overage_rate=overage_rate,
+            ),
+            idempotency_key=idempotency_key,
+        )
+
+    async def delete(
+        self,
+        addon_id: str,
+        *,
+        idempotency_key: str | None = None,
+    ) -> ApiResponse[Any]:
+        return await self._http.delete(
+            f"/addons/{addon_id}", idempotency_key=idempotency_key,
+        )

@@ -15,7 +15,7 @@ _RETRYABLE_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 
 _BASE_URL = "https://commet.co"
 
-API_VERSION = "2026-05-18"
+API_VERSION = "2026-05-25"
 
 
 def to_snake(name: str) -> str:
@@ -45,20 +45,36 @@ def handle_error(status_code: int, data: Any) -> None:
             f"Request failed with status {status_code}", status_code=status_code
         )
 
-    if data.get("code") == "validation_error" and isinstance(data.get("details"), list):
+    error_obj = data.get("error")
+    if isinstance(error_obj, dict):
+        source = error_obj
+    else:
+        source = data
+
+    error_type = source.get("type", "api_error")
+    error_code = source.get("code", "unknown")
+    error_message = source.get("message", f"Request failed with status {status_code}")
+    error_param = source.get("param")
+    error_details = source.get("details")
+    error_doc_url = source.get("doc_url")
+
+    if error_code == "validation_error" and isinstance(error_details, list):
         errors: dict[str, list[str]] = {}
-        for detail in data["details"]:
+        for detail in error_details:
             field = detail.get("field", "unknown")
             errors.setdefault(field, []).append(detail.get("message", ""))
         raise CommetValidationError(
-            data.get("message", "Validation failed"), validation_errors=errors
+            error_message, validation_errors=errors
         )
 
     raise CommetAPIError(
-        data.get("message", f"Request failed with status {status_code}"),
+        error_message,
         status_code=status_code,
-        code=data.get("code"),
-        details=data.get("details"),
+        code=error_code,
+        details=error_details,
+        type=error_type,
+        param=error_param,
+        doc_url=error_doc_url,
     )
 
 

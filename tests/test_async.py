@@ -10,7 +10,7 @@ from commet.types import Customer
 
 @pytest.fixture
 def mock_api() -> respx.MockRouter:
-    with respx.mock(base_url="https://commet.co/api") as mock:
+    with respx.mock(base_url="https://commet.co/api/v1") as mock:
         yield mock
 
 
@@ -105,33 +105,6 @@ async def test_async_usage_track(mock_api: respx.MockRouter) -> None:
         result = await client.usage.track(feature="api_calls", customer_id="cus_1", value=1)
         assert result.success is True
         assert result.data.feature == "api_calls"
-
-
-@pytest.mark.asyncio
-async def test_async_customer_context(mock_api: respx.MockRouter) -> None:
-    mock_api.get("/features/api_calls").mock(
-        return_value=Response(
-            200,
-            json={
-                "success": True,
-                "data": {
-                    "code": "api_calls",
-                    "name": "API Calls",
-                    "type": "metered",
-                    "allowed": True,
-                    "current": 50,
-                    "included": 1000,
-                },
-            },
-        )
-    )
-
-    async with AsyncCommet(api_key="ck_test_123") as client:
-        customer = client.customer("cus_1")
-        result = await customer.features.get("api_calls")
-        assert result.success is True
-        assert result.data.code == "api_calls"
-        assert result.data.allowed is True
 
 
 @pytest.mark.asyncio

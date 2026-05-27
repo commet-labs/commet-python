@@ -2,17 +2,21 @@ from __future__ import annotations
 
 import logging
 
-from ._async_customer import AsyncCustomerContext
 from ._async_http import AsyncCommetHTTPClient
 from ._shared import API_VERSION
 from .async_resources.addons import AsyncAddonsResource
+from .async_resources.api_keys import AsyncApiKeysResource
 from .async_resources.credit_packs import AsyncCreditPacksResource
 from .async_resources.customers import AsyncCustomersResource
 from .async_resources.features import AsyncFeaturesResource
+from .async_resources.invoices import AsyncInvoicesResource
+from .async_resources.plan_groups import AsyncPlanGroupsResource
 from .async_resources.plans import AsyncPlansResource
 from .async_resources.portal import AsyncPortalResource
+from .async_resources.promo_codes import AsyncPromoCodesResource
 from .async_resources.seats import AsyncSeatsResource
 from .async_resources.subscriptions import AsyncSubscriptionsResource
+from .async_resources.transactions import AsyncTransactionsResource
 from .async_resources.usage import AsyncUsageResource
 from .resources.webhooks import Webhooks
 
@@ -40,14 +44,19 @@ class AsyncCommet:
         )
 
         self.addons = AsyncAddonsResource(self._http)
+        self.api_keys = AsyncApiKeysResource(self._http)
         self.customers = AsyncCustomersResource(self._http)
         self.credit_packs = AsyncCreditPacksResource(self._http)
+        self.features = AsyncFeaturesResource(self._http)
+        self.invoices = AsyncInvoicesResource(self._http)
+        self.plan_groups = AsyncPlanGroupsResource(self._http)
         self.plans = AsyncPlansResource(self._http)
-        self.usage = AsyncUsageResource(self._http)
+        self.portal = AsyncPortalResource(self._http)
+        self.promo_codes = AsyncPromoCodesResource(self._http)
         self.seats = AsyncSeatsResource(self._http)
         self.subscriptions = AsyncSubscriptionsResource(self._http)
-        self.portal = AsyncPortalResource(self._http)
-        self.features = AsyncFeaturesResource(self._http)
+        self.transactions = AsyncTransactionsResource(self._http)
+        self.usage = AsyncUsageResource(self._http)
         self.webhooks = Webhooks()
 
         logger.debug("AsyncCommet client initialized")
@@ -60,13 +69,3 @@ class AsyncCommet:
 
     async def __aexit__(self, *args: object) -> None:
         await self.close()
-
-    def customer(self, customer_id: str) -> AsyncCustomerContext:
-        return AsyncCustomerContext(
-            customer_id,
-            features=self.features,
-            seats=self.seats,
-            usage=self.usage,
-            subscriptions=self.subscriptions,
-            portal=self.portal,
-        )

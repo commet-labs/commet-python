@@ -24,8 +24,14 @@ class CommetAPIError(CommetError):
         status_code: int,
         code: str | None = None,
         details: object = None,
+        type: str | None = None,
+        param: str | None = None,
+        doc_url: str | None = None,
     ) -> None:
         super().__init__(message, code=code, status_code=status_code, details=details)
+        self.type = type
+        self.param = param
+        self.doc_url = doc_url
 
 
 class CommetValidationError(CommetError):

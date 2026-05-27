@@ -36,6 +36,9 @@ class ApiResponse(Generic[T]):
     next_cursor: str | None = None
 
 
+_BODY_METHODS = frozenset({"POST", "PUT", "PATCH"})
+
+
 class CommetHTTPClient:
     def __init__(
         self,
@@ -130,8 +133,10 @@ class CommetHTTPClient:
         headers: dict[str, str] = {}
         if api_version is not None:
             headers["commet-version"] = api_version
-        if method == "POST":
-            headers["Idempotency-Key"] = idempotency_key or f"sdk_{uuid4().hex}"
+        if method in _BODY_METHODS and self._max_retries > 0 and not idempotency_key:
+            headers["Idempotency-Key"] = f"commet-python-retry-{uuid4()}"
+        elif idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key
 
         json_body = convert_keys(body, to_camel) if body else None
 
@@ -196,6 +201,7 @@ class CommetHTTPClient:
             )
 
         if resp.is_error:
+            logger.debug("Error response: %s", data)
             handle_error(resp.status_code, data)
 
         if self._telemetry_enabled:

@@ -11,7 +11,7 @@ from commet.types import FeatureAccess
 
 @pytest.fixture
 def mock_api() -> respx.MockRouter:
-    with respx.mock(base_url="https://commet.co/api") as mock:
+    with respx.mock(base_url="https://commet.co/api/v1") as mock:
         yield mock
 
 
@@ -61,7 +61,7 @@ class TestFeaturesCheck:
                 "data": {
                     "code": "api_calls",
                     "name": "API Calls",
-                    "type": "metered",
+                    "type": "usage",
                     "allowed": True,
                     "current": 50,
                     "included": 1000,

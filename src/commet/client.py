@@ -2,17 +2,21 @@ from __future__ import annotations
 
 import logging
 
-from ._customer import CustomerContext
 from ._http import CommetHTTPClient
 from ._shared import API_VERSION
 from .resources.addons import AddonsResource
+from .resources.api_keys import ApiKeysResource
 from .resources.credit_packs import CreditPacksResource
 from .resources.customers import CustomersResource
 from .resources.features import FeaturesResource
+from .resources.invoices import InvoicesResource
+from .resources.plan_groups import PlanGroupsResource
 from .resources.plans import PlansResource
 from .resources.portal import PortalResource
+from .resources.promo_codes import PromoCodesResource
 from .resources.seats import SeatsResource
 from .resources.subscriptions import SubscriptionsResource
+from .resources.transactions import TransactionsResource
 from .resources.usage import UsageResource
 from .resources.webhooks import Webhooks
 
@@ -20,27 +24,6 @@ logger = logging.getLogger("commet")
 
 
 class Commet:
-    """Commet SDK client.
-
-    Usage::
-
-        from commet import Commet
-
-        commet = Commet(api_key="ck_xxx")
-
-        # Direct resource access
-        commet.customers.create(email="user@example.com")
-        commet.usage.track(feature="api_calls", customer_id="user_123")
-
-        # Customer-scoped context
-        customer = commet.customer("user_123")
-        customer.usage.track("api_calls")
-
-        # Context manager
-        with Commet(api_key="ck_xxx") as commet:
-            commet.usage.track(feature="api_calls", customer_id="user_123")
-    """
-
     def __init__(
         self,
         api_key: str,
@@ -61,15 +44,20 @@ class Commet:
         )
 
         self.addons = AddonsResource(self._http)
+        self.api_keys = ApiKeysResource(self._http)
         self.customers = CustomersResource(self._http)
         self.credit_packs = CreditPacksResource(self._http)
+        self.features = FeaturesResource(self._http)
+        self.invoices = InvoicesResource(self._http)
+        self.plan_groups = PlanGroupsResource(self._http)
         self.plans = PlansResource(self._http)
-        self.usage = UsageResource(self._http)
+        self.portal = PortalResource(self._http)
+        self.promo_codes = PromoCodesResource(self._http)
         self.seats = SeatsResource(self._http)
         self.subscriptions = SubscriptionsResource(self._http)
-        self.portal = PortalResource(self._http)
-        self.features = FeaturesResource(self._http)
-        self.webhooks = Webhooks()
+        self.transactions = TransactionsResource(self._http)
+        self.usage = UsageResource(self._http)
+        self.webhooks = Webhooks(self._http)
 
         logger.debug("Commet client initialized")
 
@@ -81,14 +69,3 @@ class Commet:
 
     def __exit__(self, *args: object) -> None:
         self.close()
-
-    def customer(self, customer_id: str) -> CustomerContext:
-        """Create a customer-scoped context for cleaner API usage."""
-        return CustomerContext(
-            customer_id,
-            features=self.features,
-            seats=self.seats,
-            usage=self.usage,
-            subscriptions=self.subscriptions,
-            portal=self.portal,
-        )

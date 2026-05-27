@@ -9,14 +9,18 @@ from commet._shared import handle_error
 class TestAPIErrorParsing:
     def test_api_error_from_dict(self) -> None:
         data = {
-            "message": "Customer not found",
-            "code": "not_found",
+            "error": {
+                "message": "Customer not found",
+                "code": "not_found",
+                "type": "invalid_request_error",
+            }
         }
         with pytest.raises(CommetAPIError) as exc_info:
             handle_error(404, data)
         assert str(exc_info.value) == "Customer not found"
         assert exc_info.value.status_code == 404
         assert exc_info.value.code == "not_found"
+        assert exc_info.value.type == "invalid_request_error"
 
     def test_api_error_from_non_dict(self) -> None:
         with pytest.raises(CommetAPIError) as exc_info:
@@ -25,9 +29,11 @@ class TestAPIErrorParsing:
 
     def test_api_error_with_details(self) -> None:
         data = {
-            "message": "Rate limit exceeded",
-            "code": "rate_limit",
-            "details": {"retry_after": 30},
+            "error": {
+                "message": "Rate limit exceeded",
+                "code": "rate_limit",
+                "details": {"retry_after": 30},
+            }
         }
         with pytest.raises(CommetAPIError) as exc_info:
             handle_error(429, data)
@@ -39,17 +45,45 @@ class TestAPIErrorParsing:
             handle_error(502, {})
         assert "502" in str(exc_info.value)
 
+    def test_api_error_with_param_and_doc_url(self) -> None:
+        data = {
+            "error": {
+                "message": "Invalid parameter",
+                "code": "invalid_param",
+                "type": "invalid_request_error",
+                "param": "email",
+                "doc_url": "https://docs.commet.co/errors/invalid_param",
+            }
+        }
+        with pytest.raises(CommetAPIError) as exc_info:
+            handle_error(400, data)
+        assert exc_info.value.param == "email"
+        assert exc_info.value.doc_url == "https://docs.commet.co/errors/invalid_param"
+        assert exc_info.value.type == "invalid_request_error"
+
+    def test_api_error_falls_back_to_top_level_keys(self) -> None:
+        data = {
+            "message": "Legacy error format",
+            "code": "legacy_error",
+        }
+        with pytest.raises(CommetAPIError) as exc_info:
+            handle_error(400, data)
+        assert str(exc_info.value) == "Legacy error format"
+        assert exc_info.value.code == "legacy_error"
+
 
 class TestValidationErrorParsing:
     def test_validation_error_with_fields(self) -> None:
         data = {
-            "message": "Validation failed",
-            "code": "validation_error",
-            "details": [
-                {"field": "email", "message": "Email is required"},
-                {"field": "email", "message": "Must be a valid email"},
-                {"field": "plan_code", "message": "Plan not found"},
-            ],
+            "error": {
+                "message": "Validation failed",
+                "code": "validation_error",
+                "details": [
+                    {"field": "email", "message": "Email is required"},
+                    {"field": "email", "message": "Must be a valid email"},
+                    {"field": "plan_code", "message": "Plan not found"},
+                ],
+            }
         }
         with pytest.raises(CommetValidationError) as exc_info:
             handle_error(422, data)
@@ -62,11 +96,13 @@ class TestValidationErrorParsing:
 
     def test_validation_error_missing_field_defaults_to_unknown(self) -> None:
         data = {
-            "message": "Validation failed",
-            "code": "validation_error",
-            "details": [
-                {"message": "Something is wrong"},
-            ],
+            "error": {
+                "message": "Validation failed",
+                "code": "validation_error",
+                "details": [
+                    {"message": "Something is wrong"},
+                ],
+            }
         }
         with pytest.raises(CommetValidationError) as exc_info:
             handle_error(422, data)
@@ -74,8 +110,10 @@ class TestValidationErrorParsing:
 
     def test_non_validation_error_code_raises_api_error(self) -> None:
         data = {
-            "message": "Unauthorized",
-            "code": "unauthorized",
+            "error": {
+                "message": "Unauthorized",
+                "code": "unauthorized",
+            }
         }
         with pytest.raises(CommetAPIError):
             handle_error(401, data)

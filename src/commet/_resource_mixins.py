@@ -35,7 +35,6 @@ def parse_customer_list(response: ApiResponse[Any]) -> ApiResponse[list[Customer
 def build_customer_create_body(
     *,
     email: str,
-    id: str | None = None,
     full_name: str | None = None,
     domain: str | None = None,
     website: str | None = None,
@@ -47,7 +46,6 @@ def build_customer_create_body(
 ) -> dict[str, Any]:
     return build_body(
         billing_email=email,
-        external_id=id,
         full_name=full_name,
         domain=domain,
         website=website,
@@ -63,7 +61,6 @@ def build_customer_batch_body(customers: list[dict[str, Any]]) -> dict[str, Any]
     mapped = [
         build_body(
             billing_email=c.get("email"),
-            external_id=c.get("id"),
             full_name=c.get("full_name"),
             domain=c.get("domain"),
             website=c.get("website"),
@@ -107,16 +104,6 @@ def parse_feature_access(response: ApiResponse[Any]) -> ApiResponse[FeatureAcces
     if response.data and isinstance(response.data, dict):
         response.data = _from_dict(FeatureAccess, response.data)
     return response
-
-
-def parse_feature_check(response: ApiResponse[Any]) -> ApiResponse[dict[str, bool]]:
-    if not response.success:
-        return response
-    return ApiResponse(
-        success=True,
-        data={"allowed": response.data.get("allowed", False) if response.data else False},
-        message=response.message,
-    )
 
 
 def parse_feature_access_list(response: ApiResponse[Any]) -> ApiResponse[list[FeatureAccess]]:

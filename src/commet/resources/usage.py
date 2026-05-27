@@ -34,6 +34,27 @@ class UsageResource:
         )
         return parse_usage_event(self._http.post("/usage/events", body, idempotency_key=idempotency_key))
 
+    def track_model_tokens(
+        self,
+        *,
+        feature: str,
+        customer_id: str,
+        model: str,
+        input_tokens: int,
+        output_tokens: int,
+        cache_read_tokens: int | None = None,
+        cache_write_tokens: int | None = None,
+        idempotency_key: str | None = None,
+        timestamp: str | None = None,
+        properties: dict[str, str] | None = None,
+    ) -> ApiResponse[UsageEvent]:
+        return self.track(
+            feature=feature, customer_id=customer_id, model=model,
+            input_tokens=input_tokens, output_tokens=output_tokens,
+            cache_read_tokens=cache_read_tokens, cache_write_tokens=cache_write_tokens,
+            idempotency_key=idempotency_key, timestamp=timestamp, properties=properties,
+        )
+
     def check(
         self,
         *,

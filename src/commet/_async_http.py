@@ -9,7 +9,7 @@ from uuid import uuid4
 import httpx
 
 from ._exceptions import CommetAPIError
-from ._http import ApiResponse
+from ._http import ApiResponse, _BODY_METHODS
 from ._shared import (
     API_VERSION,
     _BASE_URL,
@@ -119,8 +119,10 @@ class AsyncCommetHTTPClient:
         headers: dict[str, str] = {}
         if api_version is not None:
             headers["commet-version"] = api_version
-        if method == "POST":
-            headers["Idempotency-Key"] = idempotency_key or f"sdk_{uuid4().hex}"
+        if method in _BODY_METHODS and self._max_retries > 0 and not idempotency_key:
+            headers["Idempotency-Key"] = f"commet-python-retry-{uuid4()}"
+        elif idempotency_key:
+            headers["Idempotency-Key"] = idempotency_key
 
         json_body = convert_keys(body, to_camel) if body else None
 
@@ -185,6 +187,7 @@ class AsyncCommetHTTPClient:
             )
 
         if resp.is_error:
+            logger.debug("Error response: %s", data)
             handle_error(resp.status_code, data)
 
         if self._telemetry_enabled:
