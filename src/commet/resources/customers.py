@@ -22,6 +22,7 @@ class CustomersResource:
         self,
         *,
         email: str,
+        id: str | None = None,
         full_name: str | None = None,
         domain: str | None = None,
         website: str | None = None,
@@ -33,7 +34,7 @@ class CustomersResource:
         idempotency_key: str | None = None,
     ) -> ApiResponse[Customer]:
         body = build_customer_create_body(
-            email=email, full_name=full_name, domain=domain,
+            email=email, id=id, full_name=full_name, domain=domain,
             website=website, timezone=timezone, language=language,
             industry=industry, metadata=metadata, address=address,
         )

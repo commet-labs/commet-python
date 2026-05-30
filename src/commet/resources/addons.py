@@ -10,8 +10,12 @@ class AddonsResource:
     def __init__(self, http: CommetHTTPClient) -> None:
         self._http = http
 
-    def get_active(self, customer_id: str) -> ApiResponse[list[dict[str, Any]]]:
+    def list_active(self, customer_id: str) -> ApiResponse[list[dict[str, Any]]]:
         return self._http.get("/addons/active", {"customer_id": customer_id})
+
+    def get_active(self, customer_id: str) -> ApiResponse[list[dict[str, Any]]]:
+        """.. deprecated:: use :meth:`list_active` instead."""
+        return self.list_active(customer_id)
 
     def list(
         self,
