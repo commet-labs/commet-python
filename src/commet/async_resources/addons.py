@@ -11,8 +11,12 @@ class AsyncAddonsResource:
     def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
-    async def get_active(self, customer_id: str) -> ApiResponse[list[dict[str, Any]]]:
+    async def list_active(self, customer_id: str) -> ApiResponse[list[dict[str, Any]]]:
         return await self._http.get("/addons/active", {"customer_id": customer_id})
+
+    async def get_active(self, customer_id: str) -> ApiResponse[list[dict[str, Any]]]:
+        """.. deprecated:: use :meth:`list_active` instead."""
+        return await self.list_active(customer_id)
 
     async def list(
         self,
