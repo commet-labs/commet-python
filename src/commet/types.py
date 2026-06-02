@@ -274,6 +274,7 @@ class QuotaAllowance:
     current: int = 0
     included: int = 0
     remaining: int | None = None
+    billed_quantity: int | None = None
     unlimited: bool = False
     overage_enabled: bool = False
     as_of: str | None = None

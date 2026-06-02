@@ -107,6 +107,7 @@ class TestQuotaGet:
                     "current": 4,
                     "included": 10,
                     "remaining": 6,
+                    "billedQuantity": 12,
                     "unlimited": False,
                     "overageEnabled": True,
                     "asOf": "2026-06-01T00:00:00Z",
@@ -121,6 +122,7 @@ class TestQuotaGet:
             assert result.data.current == 4
             assert result.data.included == 10
             assert result.data.remaining == 6
+            assert result.data.billed_quantity == 12
             assert result.data.unlimited is False
             assert result.data.overage_enabled is True
 

@@ -24,7 +24,7 @@ class QuotaResource:
     ) -> ApiResponse[QuotaEvent]:
         return parse_quota_event(self._http.post(
             "/usage/quota",
-            build_body(feature_code=feature_code, count=count, customer_id=customer_id),
+            build_body(featureCode=feature_code, count=count, customerId=customer_id),
             idempotency_key=idempotency_key,
         ))
 
@@ -38,7 +38,7 @@ class QuotaResource:
     ) -> ApiResponse[QuotaEvent]:
         return parse_quota_event(self._http.put(
             "/usage/quota",
-            build_body(feature_code=feature_code, count=count, customer_id=customer_id),
+            build_body(featureCode=feature_code, count=count, customerId=customer_id),
             idempotency_key=idempotency_key,
         ))
 
@@ -52,7 +52,7 @@ class QuotaResource:
     ) -> ApiResponse[QuotaEvent]:
         return parse_quota_event(self._http.delete(
             "/usage/quota",
-            build_body(feature_code=feature_code, count=count, customer_id=customer_id),
+            build_body(featureCode=feature_code, count=count, customerId=customer_id),
             idempotency_key=idempotency_key,
         ))
 
@@ -64,7 +64,7 @@ class QuotaResource:
     ) -> ApiResponse[QuotaAllowance]:
         return parse_quota_allowance(self._http.get(
             "/usage/quota",
-            build_body(feature_code=feature_code, customer_id=customer_id),
+            build_body(featureCode=feature_code, customerId=customer_id),
         ))
 
     def get_all(
@@ -74,5 +74,5 @@ class QuotaResource:
     ) -> ApiResponse[list[QuotaAllowance]]:
         return parse_quota_allowance_list(self._http.get(
             "/usage/quota/all",
-            build_body(customer_id=customer_id),
+            build_body(customerId=customer_id),
         ))
