@@ -14,6 +14,7 @@ from .async_resources.plan_groups import AsyncPlanGroupsResource
 from .async_resources.plans import AsyncPlansResource
 from .async_resources.portal import AsyncPortalResource
 from .async_resources.promo_codes import AsyncPromoCodesResource
+from .async_resources.quota import AsyncQuotaResource
 from .async_resources.seats import AsyncSeatsResource
 from .async_resources.subscriptions import AsyncSubscriptionsResource
 from .async_resources.transactions import AsyncTransactionsResource
@@ -53,6 +54,7 @@ class AsyncCommet:
         self.plans = AsyncPlansResource(self._http)
         self.portal = AsyncPortalResource(self._http)
         self.promo_codes = AsyncPromoCodesResource(self._http)
+        self.quota = AsyncQuotaResource(self._http)
         self.seats = AsyncSeatsResource(self._http)
         self.subscriptions = AsyncSubscriptionsResource(self._http)
         self.transactions = AsyncTransactionsResource(self._http)

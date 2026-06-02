@@ -14,6 +14,7 @@ from .resources.plan_groups import PlanGroupsResource
 from .resources.plans import PlansResource
 from .resources.portal import PortalResource
 from .resources.promo_codes import PromoCodesResource
+from .resources.quota import QuotaResource
 from .resources.seats import SeatsResource
 from .resources.subscriptions import SubscriptionsResource
 from .resources.transactions import TransactionsResource
@@ -53,6 +54,7 @@ class Commet:
         self.plans = PlansResource(self._http)
         self.portal = PortalResource(self._http)
         self.promo_codes = PromoCodesResource(self._http)
+        self.quota = QuotaResource(self._http)
         self.seats = SeatsResource(self._http)
         self.subscriptions = SubscriptionsResource(self._http)
         self.transactions = TransactionsResource(self._http)
