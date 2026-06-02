@@ -47,6 +47,25 @@ customer.seats.add(feature_code="editor", count=3)
 customer.portal.get_url()
 ```
 
+## Quota
+
+```python
+# Add to the quota balance (count defaults to 1)
+commet.quota.add(feature_code="storage", customer_id="cus_123")
+
+# Set the quota balance to an exact value
+commet.quota.set(feature_code="storage", count=10, customer_id="cus_123")
+
+# Remove from the quota balance (count defaults to 1)
+commet.quota.remove(feature_code="storage", customer_id="cus_123")
+
+# Read a single allowance
+commet.quota.get(feature_code="storage", customer_id="cus_123")
+
+# Read every allowance for a customer
+commet.quota.get_all(customer_id="cus_123")
+```
+
 ## Webhook verification
 
 ```python

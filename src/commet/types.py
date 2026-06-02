@@ -11,6 +11,7 @@ class FeatureType(str, Enum):
     BOOLEAN = "boolean"
     USAGE = "usage"
     SEATS = "seats"
+    QUOTA = "quota"
 
 
 class BillingInterval(str, Enum):
@@ -254,6 +255,28 @@ class SeatEvent:
     new_balance: int = 0
     ts: str = ""
     created_at: str = ""
+
+
+@dataclass
+class QuotaEvent:
+    id: str
+    customer_id: str = ""
+    feature_code: str = ""
+    previous_balance: int = 0
+    new_balance: int = 0
+    ts: str = ""
+    created_at: str = ""
+
+
+@dataclass
+class QuotaAllowance:
+    feature_code: str = ""
+    current: int = 0
+    included: int = 0
+    remaining: int | None = None
+    unlimited: bool = False
+    overage_enabled: bool = False
+    as_of: str | None = None
 
 
 @dataclass

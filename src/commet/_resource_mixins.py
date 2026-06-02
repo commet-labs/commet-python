@@ -11,6 +11,8 @@ from .types import (
     FeatureAccess,
     Plan,
     PortalSession,
+    QuotaAllowance,
+    QuotaEvent,
     SeatBalance,
     SeatEvent,
     Subscription,
@@ -164,6 +166,24 @@ def parse_seat_event(response: ApiResponse[Any]) -> ApiResponse[SeatEvent]:
 def parse_seat_balance(response: ApiResponse[Any]) -> ApiResponse[SeatBalance]:
     if response.data and isinstance(response.data, dict):
         response.data = _from_dict(SeatBalance, response.data)
+    return response
+
+
+def parse_quota_event(response: ApiResponse[Any]) -> ApiResponse[QuotaEvent]:
+    if response.data and isinstance(response.data, dict):
+        response.data = _from_dict(QuotaEvent, response.data)
+    return response
+
+
+def parse_quota_allowance(response: ApiResponse[Any]) -> ApiResponse[QuotaAllowance]:
+    if response.data and isinstance(response.data, dict):
+        response.data = _from_dict(QuotaAllowance, response.data)
+    return response
+
+
+def parse_quota_allowance_list(response: ApiResponse[Any]) -> ApiResponse[list[QuotaAllowance]]:
+    if response.data and isinstance(response.data, list):
+        response.data = _from_list(QuotaAllowance, response.data)
     return response
 
 
