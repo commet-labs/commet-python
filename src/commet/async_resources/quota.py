@@ -25,7 +25,7 @@ class AsyncQuotaResource:
     ) -> ApiResponse[QuotaEvent]:
         return parse_quota_event(await self._http.post(
             "/usage/quota",
-            build_body(featureCode=feature_code, count=count, customerId=customer_id),
+            build_body(feature_code=feature_code, count=count, customer_id=customer_id),
             idempotency_key=idempotency_key,
         ))
 
@@ -39,7 +39,7 @@ class AsyncQuotaResource:
     ) -> ApiResponse[QuotaEvent]:
         return parse_quota_event(await self._http.put(
             "/usage/quota",
-            build_body(featureCode=feature_code, count=count, customerId=customer_id),
+            build_body(feature_code=feature_code, count=count, customer_id=customer_id),
             idempotency_key=idempotency_key,
         ))
 
@@ -53,7 +53,7 @@ class AsyncQuotaResource:
     ) -> ApiResponse[QuotaEvent]:
         return parse_quota_event(await self._http.delete(
             "/usage/quota",
-            build_body(featureCode=feature_code, count=count, customerId=customer_id),
+            build_body(feature_code=feature_code, count=count, customer_id=customer_id),
             idempotency_key=idempotency_key,
         ))
 
@@ -65,7 +65,7 @@ class AsyncQuotaResource:
     ) -> ApiResponse[QuotaAllowance]:
         return parse_quota_allowance(await self._http.get(
             "/usage/quota",
-            build_body(featureCode=feature_code, customerId=customer_id),
+            build_body(feature_code=feature_code, customer_id=customer_id),
         ))
 
     async def get_all(
@@ -75,5 +75,5 @@ class AsyncQuotaResource:
     ) -> ApiResponse[list[QuotaAllowance]]:
         return parse_quota_allowance_list(await self._http.get(
             "/usage/quota/all",
-            build_body(customerId=customer_id),
+            build_body(customer_id=customer_id),
         ))

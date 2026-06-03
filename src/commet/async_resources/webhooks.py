@@ -1,37 +1,15 @@
 from __future__ import annotations
 
-import hashlib
-import hmac
-import json
 from typing import Any
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._async_http import AsyncCommetHTTPClient
+from .._http import ApiResponse
 from .._shared import build_body
+from ..resources.webhooks import verify_and_parse_payload, verify_signature
 
 
-def sign_payload(payload: str, secret: str) -> str:
-    return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
-
-
-def verify_signature(*, payload: str, signature: str | None, secret: str) -> bool:
-    if not signature or not secret or not payload:
-        return False
-    return hmac.compare_digest(signature, sign_payload(payload, secret))
-
-
-def verify_and_parse_payload(
-    *, raw_body: str, signature: str | None, secret: str
-) -> dict[str, Any] | None:
-    if not verify_signature(payload=raw_body, signature=signature, secret=secret):
-        return None
-    try:
-        return json.loads(raw_body)
-    except (json.JSONDecodeError, TypeError):
-        return None
-
-
-class Webhooks:
-    def __init__(self, http: CommetHTTPClient | None = None) -> None:
+class AsyncWebhooks:
+    def __init__(self, http: AsyncCommetHTTPClient | None = None) -> None:
         self._http = http
 
     def verify(self, *, payload: str, signature: str | None, secret: str) -> bool:
@@ -42,16 +20,16 @@ class Webhooks:
     ) -> dict[str, Any] | None:
         return verify_and_parse_payload(raw_body=raw_body, signature=signature, secret=secret)
 
-    def list(
+    async def list(
         self,
         *,
         limit: int | None = None,
         cursor: str | None = None,
     ) -> ApiResponse[Any]:
         assert self._http is not None
-        return self._http.get("/webhooks", build_body(limit=limit, cursor=cursor))
+        return await self._http.get("/webhooks", build_body(limit=limit, cursor=cursor))
 
-    def create(
+    async def create(
         self,
         *,
         url: str,
@@ -61,17 +39,17 @@ class Webhooks:
         idempotency_key: str | None = None,
     ) -> ApiResponse[Any]:
         assert self._http is not None
-        return self._http.post(
+        return await self._http.post(
             "/webhooks",
             build_body(url=url, events=events, description=description, api_version=api_version),
             idempotency_key=idempotency_key,
         )
 
-    def get(self, webhook_id: str) -> ApiResponse[Any]:
+    async def get(self, webhook_id: str) -> ApiResponse[Any]:
         assert self._http is not None
-        return self._http.get(f"/webhooks/{webhook_id}")
+        return await self._http.get(f"/webhooks/{webhook_id}")
 
-    def update(
+    async def update(
         self,
         webhook_id: str,
         *,
@@ -83,7 +61,7 @@ class Webhooks:
         idempotency_key: str | None = None,
     ) -> ApiResponse[Any]:
         assert self._http is not None
-        return self._http.put(
+        return await self._http.put(
             f"/webhooks/{webhook_id}",
             build_body(
                 url=url,
@@ -95,22 +73,22 @@ class Webhooks:
             idempotency_key=idempotency_key,
         )
 
-    def delete(
+    async def delete(
         self,
         webhook_id: str,
         *,
         idempotency_key: str | None = None,
     ) -> ApiResponse[Any]:
         assert self._http is not None
-        return self._http.delete(f"/webhooks/{webhook_id}", idempotency_key=idempotency_key)
+        return await self._http.delete(f"/webhooks/{webhook_id}", idempotency_key=idempotency_key)
 
-    def test(
+    async def test(
         self,
         webhook_id: str,
         *,
         idempotency_key: str | None = None,
     ) -> ApiResponse[Any]:
         assert self._http is not None
-        return self._http.post(
+        return await self._http.post(
             f"/webhooks/{webhook_id}/test", idempotency_key=idempotency_key,
         )

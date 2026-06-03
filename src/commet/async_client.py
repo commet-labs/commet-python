@@ -19,7 +19,7 @@ from .async_resources.seats import AsyncSeatsResource
 from .async_resources.subscriptions import AsyncSubscriptionsResource
 from .async_resources.transactions import AsyncTransactionsResource
 from .async_resources.usage import AsyncUsageResource
-from .resources.webhooks import Webhooks
+from .async_resources.webhooks import AsyncWebhooks
 
 logger = logging.getLogger("commet")
 
@@ -59,7 +59,7 @@ class AsyncCommet:
         self.subscriptions = AsyncSubscriptionsResource(self._http)
         self.transactions = AsyncTransactionsResource(self._http)
         self.usage = AsyncUsageResource(self._http)
-        self.webhooks = Webhooks()
+        self.webhooks = AsyncWebhooks(self._http)
 
         logger.debug("AsyncCommet client initialized")
 

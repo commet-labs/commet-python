@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import re
 from datetime import datetime, timezone
 from typing import Any
 
 from ._http import ApiResponse
 from ._shared import build_body
 from .types import (
+    ChangePlanResult,
     CreditPack,
     Customer,
     FeatureAccess,
@@ -136,6 +136,12 @@ def parse_subscription(response: ApiResponse[Any]) -> ApiResponse[Subscription]:
     return response
 
 
+def parse_change_plan_result(response: ApiResponse[Any]) -> ApiResponse[ChangePlanResult]:
+    if response.data and isinstance(response.data, dict):
+        response.data = _from_dict(ChangePlanResult, response.data)
+    return response
+
+
 def build_subscription_create_body(
     *,
     customer_id: str | None = None,
@@ -173,27 +179,21 @@ def parse_seat_balance(response: ApiResponse[Any]) -> ApiResponse[SeatBalance]:
     return response
 
 
-def _camelize_keys_to_snake(d: dict[str, Any]) -> dict[str, Any]:
-    return {re.sub(r"(?<!^)(?=[A-Z])", "_", k).lower(): v for k, v in d.items()}
-
-
 def parse_quota_event(response: ApiResponse[Any]) -> ApiResponse[QuotaEvent]:
     if response.data and isinstance(response.data, dict):
-        response.data = _from_dict(QuotaEvent, _camelize_keys_to_snake(response.data))
+        response.data = _from_dict(QuotaEvent, response.data)
     return response
 
 
 def parse_quota_allowance(response: ApiResponse[Any]) -> ApiResponse[QuotaAllowance]:
     if response.data and isinstance(response.data, dict):
-        response.data = _from_dict(QuotaAllowance, _camelize_keys_to_snake(response.data))
+        response.data = _from_dict(QuotaAllowance, response.data)
     return response
 
 
 def parse_quota_allowance_list(response: ApiResponse[Any]) -> ApiResponse[list[QuotaAllowance]]:
     if response.data and isinstance(response.data, list):
-        response.data = _from_list(
-            QuotaAllowance, [_camelize_keys_to_snake(item) for item in response.data]
-        )
+        response.data = _from_list(QuotaAllowance, response.data)
     return response
 
 
