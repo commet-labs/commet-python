@@ -4,9 +4,13 @@ from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
-from .._resource_mixins import build_subscription_create_body, parse_subscription
+from .._resource_mixins import (
+    build_subscription_create_body,
+    parse_change_plan_result,
+    parse_subscription,
+)
 from .._shared import build_body
-from ..types import Subscription
+from ..types import ChangePlanResult, Subscription
 
 
 class AsyncSubscriptionsResource:
@@ -91,8 +95,8 @@ class AsyncSubscriptionsResource:
         new_plan_id: str | None = None,
         new_billing_interval: str | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Subscription]:
-        return parse_subscription(
+    ) -> ApiResponse[ChangePlanResult]:
+        return parse_change_plan_result(
             await self._http.post(
                 f"/subscriptions/{subscription_id}/change-plan",
                 build_body(new_plan_id=new_plan_id, new_billing_interval=new_billing_interval),

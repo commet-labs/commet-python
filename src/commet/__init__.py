@@ -1,7 +1,9 @@
 from ._exceptions import CommetAPIError, CommetError, CommetValidationError
 from ._http import ApiResponse
 from ._shared import API_VERSION
+from ._telemetry import register_integration
 from .async_client import AsyncCommet
+from .async_resources.webhooks import AsyncWebhooks
 from .client import Commet
 from .resources.webhooks import Webhooks
 from .types import (
@@ -9,6 +11,7 @@ from .types import (
     ApiKeyCreated,
     ApiKeyData,
     BillingInterval,
+    ChangePlanResult,
     ConsumptionModel,
     CreditPack,
     CreditPackDetail,
@@ -60,7 +63,9 @@ __all__ = [
     "ApiKeyData",
     "ApiResponse",
     "AsyncCommet",
+    "AsyncWebhooks",
     "BillingInterval",
+    "ChangePlanResult",
     "Commet",
     "CommetAPIError",
     "CommetError",
@@ -89,6 +94,7 @@ __all__ = [
     "PromoCodeDetail",
     "QuotaAllowance",
     "QuotaEvent",
+    "register_integration",
     "SeatBalance",
     "SeatEvent",
     "SeatEventType",

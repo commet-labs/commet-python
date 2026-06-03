@@ -191,6 +191,22 @@ class Subscription:
 
 
 @dataclass
+class ChangePlanResult:
+    id: str
+    scheduled: bool = False
+    customer_id: str | None = None
+    previous_plan: dict[str, Any] | None = None
+    current_plan: dict[str, Any] | None = None
+    billing_interval: str | None = None
+    billing: dict[str, Any] | None = None
+    invoice_id: str | None = None
+    scheduled_for: str | None = None
+    change_type: str | None = None
+    requires_checkout: bool | None = None
+    checkout_url: str | None = None
+
+
+@dataclass
 class Feature:
     code: str
     name: str = ""
@@ -231,6 +247,7 @@ class FeatureAccess:
     remaining: int | None = None
     overage: int | None = None
     overage_unit_price: int | None = None
+    billed_quantity: int | None = None
     unlimited: bool | None = None
     overage_enabled: bool | None = None
 
