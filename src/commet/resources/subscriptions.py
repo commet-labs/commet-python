@@ -25,6 +25,7 @@ class SubscriptionsResource:
         billing_interval: str | None = None,
         initial_seats: dict[str, int] | None = None,
         skip_trial: bool | None = None,
+        custom_intro_offer: dict[str, Any] | None = None,
         name: str | None = None,
         start_date: str | None = None,
         success_url: str | None = None,
@@ -33,8 +34,8 @@ class SubscriptionsResource:
         body = build_subscription_create_body(
             customer_id=customer_id, plan_code=plan_code, plan_id=plan_id,
             billing_interval=billing_interval, initial_seats=initial_seats,
-            skip_trial=skip_trial, name=name, start_date=start_date,
-            success_url=success_url,
+            skip_trial=skip_trial, custom_intro_offer=custom_intro_offer,
+            name=name, start_date=start_date, success_url=success_url,
         )
         return parse_subscription(
             self._http.post("/subscriptions", body, idempotency_key=idempotency_key)
