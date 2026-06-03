@@ -94,12 +94,17 @@ class AsyncSubscriptionsResource:
         *,
         new_plan_id: str | None = None,
         new_billing_interval: str | None = None,
+        success_url: str | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[ChangePlanResult]:
         return parse_change_plan_result(
             await self._http.post(
                 f"/subscriptions/{subscription_id}/change-plan",
-                build_body(new_plan_id=new_plan_id, new_billing_interval=new_billing_interval),
+                build_body(
+                    new_plan_id=new_plan_id,
+                    new_billing_interval=new_billing_interval,
+                    success_url=success_url,
+                ),
                 idempotency_key=idempotency_key,
             )
         )
