@@ -10,9 +10,10 @@ from .._resource_mixins import (
     build_customer_update_body,
     parse_customer,
     parse_customer_list,
+    parse_customers_batch_result,
 )
 from .._shared import build_body
-from ..types import Customer
+from ..types import Customer, CustomersBatchResult
 
 
 class AsyncCustomersResource:
@@ -48,9 +49,11 @@ class AsyncCustomersResource:
         customers: list[dict[str, Any]],
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
+    ) -> ApiResponse[CustomersBatchResult]:
         body = build_customer_batch_body(customers)
-        return await self._http.post("/customers/batch", body, idempotency_key=idempotency_key)
+        return parse_customers_batch_result(
+            await self._http.post("/customers/batch", body, idempotency_key=idempotency_key)
+        )
 
     async def get(self, customer_id: str) -> ApiResponse[Customer]:
         return parse_customer(await self._http.get(f"/customers/{customer_id}"))

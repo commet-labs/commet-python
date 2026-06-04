@@ -8,7 +8,7 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import Subscription
+from commet.types import CreatedSubscription
 
 _CUSTOM_INTRO_OFFER = {
     "discount_type": "percentage",
@@ -46,7 +46,7 @@ class TestCreate:
                 custom_intro_offer=_CUSTOM_INTRO_OFFER,
             )
             assert result.success is True
-            assert isinstance(result.data, Subscription)
+            assert isinstance(result.data, CreatedSubscription)
 
         sent = json.loads(route.calls.last.request.content)
         assert sent["customIntroOffer"] == {
@@ -73,7 +73,7 @@ class TestAsyncCreate:
                 custom_intro_offer=_CUSTOM_INTRO_OFFER,
             )
             assert result.success is True
-            assert isinstance(result.data, Subscription)
+            assert isinstance(result.data, CreatedSubscription)
 
         sent = json.loads(route.calls.last.request.content)
         assert sent["customIntroOffer"] == {

@@ -4,8 +4,21 @@ from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
+from .._resource_mixins import (
+    parse_delete_result,
+    parse_webhook_endpoint,
+    parse_webhook_endpoint_created,
+    parse_webhook_endpoint_list,
+    parse_webhook_test_result,
+)
 from .._shared import build_body
 from ..resources.webhooks import verify_and_parse_payload, verify_signature
+from ..types import (
+    DeleteResult,
+    WebhookEndpoint,
+    WebhookEndpointCreated,
+    WebhookTestResult,
+)
 
 
 class AsyncWebhooks:
@@ -25,9 +38,11 @@ class AsyncWebhooks:
         *,
         limit: int | None = None,
         cursor: str | None = None,
-    ) -> ApiResponse[Any]:
+    ) -> ApiResponse[list[WebhookEndpoint]]:
         assert self._http is not None
-        return await self._http.get("/webhooks", build_body(limit=limit, cursor=cursor))
+        return parse_webhook_endpoint_list(
+            await self._http.get("/webhooks", build_body(limit=limit, cursor=cursor))
+        )
 
     async def create(
         self,
@@ -37,17 +52,17 @@ class AsyncWebhooks:
         description: str | None = None,
         api_version: str | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
+    ) -> ApiResponse[WebhookEndpointCreated]:
         assert self._http is not None
-        return await self._http.post(
+        return parse_webhook_endpoint_created(await self._http.post(
             "/webhooks",
             build_body(url=url, events=events, description=description, api_version=api_version),
             idempotency_key=idempotency_key,
-        )
+        ))
 
-    async def get(self, webhook_id: str) -> ApiResponse[Any]:
+    async def get(self, webhook_id: str) -> ApiResponse[WebhookEndpoint]:
         assert self._http is not None
-        return await self._http.get(f"/webhooks/{webhook_id}")
+        return parse_webhook_endpoint(await self._http.get(f"/webhooks/{webhook_id}"))
 
     async def update(
         self,
@@ -59,9 +74,9 @@ class AsyncWebhooks:
         is_active: bool | None = None,
         api_version: str | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
+    ) -> ApiResponse[WebhookEndpoint]:
         assert self._http is not None
-        return await self._http.put(
+        return parse_webhook_endpoint(await self._http.put(
             f"/webhooks/{webhook_id}",
             build_body(
                 url=url,
@@ -71,24 +86,26 @@ class AsyncWebhooks:
                 api_version=api_version,
             ),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def delete(
         self,
         webhook_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
+    ) -> ApiResponse[DeleteResult]:
         assert self._http is not None
-        return await self._http.delete(f"/webhooks/{webhook_id}", idempotency_key=idempotency_key)
+        return parse_delete_result(
+            await self._http.delete(f"/webhooks/{webhook_id}", idempotency_key=idempotency_key)
+        )
 
     async def test(
         self,
         webhook_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
+    ) -> ApiResponse[WebhookTestResult]:
         assert self._http is not None
-        return await self._http.post(
+        return parse_webhook_test_result(await self._http.post(
             f"/webhooks/{webhook_id}/test", idempotency_key=idempotency_key,
-        )
+        ))

@@ -4,9 +4,28 @@ from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
-from .._resource_mixins import parse_plan, parse_plan_list
+from .._resource_mixins import (
+    parse_delete_result,
+    parse_plan_detail,
+    parse_plan_feature_manage,
+    parse_plan_list,
+    parse_plan_manage,
+    parse_plan_price_manage,
+    parse_regional_price_result,
+    parse_remove_result,
+)
 from .._shared import build_body
-from ..types import Plan
+from ..types import (
+    ConsumptionModel,
+    DeleteResult,
+    Plan,
+    PlanDetail,
+    PlanFeatureManage,
+    PlanManage,
+    PlanPriceManage,
+    RegionalPriceResult,
+    RemoveResult,
+)
 
 
 class AsyncPlansResource:
@@ -24,8 +43,8 @@ class AsyncPlansResource:
             include_private=include_private, limit=limit, cursor=cursor
         )))
 
-    async def get(self, plan_id: str) -> ApiResponse[Plan]:
-        return parse_plan(await self._http.get(f"/plans/{plan_id}"))
+    async def get(self, plan_id: str) -> ApiResponse[PlanDetail]:
+        return parse_plan_detail(await self._http.get(f"/plans/{plan_id}"))
 
     async def create(
         self,
@@ -33,15 +52,15 @@ class AsyncPlansResource:
         name: str,
         code: str,
         description: str | None = None,
-        consumption_model: str | None = None,
+        consumption_model: ConsumptionModel | None = None,
         is_public: bool | None = None,
         is_free: bool | None = None,
         block_on_exhaustion: bool | None = None,
         plan_group_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.post(
+    ) -> ApiResponse[PlanManage]:
+        return parse_plan_manage(await self._http.post(
             "/plans/manage",
             build_body(
                 name=name, code=code, description=description,
@@ -50,7 +69,7 @@ class AsyncPlansResource:
                 plan_group_id=plan_group_id, metadata=metadata,
             ),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def update(
         self,
@@ -61,22 +80,22 @@ class AsyncPlansResource:
         metadata: dict[str, Any] | None = None,
         is_public: bool | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.put(
+    ) -> ApiResponse[PlanManage]:
+        return parse_plan_manage(await self._http.put(
             f"/plans/{plan_id}/manage",
             build_body(name=name, description=description, metadata=metadata, is_public=is_public),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def delete(
         self,
         plan_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.delete(
+    ) -> ApiResponse[DeleteResult]:
+        return parse_delete_result(await self._http.delete(
             f"/plans/{plan_id}/manage", idempotency_key=idempotency_key,
-        )
+        ))
 
     async def set_visibility(
         self,
@@ -84,12 +103,12 @@ class AsyncPlansResource:
         *,
         is_public: bool,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.put(
+    ) -> ApiResponse[PlanManage]:
+        return parse_plan_manage(await self._http.put(
             f"/plans/{plan_id}/visibility",
             build_body(is_public=is_public),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def add_feature(
         self,
@@ -105,8 +124,8 @@ class AsyncPlansResource:
         overage_unit_price: int | None = None,
         margin: int | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.post(
+    ) -> ApiResponse[PlanFeatureManage]:
+        return parse_plan_feature_manage(await self._http.post(
             f"/plans/{plan_id}/features",
             build_body(
                 feature_id=feature_id, enabled=enabled, included_amount=included_amount,
@@ -115,7 +134,7 @@ class AsyncPlansResource:
                 overage_unit_price=overage_unit_price, margin=margin,
             ),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def update_feature(
         self,
@@ -131,8 +150,8 @@ class AsyncPlansResource:
         overage_unit_price: int | None = None,
         margin: int | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.put(
+    ) -> ApiResponse[PlanFeatureManage]:
+        return parse_plan_feature_manage(await self._http.put(
             f"/plans/{plan_id}/features/{feature_id}",
             build_body(
                 enabled=enabled, included_amount=included_amount,
@@ -141,7 +160,7 @@ class AsyncPlansResource:
                 overage_unit_price=overage_unit_price, margin=margin,
             ),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def remove_feature(
         self,
@@ -149,11 +168,11 @@ class AsyncPlansResource:
         feature_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.delete(
+    ) -> ApiResponse[RemoveResult]:
+        return parse_remove_result(await self._http.delete(
             f"/plans/{plan_id}/features/{feature_id}",
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def add_price(
         self,
@@ -170,8 +189,8 @@ class AsyncPlansResource:
         intro_offer_discount_value: int | None = None,
         intro_offer_duration_cycles: int | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.post(
+    ) -> ApiResponse[PlanPriceManage]:
+        return parse_plan_price_manage(await self._http.post(
             f"/plans/{plan_id}/prices",
             build_body(
                 billing_interval=billing_interval, price=price, trial_days=trial_days,
@@ -182,7 +201,7 @@ class AsyncPlansResource:
                 intro_offer_duration_cycles=intro_offer_duration_cycles,
             ),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def update_price(
         self,
@@ -199,8 +218,8 @@ class AsyncPlansResource:
         intro_offer_discount_value: int | None = None,
         intro_offer_duration_cycles: int | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.put(
+    ) -> ApiResponse[PlanPriceManage]:
+        return parse_plan_price_manage(await self._http.put(
             f"/plans/{plan_id}/prices/{price_id}",
             build_body(
                 price=price, is_default=is_default, trial_days=trial_days,
@@ -211,7 +230,7 @@ class AsyncPlansResource:
                 intro_offer_duration_cycles=intro_offer_duration_cycles,
             ),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def delete_price(
         self,
@@ -219,11 +238,11 @@ class AsyncPlansResource:
         price_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.delete(
+    ) -> ApiResponse[DeleteResult]:
+        return parse_delete_result(await self._http.delete(
             f"/plans/{plan_id}/prices/{price_id}",
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def set_default_price(
         self,
@@ -231,12 +250,12 @@ class AsyncPlansResource:
         price_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.put(
+    ) -> ApiResponse[PlanPriceManage]:
+        return parse_plan_price_manage(await self._http.put(
             f"/plans/{plan_id}/prices/{price_id}/default",
             {},
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def set_regional_prices(
         self,
@@ -245,12 +264,12 @@ class AsyncPlansResource:
         *,
         overrides: list[dict[str, Any]],
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.put(
+    ) -> ApiResponse[RegionalPriceResult]:
+        return parse_regional_price_result(await self._http.put(
             f"/plans/{plan_id}/prices/{price_id}/regional",
             build_body(overrides=overrides),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     async def delete_regional_prices(
         self,
@@ -258,8 +277,8 @@ class AsyncPlansResource:
         price_id: str,
         *,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return await self._http.delete(
+    ) -> ApiResponse[DeleteResult]:
+        return parse_delete_result(await self._http.delete(
             f"/plans/{plan_id}/prices/{price_id}/regional",
             idempotency_key=idempotency_key,
-        )
+        ))

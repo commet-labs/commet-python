@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
-
 from .._http import ApiResponse, CommetHTTPClient
-from .._resource_mixins import parse_seat_balance, parse_seat_event
+from .._resource_mixins import (
+    parse_seat_balance,
+    parse_seat_balance_map,
+    parse_seat_event,
+    parse_seat_event_list,
+)
 from .._shared import build_body
 from ..types import SeatBalance, SeatEvent
 
@@ -60,12 +63,12 @@ class SeatsResource:
         seats: dict[str, int],
         customer_id: str,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Any]:
-        return self._http.put(
+    ) -> ApiResponse[list[SeatEvent]]:
+        return parse_seat_event_list(self._http.put(
             "/seats/bulk",
             build_body(seats=seats, customer_id=customer_id),
             idempotency_key=idempotency_key,
-        )
+        ))
 
     def get_balance(
         self,
@@ -82,8 +85,8 @@ class SeatsResource:
         self,
         *,
         customer_id: str,
-    ) -> ApiResponse[dict[str, Any]]:
-        return self._http.get(
+    ) -> ApiResponse[dict[str, SeatBalance]]:
+        return parse_seat_balance_map(self._http.get(
             "/seats/balances",
             build_body(customer_id=customer_id),
-        )
+        ))

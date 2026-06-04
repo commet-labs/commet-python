@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
-
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
-from .._resource_mixins import build_usage_track_body, parse_usage_event
-from ..types import UsageEvent
+from .._resource_mixins import (
+    build_usage_track_body,
+    parse_usage_check_result,
+    parse_usage_event,
+)
+from ..types import UsageCheckResult, UsageEvent
 
 
 class AsyncUsageResource:
@@ -64,8 +66,8 @@ class AsyncUsageResource:
         customer_id: str,
         feature_code: str,
         quantity: int,
-    ) -> ApiResponse[dict[str, Any]]:
-        return await self._http.post(
+    ) -> ApiResponse[UsageCheckResult]:
+        return parse_usage_check_result(await self._http.post(
             "/usage/check",
             {"customer_id": customer_id, "feature_code": feature_code, "quantity": quantity},
-        )
+        ))

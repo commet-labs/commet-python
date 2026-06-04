@@ -6,7 +6,7 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import FeatureAccess
+from commet.types import CanUseResult, FeatureAccess
 
 
 @pytest.fixture
@@ -26,7 +26,8 @@ class TestFeaturesCanUse:
         with Commet(api_key="ck_test_123") as client:
             result = client.features.can_use(code="api_calls", customer_id="cus_1")
             assert result.success is True
-            assert result.data == {"allowed": True}
+            assert isinstance(result.data, CanUseResult)
+            assert result.data.allowed is True
         assert dict(route.calls.last.request.url.params) == {
             "customerId": "cus_1",
             "action": "canUse",
@@ -42,7 +43,8 @@ class TestFeaturesCanUse:
         with Commet(api_key="ck_test_123") as client:
             result = client.features.can_use(code="api_calls", customer_id="cus_1")
             assert result.success is True
-            assert result.data == {"allowed": False}
+            assert isinstance(result.data, CanUseResult)
+            assert result.data.allowed is False
         assert dict(route.calls.last.request.url.params) == {
             "customerId": "cus_1",
             "action": "canUse",
@@ -112,7 +114,8 @@ class TestAsyncFeaturesCanUse:
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.features.can_use(code="api_calls", customer_id="cus_1")
             assert result.success is True
-            assert result.data == {"allowed": True}
+            assert isinstance(result.data, CanUseResult)
+            assert result.data.allowed is True
         assert dict(route.calls.last.request.url.params) == {
             "customerId": "cus_1",
             "action": "canUse",
