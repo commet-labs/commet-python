@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import builtins
+
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
 from .._shared import build_body
@@ -38,7 +40,7 @@ class AsyncPromoCodesResource:
         duration_cycles: int | None = None,
         max_redemptions: int | None = None,
         expires_at: str | None = None,
-        plan_ids: list[str] | None = None,
+        plan_ids: builtins.list[str] | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[PromoCode]:
         """Create a new promo code. Optionally restrict to specific plans."""
@@ -62,7 +64,7 @@ class AsyncPromoCodesResource:
         max_redemptions: int | None = None,
         expires_at: str | None = None,
         active: bool | None = None,
-        plan_ids: list[str] | None = None,
+        plan_ids: builtins.list[str] | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[PromoCode]:
         """Update a promo code's redemption limits, expiration, active status, or plan restrictions."""

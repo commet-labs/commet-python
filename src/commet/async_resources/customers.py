@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
@@ -92,7 +93,7 @@ class AsyncCustomersResource:
     async def create_batch(
         self,
         *,
-        customers: list[BatchCreateCustomersParamsCustomersItem],
+        customers: builtins.list[BatchCreateCustomersParamsCustomersItem],
         idempotency_key: str | None = None,
     ) -> ApiResponse[CustomerBatch]:
         """Create up to 100 customers in a single request."""

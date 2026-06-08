@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import builtins
+
 from .._http import ApiResponse, CommetHTTPClient
 from .._shared import build_body
 from ..types import (
@@ -84,7 +86,7 @@ class PlanGroupsResource:
         return _parse(self._http.delete(f"/plan-groups/{id}/plans/{plan_id}"), RemovedPlanFromGroup)
 
     def reorder_plans(
-        self, id: str, *, plan_ids: list[str], idempotency_key: str | None = None
+        self, id: str, *, plan_ids: builtins.list[str], idempotency_key: str | None = None
     ) -> ApiResponse[ReorderedPlans]:
         """Set the display order of plans within a group. All plan IDs in the group must be provided."""
         body = build_body(plan_ids=plan_ids)

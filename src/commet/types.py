@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
 
 from ._http import ApiResponse
 
@@ -52,7 +52,7 @@ def _coerce_field(annotation: str, value: Any) -> Any:
 
 def _from_dict(cls: type[T], data: Any) -> T:
     if not isinstance(data, dict):
-        return data
+        return cast("T", data)
     fields_map = cls.__dataclass_fields__  # type: ignore[attr-defined]
     result: dict[str, Any] = {}
     for key, value in data.items():

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Any
 
 from .._http import ApiResponse, CommetHTTPClient
@@ -90,7 +91,7 @@ class CustomersResource:
     def create_batch(
         self,
         *,
-        customers: list[BatchCreateCustomersParamsCustomersItem],
+        customers: builtins.list[BatchCreateCustomersParamsCustomersItem],
         idempotency_key: str | None = None,
     ) -> ApiResponse[CustomerBatch]:
         """Create up to 100 customers in a single request."""

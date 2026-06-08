@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
@@ -44,7 +45,7 @@ class AsyncWebhooks:
         self,
         *,
         url: str,
-        events: list[str],
+        events: builtins.list[str],
         description: str | None = None,
         api_version: str | None = None,
         idempotency_key: str | None = None,
@@ -70,7 +71,7 @@ class AsyncWebhooks:
         webhook_id: str,
         *,
         url: str | None = None,
-        events: list[str] | None = None,
+        events: builtins.list[str] | None = None,
         description: str | None = None,
         is_active: bool | None = None,
         api_version: str | None = None,

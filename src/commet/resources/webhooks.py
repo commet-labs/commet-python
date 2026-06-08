@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import hashlib
 import hmac
 import json
@@ -33,9 +34,12 @@ def verify_and_parse_payload(
     if not verify_signature(payload=raw_body, signature=signature, secret=secret):
         return None
     try:
-        return json.loads(raw_body)
+        parsed = json.loads(raw_body)
     except (json.JSONDecodeError, TypeError):
         return None
+    if not isinstance(parsed, dict):
+        return None
+    return parsed
 
 
 class Webhooks:
@@ -65,7 +69,7 @@ class Webhooks:
         self,
         *,
         url: str,
-        events: list[str],
+        events: builtins.list[str],
         description: str | None = None,
         api_version: str | None = None,
         idempotency_key: str | None = None,
@@ -91,7 +95,7 @@ class Webhooks:
         webhook_id: str,
         *,
         url: str | None = None,
-        events: list[str] | None = None,
+        events: builtins.list[str] | None = None,
         description: str | None = None,
         is_active: bool | None = None,
         api_version: str | None = None,

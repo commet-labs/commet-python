@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, TypeVar
+
+from ._http import ApiResponse
+
+_T = TypeVar("_T")
 
 # Hand-written types for the preserved resources (usage, webhooks). These are NOT
 # generated from the contract because usage and webhooks carry custom client
@@ -128,13 +132,13 @@ __all__ = [
 
 # Re-export the shared deserializer helpers from the generated types module so
 # preserved resources can parse responses without importing the wire converter.
-def _parse(response: Any, cls: type) -> Any:  # noqa: ANN401 - thin re-export
+def _parse(response: ApiResponse[Any], cls: type[_T]) -> ApiResponse[_T]:
     from .types import _parse as _shared_parse
 
     return _shared_parse(response, cls)
 
 
-def _parse_list(response: Any, cls: type) -> Any:  # noqa: ANN401 - thin re-export
+def _parse_list(response: ApiResponse[Any], cls: type[_T]) -> ApiResponse[list[_T]]:
     from .types import _parse_list as _shared_parse_list
 
     return _shared_parse_list(response, cls)
