@@ -2,31 +2,16 @@ from __future__ import annotations
 
 import logging
 
+from ._generated_resources import GeneratedSyncResources
 from ._http import CommetHTTPClient
 from ._shared import API_VERSION
-from .resources.addons import AddonsResource
-from .resources.api_keys import ApiKeysResource
-from .resources.credit_packs import CreditPacksResource
-from .resources.customers import CustomersResource
-from .resources.features import FeaturesResource
-from .resources.invoices import InvoicesResource
-from .resources.payouts import PayoutsResource
-from .resources.plan_groups import PlanGroupsResource
-from .resources.plans import PlansResource
-from .resources.portal import PortalResource
-from .resources.promo_codes import PromoCodesResource
-from .resources.quota import QuotaResource
-from .resources.seats import SeatsResource
-from .resources.subscriptions import SubscriptionsResource
-from .resources.test_clock import TestClockResource
-from .resources.transactions import TransactionsResource
 from .resources.usage import UsageResource
 from .resources.webhooks import Webhooks
 
 logger = logging.getLogger("commet")
 
 
-class Commet:
+class Commet(GeneratedSyncResources):
     def __init__(
         self,
         api_key: str,
@@ -46,22 +31,8 @@ class Commet:
             api_key, api_version=api_version, timeout=timeout, retries=retries, telemetry=telemetry
         )
 
-        self.addons = AddonsResource(self._http)
-        self.api_keys = ApiKeysResource(self._http)
-        self.customers = CustomersResource(self._http)
-        self.credit_packs = CreditPacksResource(self._http)
-        self.features = FeaturesResource(self._http)
-        self.invoices = InvoicesResource(self._http)
-        self.payouts = PayoutsResource(self._http)
-        self.plan_groups = PlanGroupsResource(self._http)
-        self.plans = PlansResource(self._http)
-        self.portal = PortalResource(self._http)
-        self.promo_codes = PromoCodesResource(self._http)
-        self.quota = QuotaResource(self._http)
-        self.seats = SeatsResource(self._http)
-        self.subscriptions = SubscriptionsResource(self._http)
-        self.test_clock = TestClockResource(self._http)
-        self.transactions = TransactionsResource(self._http)
+        self._init_resources(self._http)
+
         self.usage = UsageResource(self._http)
         self.webhooks = Webhooks(self._http)
 

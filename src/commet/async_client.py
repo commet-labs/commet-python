@@ -3,30 +3,15 @@ from __future__ import annotations
 import logging
 
 from ._async_http import AsyncCommetHTTPClient
+from ._generated_async_resources import GeneratedAsyncResources
 from ._shared import API_VERSION
-from .async_resources.addons import AsyncAddonsResource
-from .async_resources.api_keys import AsyncApiKeysResource
-from .async_resources.credit_packs import AsyncCreditPacksResource
-from .async_resources.customers import AsyncCustomersResource
-from .async_resources.features import AsyncFeaturesResource
-from .async_resources.invoices import AsyncInvoicesResource
-from .async_resources.payouts import AsyncPayoutsResource
-from .async_resources.plan_groups import AsyncPlanGroupsResource
-from .async_resources.plans import AsyncPlansResource
-from .async_resources.portal import AsyncPortalResource
-from .async_resources.promo_codes import AsyncPromoCodesResource
-from .async_resources.quota import AsyncQuotaResource
-from .async_resources.seats import AsyncSeatsResource
-from .async_resources.subscriptions import AsyncSubscriptionsResource
-from .async_resources.test_clock import AsyncTestClockResource
-from .async_resources.transactions import AsyncTransactionsResource
 from .async_resources.usage import AsyncUsageResource
 from .async_resources.webhooks import AsyncWebhooks
 
 logger = logging.getLogger("commet")
 
 
-class AsyncCommet:
+class AsyncCommet(GeneratedAsyncResources):
     def __init__(
         self,
         api_key: str,
@@ -46,22 +31,8 @@ class AsyncCommet:
             api_key, api_version=api_version, timeout=timeout, retries=retries, telemetry=telemetry
         )
 
-        self.addons = AsyncAddonsResource(self._http)
-        self.api_keys = AsyncApiKeysResource(self._http)
-        self.customers = AsyncCustomersResource(self._http)
-        self.credit_packs = AsyncCreditPacksResource(self._http)
-        self.features = AsyncFeaturesResource(self._http)
-        self.invoices = AsyncInvoicesResource(self._http)
-        self.payouts = AsyncPayoutsResource(self._http)
-        self.plan_groups = AsyncPlanGroupsResource(self._http)
-        self.plans = AsyncPlansResource(self._http)
-        self.portal = AsyncPortalResource(self._http)
-        self.promo_codes = AsyncPromoCodesResource(self._http)
-        self.quota = AsyncQuotaResource(self._http)
-        self.seats = AsyncSeatsResource(self._http)
-        self.subscriptions = AsyncSubscriptionsResource(self._http)
-        self.test_clock = AsyncTestClockResource(self._http)
-        self.transactions = AsyncTransactionsResource(self._http)
+        self._init_resources(self._http)
+
         self.usage = AsyncUsageResource(self._http)
         self.webhooks = AsyncWebhooks(self._http)
 
