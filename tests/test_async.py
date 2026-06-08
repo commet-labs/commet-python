@@ -29,8 +29,8 @@ async def test_async_customer_create(mock_api: respx.MockRouter) -> None:
                 "success": True,
                 "data": {
                     "id": "cus_123",
-                    "organizationId": "org_1",
-                    "billingEmail": "user@example.com",
+                    "externalId": "org_1",
+                    "email": "user@example.com",
                     "createdAt": "2024-01-01T00:00:00Z",
                     "updatedAt": "2024-01-01T00:00:00Z",
                 },
@@ -43,7 +43,7 @@ async def test_async_customer_create(mock_api: respx.MockRouter) -> None:
         assert result.success is True
         assert isinstance(result.data, Customer)
         assert result.data.id == "cus_123"
-        assert result.data.billing_email == "user@example.com"
+        assert result.data.email == "user@example.com"
 
 
 @pytest.mark.asyncio
@@ -56,15 +56,13 @@ async def test_async_customer_list(mock_api: respx.MockRouter) -> None:
                 "data": [
                     {
                         "id": "cus_1",
-                        "organizationId": "org_1",
-                        "billingEmail": "a@example.com",
+                        "email": "a@example.com",
                         "createdAt": "2024-01-01T00:00:00Z",
                         "updatedAt": "2024-01-01T00:00:00Z",
                     },
                     {
                         "id": "cus_2",
-                        "organizationId": "org_1",
-                        "billingEmail": "b@example.com",
+                        "email": "b@example.com",
                         "createdAt": "2024-01-01T00:00:00Z",
                         "updatedAt": "2024-01-01T00:00:00Z",
                     },

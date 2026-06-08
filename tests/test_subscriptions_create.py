@@ -8,9 +8,9 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import CreatedSubscription
+from commet.types import Subscription
 
-_CUSTOM_INTRO_OFFER = {
+_INTRO_OFFER = {
     "discount_type": "percentage",
     "discount_value": 1000,
     "duration_cycles": 3,
@@ -18,14 +18,17 @@ _CUSTOM_INTRO_OFFER = {
 
 
 def _create_response() -> Response:
-    return Response(200, json={
-        "success": True,
-        "data": {
-            "id": "sub_1",
-            "customerId": "cus_1",
-            "status": "active",
+    return Response(
+        200,
+        json={
+            "success": True,
+            "data": {
+                "id": "sub_1",
+                "customerId": "cus_1",
+                "status": "active",
+            },
         },
-    })
+    )
 
 
 @pytest.fixture
@@ -43,21 +46,21 @@ class TestCreate:
             result = client.subscriptions.create(
                 customer_id="cus_1",
                 plan_code="pro",
-                custom_intro_offer=_CUSTOM_INTRO_OFFER,
+                intro_offer=_INTRO_OFFER,
             )
             assert result.success is True
-            assert isinstance(result.data, CreatedSubscription)
+            assert isinstance(result.data, Subscription)
 
         sent = json.loads(route.calls.last.request.content)
-        assert sent["customIntroOffer"] == {
+        assert sent["introOffer"] == {
             "discountType": "percentage",
             "discountValue": 1000,
             "durationCycles": 3,
         }
-        assert "custom_intro_offer" not in sent
-        assert "discount_type" not in sent["customIntroOffer"]
-        assert "discount_value" not in sent["customIntroOffer"]
-        assert "duration_cycles" not in sent["customIntroOffer"]
+        assert "intro_offer" not in sent
+        assert "discount_type" not in sent["introOffer"]
+        assert "discount_value" not in sent["introOffer"]
+        assert "duration_cycles" not in sent["introOffer"]
 
 
 @pytest.mark.asyncio
@@ -70,18 +73,18 @@ class TestAsyncCreate:
             result = await client.subscriptions.create(
                 customer_id="cus_1",
                 plan_code="pro",
-                custom_intro_offer=_CUSTOM_INTRO_OFFER,
+                intro_offer=_INTRO_OFFER,
             )
             assert result.success is True
-            assert isinstance(result.data, CreatedSubscription)
+            assert isinstance(result.data, Subscription)
 
         sent = json.loads(route.calls.last.request.content)
-        assert sent["customIntroOffer"] == {
+        assert sent["introOffer"] == {
             "discountType": "percentage",
             "discountValue": 1000,
             "durationCycles": 3,
         }
-        assert "custom_intro_offer" not in sent
-        assert "discount_type" not in sent["customIntroOffer"]
-        assert "discount_value" not in sent["customIntroOffer"]
-        assert "duration_cycles" not in sent["customIntroOffer"]
+        assert "intro_offer" not in sent
+        assert "discount_type" not in sent["introOffer"]
+        assert "discount_value" not in sent["introOffer"]
+        assert "duration_cycles" not in sent["introOffer"]

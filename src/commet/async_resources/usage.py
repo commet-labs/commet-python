@@ -2,12 +2,9 @@ from __future__ import annotations
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
-from .._resource_mixins import (
-    build_usage_track_body,
-    parse_usage_check_result,
-    parse_usage_event,
-)
-from ..types import UsageCheckResult, UsageEvent
+from .._preserved_types import UsageCheckResult, UsageEvent, _parse
+from .._shared import build_body
+from ..resources.usage import build_usage_track_body
 
 
 class AsyncUsageResource:
@@ -30,13 +27,21 @@ class AsyncUsageResource:
         properties: dict[str, str] | None = None,
     ) -> ApiResponse[UsageEvent]:
         body = build_usage_track_body(
-            feature=feature, customer_id=customer_id, value=value, model=model,
-            input_tokens=input_tokens, output_tokens=output_tokens,
-            cache_read_tokens=cache_read_tokens, cache_write_tokens=cache_write_tokens,
-            idempotency_key=idempotency_key, timestamp=timestamp, properties=properties,
+            feature=feature,
+            customer_id=customer_id,
+            value=value,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cache_read_tokens=cache_read_tokens,
+            cache_write_tokens=cache_write_tokens,
+            idempotency_key=idempotency_key,
+            timestamp=timestamp,
+            properties=properties,
         )
-        return parse_usage_event(
-            await self._http.post("/usage/events", body, idempotency_key=idempotency_key)
+        return _parse(
+            await self._http.post("/usage/events", body, idempotency_key=idempotency_key),
+            UsageEvent,
         )
 
     async def track_model_tokens(
@@ -54,10 +59,16 @@ class AsyncUsageResource:
         properties: dict[str, str] | None = None,
     ) -> ApiResponse[UsageEvent]:
         return await self.track(
-            feature=feature, customer_id=customer_id, model=model,
-            input_tokens=input_tokens, output_tokens=output_tokens,
-            cache_read_tokens=cache_read_tokens, cache_write_tokens=cache_write_tokens,
-            idempotency_key=idempotency_key, timestamp=timestamp, properties=properties,
+            feature=feature,
+            customer_id=customer_id,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cache_read_tokens=cache_read_tokens,
+            cache_write_tokens=cache_write_tokens,
+            idempotency_key=idempotency_key,
+            timestamp=timestamp,
+            properties=properties,
         )
 
     async def check(
@@ -67,7 +78,5 @@ class AsyncUsageResource:
         feature_code: str,
         quantity: int,
     ) -> ApiResponse[UsageCheckResult]:
-        return parse_usage_check_result(await self._http.post(
-            "/usage/check",
-            {"customer_id": customer_id, "feature_code": feature_code, "quantity": quantity},
-        ))
+        body = build_body(customer_id=customer_id, feature_code=feature_code, quantity=quantity)
+        return _parse(await self._http.post("/usage/check", body), UsageCheckResult)

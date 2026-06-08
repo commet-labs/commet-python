@@ -19,47 +19,65 @@ class TestWebhookVerification:
         self.valid_signature = _sign(self.payload, self.secret)
 
     def test_valid_signature_passes(self) -> None:
-        assert self.webhooks.verify(
-            payload=self.payload,
-            signature=self.valid_signature,
-            secret=self.secret,
-        ) is True
+        assert (
+            self.webhooks.verify(
+                payload=self.payload,
+                signature=self.valid_signature,
+                secret=self.secret,
+            )
+            is True
+        )
 
     def test_invalid_signature_fails(self) -> None:
-        assert self.webhooks.verify(
-            payload=self.payload,
-            signature="invalid_signature_value",
-            secret=self.secret,
-        ) is False
+        assert (
+            self.webhooks.verify(
+                payload=self.payload,
+                signature="invalid_signature_value",
+                secret=self.secret,
+            )
+            is False
+        )
 
     def test_tampered_payload_fails(self) -> None:
         tampered = json.dumps({"event": "subscription.created", "data": {"id": "sub_999"}})
-        assert self.webhooks.verify(
-            payload=tampered,
-            signature=self.valid_signature,
-            secret=self.secret,
-        ) is False
+        assert (
+            self.webhooks.verify(
+                payload=tampered,
+                signature=self.valid_signature,
+                secret=self.secret,
+            )
+            is False
+        )
 
     def test_empty_signature_fails(self) -> None:
-        assert self.webhooks.verify(
-            payload=self.payload,
-            signature=None,
-            secret=self.secret,
-        ) is False
+        assert (
+            self.webhooks.verify(
+                payload=self.payload,
+                signature=None,
+                secret=self.secret,
+            )
+            is False
+        )
 
     def test_empty_secret_fails(self) -> None:
-        assert self.webhooks.verify(
-            payload=self.payload,
-            signature=self.valid_signature,
-            secret="",
-        ) is False
+        assert (
+            self.webhooks.verify(
+                payload=self.payload,
+                signature=self.valid_signature,
+                secret="",
+            )
+            is False
+        )
 
     def test_empty_payload_fails(self) -> None:
-        assert self.webhooks.verify(
-            payload="",
-            signature=self.valid_signature,
-            secret=self.secret,
-        ) is False
+        assert (
+            self.webhooks.verify(
+                payload="",
+                signature=self.valid_signature,
+                secret=self.secret,
+            )
+            is False
+        )
 
     def test_verify_and_parse_valid(self) -> None:
         result = self.webhooks.verify_and_parse(

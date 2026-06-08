@@ -8,22 +8,25 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import ChangePlanResult
+from commet.types import PlanChange
 
 _SUCCESS_URL = "https://app.example.com/billing/success"
 
 
 def _change_plan_response() -> Response:
-    return Response(200, json={
-        "success": True,
-        "data": {
-            "id": "chp_1",
-            "scheduled": False,
-            "customerId": "cus_1",
-            "requiresCheckout": True,
-            "checkoutUrl": "https://checkout.example.com/abc",
+    return Response(
+        200,
+        json={
+            "success": True,
+            "data": {
+                "id": "chp_1",
+                "scheduled": False,
+                "customerId": "cus_1",
+                "requiresCheckout": True,
+                "checkoutUrl": "https://checkout.example.com/abc",
+            },
         },
-    })
+    )
 
 
 @pytest.fixture
@@ -42,7 +45,7 @@ class TestChangePlan:
                 "sub_1", new_plan_id="plan_2", success_url=_SUCCESS_URL
             )
             assert result.success is True
-            assert isinstance(result.data, ChangePlanResult)
+            assert isinstance(result.data, PlanChange)
 
         sent = json.loads(route.calls.last.request.content)
         assert sent["successUrl"] == _SUCCESS_URL
@@ -64,7 +67,7 @@ class TestAsyncChangePlan:
                 "sub_1", new_plan_id="plan_2", success_url=_SUCCESS_URL
             )
             assert result.success is True
-            assert isinstance(result.data, ChangePlanResult)
+            assert isinstance(result.data, PlanChange)
 
         sent = json.loads(route.calls.last.request.content)
         assert sent["successUrl"] == _SUCCESS_URL

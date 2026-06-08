@@ -38,7 +38,7 @@ def test_create_sends_id(mock_api: respx.MockRouter) -> None:
 
     body = _last_body(mock_api)
     assert body["id"] == "ext_123"
-    assert body["billingEmail"] == "user@example.com"
+    assert body["email"] == "user@example.com"
 
 
 def test_create_without_id_omits_it(mock_api: respx.MockRouter) -> None:
@@ -57,7 +57,7 @@ def test_create_batch_sends_id(mock_api: respx.MockRouter) -> None:
 
     client = Commet(api_key="ck_test_123")
     client.customers.create_batch(
-        [
+        customers=[
             {"email": "a@example.com", "id": "ext_a"},
             {"email": "b@example.com"},
         ]
@@ -74,19 +74,7 @@ def test_addons_list_active(mock_api: respx.MockRouter) -> None:
     )
 
     client = Commet(api_key="ck_test_123")
-    client.addons.list_active("cus_1")
-
-    assert route.called
-    assert mock_api.calls.last.request.url.params["customerId"] == "cus_1"
-
-
-def test_addons_get_active_delegates_to_list_active(mock_api: respx.MockRouter) -> None:
-    route = mock_api.get("/addons/active").mock(
-        return_value=Response(200, json={"success": True, "data": []})
-    )
-
-    client = Commet(api_key="ck_test_123")
-    client.addons.get_active("cus_1")
+    client.addons.list_active(customer_id="cus_1")
 
     assert route.called
     assert mock_api.calls.last.request.url.params["customerId"] == "cus_1"
