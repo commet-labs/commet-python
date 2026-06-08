@@ -299,6 +299,61 @@ class CanceledSubscription:
 
 
 @dataclass
+class CompletePayoutVerificationParamsBank:
+    account_number: str = ""
+    account_holder_name: str = ""
+    routing_number: str | None = None
+    account_type: Literal["checking", "savings"] | None = None
+
+
+@dataclass
+class CompletePayoutVerificationParamsCompany:
+    name: str = ""
+    tax_id: str = ""
+    address: CompletePayoutVerificationParamsCompanyAddress | None = None
+    representative: CompletePayoutVerificationParamsCompanyRepresentative | None = None
+
+
+@dataclass
+class CompletePayoutVerificationParamsCompanyAddress:
+    line1: str = ""
+    line2: str | None = None
+    city: str = ""
+    state: str | None = None
+    postal_code: str = ""
+    country: str = ""
+
+
+@dataclass
+class CompletePayoutVerificationParamsCompanyRepresentative:
+    first_name: str = ""
+    last_name: str = ""
+    phone: str | None = None
+    email: str | None = None
+
+
+@dataclass
+class CompletePayoutVerificationParamsIndividual:
+    first_name: str = ""
+    last_name: str = ""
+    phone: str = ""
+    date_of_birth: str = ""
+    ssn_last4: str | None = None
+    id_number: str | None = None
+    address: CompletePayoutVerificationParamsIndividualAddress | None = None
+
+
+@dataclass
+class CompletePayoutVerificationParamsIndividualAddress:
+    line1: str = ""
+    line2: str | None = None
+    city: str = ""
+    state: str | None = None
+    postal_code: str = ""
+    country: str = ""
+
+
+@dataclass
 class CreateCustomerParamsAddress:
     line1: str = ""
     line2: str | None = None
@@ -589,6 +644,50 @@ class InvoiceStatus:
     status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
     updated_at: str = ""
     object: Literal["invoice"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Payout:
+    id: str = ""
+    status: Literal["pending", "in_transit", "paid", "failed", "canceled"] | None = None
+    amount: int = 0
+    fee: int = 0
+    net_amount: int = 0
+    currency: str = ""
+    description: str | None = None
+    provider_transfer_id: str = ""
+    created_at: str = ""
+    object: Literal["payout"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PayoutBankAccount:
+    id: str = ""
+    provider_external_account_id: str | None = None
+    holder_name: str = ""
+    last4: str = ""
+    bank_name: str | None = None
+    country: str = ""
+    currency: str = ""
+    account_type: Literal["checking", "savings"] | None = None
+    is_default: bool = False
+    status: Literal["active", "errored"] | None = None
+    created_at: str = ""
+    object: Literal["payout_bank_account"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PayoutVerification:
+    provider_account_id: str = ""
+    status: Literal["pending_verification", "verified", "restricted", "disabled"] | None = None
+    transfers_enabled: bool = False
+    already_exists: bool | None = None
+    business_type: Literal["individual", "company"] | None = None
+    country: str | None = None
+    object: Literal["payout_account"] | None = None
     livemode: bool = False
 
 
@@ -1042,6 +1141,24 @@ class SubscriptionPlan:
 
 
 @dataclass
+class TestClock:
+    simulated_time: str | None = None
+    is_active: bool = False
+    now: str = ""
+    object: Literal["test_clock"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class TestClockBilling:
+    customers_found: int = 0
+    enqueued: int = 0
+    failed: int = 0
+    object: Literal["test_clock"] | None = None
+    livemode: bool = False
+
+
+@dataclass
 class Transaction:
     id: str = ""
     invoice_id: str | None = None
@@ -1173,6 +1290,12 @@ _DATACLASS_TYPES.update(
         "BatchCreateCustomersParamsCustomersItemAddress": BatchCreateCustomersParamsCustomersItemAddress,
         "BulkSeatUpdate": BulkSeatUpdate,
         "CanceledSubscription": CanceledSubscription,
+        "CompletePayoutVerificationParamsBank": CompletePayoutVerificationParamsBank,
+        "CompletePayoutVerificationParamsCompany": CompletePayoutVerificationParamsCompany,
+        "CompletePayoutVerificationParamsCompanyAddress": CompletePayoutVerificationParamsCompanyAddress,
+        "CompletePayoutVerificationParamsCompanyRepresentative": CompletePayoutVerificationParamsCompanyRepresentative,
+        "CompletePayoutVerificationParamsIndividual": CompletePayoutVerificationParamsIndividual,
+        "CompletePayoutVerificationParamsIndividualAddress": CompletePayoutVerificationParamsIndividualAddress,
         "CreateCustomerParamsAddress": CreateCustomerParamsAddress,
         "CreatedApiKey": CreatedApiKey,
         "CreatedInvoice": CreatedInvoice,
@@ -1196,6 +1319,9 @@ _DATACLASS_TYPES.update(
         "InvoiceDownload": InvoiceDownload,
         "InvoiceLineItemsItem": InvoiceLineItemsItem,
         "InvoiceStatus": InvoiceStatus,
+        "Payout": Payout,
+        "PayoutBankAccount": PayoutBankAccount,
+        "PayoutVerification": PayoutVerification,
         "Plan": Plan,
         "PlanChange": PlanChange,
         "PlanChangeBilling": PlanChangeBilling,
@@ -1241,6 +1367,8 @@ _DATACLASS_TYPES.update(
         "SubscriptionFeaturesItem": SubscriptionFeaturesItem,
         "SubscriptionFeaturesItemUsage": SubscriptionFeaturesItemUsage,
         "SubscriptionPlan": SubscriptionPlan,
+        "TestClock": TestClock,
+        "TestClockBilling": TestClockBilling,
         "Transaction": Transaction,
         "TransactionRefund": TransactionRefund,
         "TransactionRetry": TransactionRetry,

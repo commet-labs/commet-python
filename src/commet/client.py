@@ -10,6 +10,7 @@ from .resources.credit_packs import CreditPacksResource
 from .resources.customers import CustomersResource
 from .resources.features import FeaturesResource
 from .resources.invoices import InvoicesResource
+from .resources.payouts import PayoutsResource
 from .resources.plan_groups import PlanGroupsResource
 from .resources.plans import PlansResource
 from .resources.portal import PortalResource
@@ -17,6 +18,7 @@ from .resources.promo_codes import PromoCodesResource
 from .resources.quota import QuotaResource
 from .resources.seats import SeatsResource
 from .resources.subscriptions import SubscriptionsResource
+from .resources.test_clock import TestClockResource
 from .resources.transactions import TransactionsResource
 from .resources.usage import UsageResource
 from .resources.webhooks import Webhooks
@@ -50,6 +52,7 @@ class Commet:
         self.credit_packs = CreditPacksResource(self._http)
         self.features = FeaturesResource(self._http)
         self.invoices = InvoicesResource(self._http)
+        self.payouts = PayoutsResource(self._http)
         self.plan_groups = PlanGroupsResource(self._http)
         self.plans = PlansResource(self._http)
         self.portal = PortalResource(self._http)
@@ -57,6 +60,7 @@ class Commet:
         self.quota = QuotaResource(self._http)
         self.seats = SeatsResource(self._http)
         self.subscriptions = SubscriptionsResource(self._http)
+        self.test_clock = TestClockResource(self._http)
         self.transactions = TransactionsResource(self._http)
         self.usage = UsageResource(self._http)
         self.webhooks = Webhooks(self._http)
