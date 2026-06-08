@@ -16,6 +16,7 @@ from ._shared import (
     build_headers,
     convert_keys,
     handle_error,
+    query_value,
     to_camel,
     to_snake,
 )
@@ -71,7 +72,11 @@ class CommetHTTPClient:
         idempotency_key: str | None = None,
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
-        clean = {to_camel(k): v for k, v in params.items() if v is not None} if params else None
+        clean = (
+            {to_camel(k): query_value(v) for k, v in params.items() if v is not None}
+            if params
+            else None
+        )
         return self._request(
             "GET",
             endpoint,

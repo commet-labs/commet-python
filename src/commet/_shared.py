@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from enum import Enum
 from typing import Any, Callable
 
 from ._exceptions import CommetAPIError, CommetValidationError
@@ -37,6 +38,12 @@ def convert_keys(obj: Any, fn: Callable[[str], str]) -> Any:
 
 def build_body(**kwargs: Any) -> dict[str, Any]:
     return {k: v for k, v in kwargs.items() if v is not None}
+
+
+def query_value(value: Any) -> Any:
+    if isinstance(value, Enum):
+        return value.value
+    return value
 
 
 def handle_error(status_code: int, data: Any) -> None:
