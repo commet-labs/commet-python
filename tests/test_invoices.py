@@ -24,9 +24,7 @@ def mock_api() -> respx.MockRouter:
 
 
 class TestGet:
-    def test_get_parses_line_items_and_invoice_type_enum(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    def test_get_parses_line_items_and_invoice_type_enum(self, mock_api: respx.MockRouter) -> None:
         mock_api.get("/invoices/inv_1").mock(
             return_value=Response(
                 200,

@@ -134,9 +134,7 @@ class TestRequestPayout:
 
 
 class TestCompleteVerification:
-    def test_sends_deeply_nested_kyc_body_as_camel_case(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    def test_sends_deeply_nested_kyc_body_as_camel_case(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/payouts/verification").mock(
             return_value=Response(
                 200,

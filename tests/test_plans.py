@@ -27,9 +27,7 @@ def mock_api() -> respx.MockRouter:
 
 
 class TestGet:
-    def test_get_parses_nested_prices_features_and_enums(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    def test_get_parses_nested_prices_features_and_enums(self, mock_api: respx.MockRouter) -> None:
         mock_api.get("/plans/pro").mock(
             return_value=Response(
                 200,
@@ -109,9 +107,7 @@ class TestListIncludePrivate:
 
 
 class TestAddPrice:
-    def test_add_price_sends_enum_and_nested_intro_offer(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    def test_add_price_sends_enum_and_nested_intro_offer(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/plans/plan_1/prices").mock(
             return_value=Response(
                 200,
@@ -224,9 +220,7 @@ class TestSetRegionalPricing:
             )
         )
         with Commet(api_key="ck_test_123") as client:
-            result = client.plans.set_regional_pricing(
-                "plan_1", currency="brl", exchange_rate=5.12
-            )
+            result = client.plans.set_regional_pricing("plan_1", currency="brl", exchange_rate=5.12)
 
         assert isinstance(result.data, PlanRegionalPricingResult)
         assert result.data.currency == "brl"

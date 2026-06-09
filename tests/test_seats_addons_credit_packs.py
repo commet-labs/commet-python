@@ -109,9 +109,7 @@ class TestSeats:
             )
         )
         with Commet(api_key="ck_test_123") as client:
-            result = client.seats.set_all(
-                customer_id="cus_1", seats={"editor": 3, "viewer": 10}
-            )
+            result = client.seats.set_all(customer_id="cus_1", seats={"editor": 3, "viewer": 10})
 
         assert isinstance(result.data, list)
         assert all(isinstance(item, BulkSeatUpdate) for item in result.data)

@@ -21,9 +21,7 @@ def mock_api() -> respx.MockRouter:
 
 
 class TestList:
-    def test_enum_status_filter_serializes_to_wire_string(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    def test_enum_status_filter_serializes_to_wire_string(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.get("/transactions").mock(
             return_value=Response(
                 200,
@@ -92,9 +90,7 @@ class TestGet:
 
 
 class TestRefundRetry:
-    def test_refund_no_body_post_parses_refunded_status(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    def test_refund_no_body_post_parses_refunded_status(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/transactions/txn_1/refund").mock(
             return_value=Response(
                 200,
