@@ -15,9 +15,7 @@ def mock_api() -> respx.MockRouter:
 
 class TestInvalidJsonResponse:
     def test_404_with_invalid_json_raises_error(self, mock_api: respx.MockRouter) -> None:
-        mock_api.get("/customers/cus_missing").mock(
-            return_value=Response(404, text="Not Found")
-        )
+        mock_api.get("/customers/cus_missing").mock(return_value=Response(404, text="Not Found"))
         with Commet(api_key="ck_test_123") as client:
             with pytest.raises(CommetAPIError) as exc_info:
                 client.customers.get("cus_missing")
@@ -35,9 +33,7 @@ class TestInvalidJsonResponse:
             assert exc_info.value.code == "INVALID_JSON"
 
     def test_200_with_invalid_json_raises_error(self, mock_api: respx.MockRouter) -> None:
-        mock_api.get("/customers/cus_1").mock(
-            return_value=Response(200, text="not json at all")
-        )
+        mock_api.get("/customers/cus_1").mock(return_value=Response(200, text="not json at all"))
         with Commet(api_key="ck_test_123") as client:
             with pytest.raises(CommetAPIError) as exc_info:
                 client.customers.get("cus_1")

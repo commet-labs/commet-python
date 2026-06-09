@@ -9,14 +9,15 @@ from uuid import uuid4
 import httpx
 
 from ._exceptions import CommetAPIError
-from ._http import ApiResponse, _BODY_METHODS
+from ._http import _BODY_METHODS, ApiResponse
 from ._shared import (
-    API_VERSION,
     _BASE_URL,
     _RETRYABLE_STATUS_CODES,
+    API_VERSION,
     build_headers,
     convert_keys,
     handle_error,
+    query_value,
     to_camel,
     to_snake,
 )
@@ -58,12 +59,17 @@ class AsyncCommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         clean = (
-            {to_camel(k): v for k, v in params.items() if v is not None}
+            {to_camel(k): query_value(v) for k, v in params.items() if v is not None}
             if params
             else None
         )
         return await self._request(
-            "GET", endpoint, params=clean, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "GET",
+            endpoint,
+            params=clean,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     async def post(
@@ -76,7 +82,12 @@ class AsyncCommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return await self._request(
-            "POST", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "POST",
+            endpoint,
+            body=body,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     async def put(
@@ -89,7 +100,12 @@ class AsyncCommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return await self._request(
-            "PUT", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "PUT",
+            endpoint,
+            body=body,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     async def delete(
@@ -102,7 +118,12 @@ class AsyncCommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return await self._request(
-            "DELETE", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "DELETE",
+            endpoint,
+            body=body,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     async def _request(
@@ -163,8 +184,13 @@ class AsyncCommetHTTPClient:
             if attempt <= self._max_retries:
                 await self._wait(attempt)
                 return await self._execute(
-                    method, endpoint, json_body=json_body, params=params,
-                    headers=headers, timeout=timeout, attempt=attempt + 1,
+                    method,
+                    endpoint,
+                    json_body=json_body,
+                    params=params,
+                    headers=headers,
+                    timeout=timeout,
+                    attempt=attempt + 1,
                 )
             raise
 
@@ -173,8 +199,13 @@ class AsyncCommetHTTPClient:
         if resp.status_code in _RETRYABLE_STATUS_CODES and attempt <= self._max_retries:
             await self._wait(attempt)
             return await self._execute(
-                method, endpoint, json_body=json_body, params=params,
-                headers=headers, timeout=timeout, attempt=attempt + 1,
+                method,
+                endpoint,
+                json_body=json_body,
+                params=params,
+                headers=headers,
+                timeout=timeout,
+                attempt=attempt + 1,
             )
 
         try:

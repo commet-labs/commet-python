@@ -50,3 +50,8 @@ select = ["E", "F", "I", "UP"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+filterwarnings = [
+    # TestClock / TestClockBilling are response dataclasses (not test classes); pytest
+    # tries to collect them only because their names start with "Test" when imported.
+    "ignore:cannot collect test class:pytest.PytestCollectionWarning",
+]

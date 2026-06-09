@@ -1,36 +1,28 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
-from typing import Any
+from typing import Literal
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
-from .._resource_mixins import (
-    build_subscription_create_body,
-    parse_activate_addon_result,
-    parse_active_subscription,
-    parse_adjust_balance_result,
-    parse_change_plan_result,
-    parse_created_subscription,
-    parse_deactivate_addon_result,
-    parse_preview_change_result,
-    parse_purchase_credits_result,
-    parse_subscription,
-    parse_subscription_list,
-    parse_topup_balance_result,
-)
 from .._shared import build_body
 from ..types import (
-    ActivateAddonResult,
-    ActiveSubscription,
-    AdjustBalanceResult,
-    ChangePlanResult,
-    CreatedSubscription,
-    DeactivateAddonResult,
-    PreviewChangeResult,
-    PurchaseCreditsResult,
+    BalanceAdjustment,
+    BalanceTopup,
+    BillingInterval,
+    CanceledSubscription,
+    CreateSubscriptionParamsIntroOffer,
+    CreditGrant,
+    DeletedSubscriptionAddon,
+    PlanChange,
+    PreviewChange,
     Subscription,
-    SubscriptionListItem,
-    TopupBalanceResult,
+    SubscriptionAddon,
+    SubscriptionStatus,
+    UncanceledSubscription,
+    _parse,
+    _parse_list,
 )
 
 
@@ -38,175 +30,179 @@ class AsyncSubscriptionsResource:
     def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
+    async def list(
+        self, *, customer_id: str | None = None, status: SubscriptionStatus | None = None
+    ) -> ApiResponse[list[Subscription]]:
+        """List all subscriptions. Filter by customer ID or status."""
+        query = build_body(customer_id=customer_id, status=status)
+        return _parse_list(await self._http.get("/subscriptions", query), Subscription)
+
     async def create(
         self,
         *,
-        customer_id: str | None = None,
-        plan_code: str | None = None,
+        customer_id: str,
         plan_id: str | None = None,
-        billing_interval: str | None = None,
+        plan_code: str | None = None,
+        billing_interval: BillingInterval | None = None,
         initial_seats: dict[str, int] | None = None,
         skip_trial: bool | None = None,
-        custom_intro_offer: dict[str, Any] | None = None,
+        intro_offer: CreateSubscriptionParamsIntroOffer | None = None,
         name: str | None = None,
         start_date: str | None = None,
         success_url: str | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[CreatedSubscription]:
-        body = build_subscription_create_body(
-            customer_id=customer_id, plan_code=plan_code, plan_id=plan_id,
-            billing_interval=billing_interval, initial_seats=initial_seats,
-            skip_trial=skip_trial, custom_intro_offer=custom_intro_offer,
-            name=name, start_date=start_date, success_url=success_url,
+    ) -> ApiResponse[Subscription]:
+        """Create a subscription for a customer. Requires planId or planCode plus customerId."""
+        body = build_body(
+            plan_id=plan_id,
+            plan_code=plan_code,
+            customer_id=customer_id,
+            billing_interval=billing_interval,
+            initial_seats=initial_seats,
+            skip_trial=skip_trial,
+            intro_offer=intro_offer,
+            name=name,
+            start_date=start_date,
+            success_url=success_url,
         )
-        return parse_created_subscription(
-            await self._http.post("/subscriptions", body, idempotency_key=idempotency_key)
+        return _parse(
+            await self._http.post("/subscriptions", body, idempotency_key=idempotency_key),
+            Subscription,
         )
 
-    async def get_active(self, customer_id: str) -> ApiResponse[ActiveSubscription]:
-        return parse_active_subscription(
-            await self._http.get("/subscriptions/active", {"customer_id": customer_id})
-        )
+    async def get(self, id: str) -> ApiResponse[Subscription]:
+        """Get a subscription by its public ID, regardless of status (including pending_payment and past_due)."""
+        return _parse(await self._http.get(f"/subscriptions/{id}"), Subscription)
 
-    async def list(
-        self,
-        *,
-        customer_id: str | None = None,
-        status: str | None = None,
-        limit: int | None = None,
-        cursor: str | None = None,
-    ) -> ApiResponse[list[SubscriptionListItem]]:
-        return parse_subscription_list(await self._http.get("/subscriptions", build_body(
-            customer_id=customer_id, status=status, limit=limit, cursor=cursor,
-        )))
+    async def get_active(self, *, customer_id: str) -> ApiResponse[Subscription | None]:
+        """Get the active subscription for a customer. Returns null if none."""
+        query = build_body(customer_id=customer_id)
+        return _parse(await self._http.get("/subscriptions/active", query), Subscription)
 
     async def cancel(
         self,
-        subscription_id: str,
+        id: str,
         *,
         reason: str | None = None,
         immediate: bool | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Subscription]:
-        return parse_subscription(
+    ) -> ApiResponse[CanceledSubscription]:
+        """Cancel immediately or at period end."""
+        body = build_body(reason=reason, immediate=immediate)
+        return _parse(
             await self._http.post(
-                f"/subscriptions/{subscription_id}/cancel",
-                build_body(reason=reason, immediate=immediate),
-                idempotency_key=idempotency_key,
-            )
+                f"/subscriptions/{id}/cancel", body, idempotency_key=idempotency_key
+            ),
+            CanceledSubscription,
         )
 
     async def uncancel(
-        self,
-        subscription_id: str,
-        *,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[Subscription]:
-        return parse_subscription(
-            await self._http.post(
-                f"/subscriptions/{subscription_id}/uncancel",
-                {},
-                idempotency_key=idempotency_key,
-            )
+        self, id: str, *, idempotency_key: str | None = None
+    ) -> ApiResponse[UncanceledSubscription]:
+        """Revert a scheduled cancellation. Only works when canceledAt is set but status is not yet 'canceled'."""
+        return _parse(
+            await self._http.post(f"/subscriptions/{id}/uncancel", idempotency_key=idempotency_key),
+            UncanceledSubscription,
         )
 
     async def change_plan(
         self,
-        subscription_id: str,
+        id: str,
         *,
         new_plan_id: str | None = None,
-        new_billing_interval: str | None = None,
+        new_billing_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None,
         success_url: str | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[ChangePlanResult]:
-        return parse_change_plan_result(
+    ) -> ApiResponse[PlanChange]:
+        """Upgrade, downgrade, or change billing interval."""
+        body = build_body(
+            new_plan_id=new_plan_id,
+            new_billing_interval=new_billing_interval,
+            success_url=success_url,
+        )
+        return _parse(
             await self._http.post(
-                f"/subscriptions/{subscription_id}/change-plan",
-                build_body(
-                    new_plan_id=new_plan_id,
-                    new_billing_interval=new_billing_interval,
-                    success_url=success_url,
-                ),
-                idempotency_key=idempotency_key,
-            )
+                f"/subscriptions/{id}/change-plan", body, idempotency_key=idempotency_key
+            ),
+            PlanChange,
         )
 
     async def preview_change(
         self,
-        subscription_id: str,
+        id: str,
         *,
-        plan_id: str | None = None,
-        billing_interval: str | None = None,
+        plan_id: str,
+        billing_interval: BillingInterval | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PreviewChangeResult]:
-        return parse_preview_change_result(await self._http.post(
-            f"/subscriptions/{subscription_id}/preview-change",
-            build_body(plan_id=plan_id, billing_interval=billing_interval),
-            idempotency_key=idempotency_key,
-        ))
+    ) -> ApiResponse[PreviewChange]:
+        """Preview proration details for an immediate plan change (an upgrade or a longer interval) without applying it. Returns credit, charge, and net amount. Downgrades — a cheaper plan in the same group, or a shorter interval — are scheduled for the end of the current period instead of being prorated, so they return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint."""
+        body = build_body(plan_id=plan_id, billing_interval=billing_interval)
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/preview-change", body, idempotency_key=idempotency_key
+            ),
+            PreviewChange,
+        )
 
     async def activate_addon(
-        self,
-        subscription_id: str,
-        *,
-        addon_id: str,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[ActivateAddonResult]:
-        return parse_activate_addon_result(await self._http.post(
-            f"/subscriptions/{subscription_id}/addons",
-            build_body(addon_id=addon_id),
-            idempotency_key=idempotency_key,
-        ))
+        self, id: str, *, addon_id: str, idempotency_key: str | None = None
+    ) -> ApiResponse[SubscriptionAddon]:
+        """Activate an add-on on a subscription. Charges a prorated amount for the current billing period."""
+        body = build_body(addon_id=addon_id)
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/addons", body, idempotency_key=idempotency_key
+            ),
+            SubscriptionAddon,
+        )
 
     async def deactivate_addon(
-        self,
-        subscription_id: str,
-        *,
-        addon_id: str,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[DeactivateAddonResult]:
-        return parse_deactivate_addon_result(await self._http.delete(
-            f"/subscriptions/{subscription_id}/addons/{addon_id}",
-            idempotency_key=idempotency_key,
-        ))
+        self, id: str, addon_id: str
+    ) -> ApiResponse[DeletedSubscriptionAddon]:
+        """Deactivate an add-on from a subscription."""
+        return _parse(
+            await self._http.delete(f"/subscriptions/{id}/addons/{addon_id}"),
+            DeletedSubscriptionAddon,
+        )
 
     async def adjust_balance(
         self,
-        subscription_id: str,
+        id: str,
         *,
         amount: int,
         reason: str | None = None,
-        type: str | None = None,
+        type: Literal["credits", "balance"] | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[AdjustBalanceResult]:
-        return parse_adjust_balance_result(await self._http.post(
-            f"/subscriptions/{subscription_id}/balance/adjust",
-            build_body(amount=amount, reason=reason, type=type),
-            idempotency_key=idempotency_key,
-        ))
+    ) -> ApiResponse[BalanceAdjustment]:
+        """Adjust a subscription's balance or credits by a signed amount. Positive adds, negative subtracts."""
+        body = build_body(amount=amount, reason=reason, type=type)
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/balance/adjust", body, idempotency_key=idempotency_key
+            ),
+            BalanceAdjustment,
+        )
 
     async def topup_balance(
-        self,
-        subscription_id: str,
-        *,
-        amount: int,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[TopupBalanceResult]:
-        return parse_topup_balance_result(await self._http.post(
-            f"/subscriptions/{subscription_id}/balance/topup",
-            build_body(amount=amount),
-            idempotency_key=idempotency_key,
-        ))
+        self, id: str, *, amount: int, idempotency_key: str | None = None
+    ) -> ApiResponse[BalanceTopup]:
+        """Top up a subscription's balance. Charges the customer's payment method for the specified amount."""
+        body = build_body(amount=amount)
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/balance/topup", body, idempotency_key=idempotency_key
+            ),
+            BalanceTopup,
+        )
 
     async def purchase_credits(
-        self,
-        subscription_id: str,
-        *,
-        credit_pack_id: str,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[PurchaseCreditsResult]:
-        return parse_purchase_credits_result(await self._http.post(
-            f"/subscriptions/{subscription_id}/credits",
-            build_body(credit_pack_id=credit_pack_id),
-            idempotency_key=idempotency_key,
-        ))
+        self, id: str, *, credit_pack_id: str, idempotency_key: str | None = None
+    ) -> ApiResponse[CreditGrant]:
+        """Purchase a credit pack for a subscription. Charges the customer and adds credits to their balance."""
+        body = build_body(credit_pack_id=credit_pack_id)
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/credits", body, idempotency_key=idempotency_key
+            ),
+            CreditGrant,
+        )

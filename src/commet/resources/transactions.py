@@ -1,19 +1,16 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from .._http import ApiResponse, CommetHTTPClient
-from .._resource_mixins import (
-    parse_transaction_detail,
-    parse_transaction_list,
-    parse_transaction_refund_result,
-    parse_transaction_retry_result,
-)
 from .._shared import build_body
 from ..types import (
-    TransactionDetail,
-    TransactionListItem,
-    TransactionRefundResult,
-    TransactionRetryResult,
+    Transaction,
+    TransactionRefund,
+    TransactionRetry,
     TransactionStatus,
+    _parse,
+    _parse_list,
 )
 
 
@@ -28,31 +25,29 @@ class TransactionsResource:
         customer_email: str | None = None,
         limit: int | None = None,
         cursor: str | None = None,
-    ) -> ApiResponse[list[TransactionListItem]]:
-        return parse_transaction_list(self._http.get("/transactions", build_body(
-            status=status, customer_email=customer_email,
-            limit=limit, cursor=cursor,
-        )))
+    ) -> ApiResponse[list[Transaction]]:
+        """List payment transactions with cursor-based pagination. Filter by status or customer email."""
+        query = build_body(status=status, customer_email=customer_email, limit=limit, cursor=cursor)
+        return _parse_list(self._http.get("/transactions", query), Transaction)
 
-    def get(self, transaction_id: str) -> ApiResponse[TransactionDetail]:
-        return parse_transaction_detail(self._http.get(f"/transactions/{transaction_id}"))
+    def get(self, id: str) -> ApiResponse[Transaction]:
+        """Retrieve a single payment transaction by its public ID, including provider details."""
+        return _parse(self._http.get(f"/transactions/{id}"), Transaction)
 
     def refund(
-        self,
-        transaction_id: str,
-        *,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[TransactionRefundResult]:
-        return parse_transaction_refund_result(self._http.post(
-            f"/transactions/{transaction_id}/refund", {}, idempotency_key=idempotency_key,
-        ))
+        self, id: str, *, idempotency_key: str | None = None
+    ) -> ApiResponse[TransactionRefund]:
+        """Issue a full refund for a payment transaction."""
+        return _parse(
+            self._http.post(f"/transactions/{id}/refund", idempotency_key=idempotency_key),
+            TransactionRefund,
+        )
 
     def retry(
-        self,
-        transaction_id: str,
-        *,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[TransactionRetryResult]:
-        return parse_transaction_retry_result(self._http.post(
-            f"/transactions/{transaction_id}/retry", {}, idempotency_key=idempotency_key,
-        ))
+        self, id: str, *, idempotency_key: str | None = None
+    ) -> ApiResponse[TransactionRetry]:
+        """Retry a failed payment transaction. Creates a new invoice and initiates a new payment attempt."""
+        return _parse(
+            self._http.post(f"/transactions/{id}/retry", idempotency_key=idempotency_key),
+            TransactionRetry,
+        )

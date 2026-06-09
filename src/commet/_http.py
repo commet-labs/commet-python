@@ -10,12 +10,13 @@ import httpx
 
 from ._exceptions import CommetAPIError
 from ._shared import (
-    API_VERSION,
     _BASE_URL,
     _RETRYABLE_STATUS_CODES,
+    API_VERSION,
     build_headers,
     convert_keys,
     handle_error,
+    query_value,
     to_camel,
     to_snake,
 )
@@ -72,12 +73,17 @@ class CommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         clean = (
-            {to_camel(k): v for k, v in params.items() if v is not None}
+            {to_camel(k): query_value(v) for k, v in params.items() if v is not None}
             if params
             else None
         )
         return self._request(
-            "GET", endpoint, params=clean, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "GET",
+            endpoint,
+            params=clean,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     def post(
@@ -90,7 +96,12 @@ class CommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return self._request(
-            "POST", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "POST",
+            endpoint,
+            body=body,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     def put(
@@ -103,7 +114,12 @@ class CommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return self._request(
-            "PUT", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "PUT",
+            endpoint,
+            body=body,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     def delete(
@@ -116,7 +132,12 @@ class CommetHTTPClient:
         timeout: float | None = None,
     ) -> ApiResponse[Any]:
         return self._request(
-            "DELETE", endpoint, body=body, api_version=api_version, idempotency_key=idempotency_key, timeout=timeout
+            "DELETE",
+            endpoint,
+            body=body,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
         )
 
     def _request(
@@ -177,8 +198,13 @@ class CommetHTTPClient:
             if attempt <= self._max_retries:
                 self._wait(attempt)
                 return self._execute(
-                    method, endpoint, json_body=json_body, params=params,
-                    headers=headers, timeout=timeout, attempt=attempt + 1,
+                    method,
+                    endpoint,
+                    json_body=json_body,
+                    params=params,
+                    headers=headers,
+                    timeout=timeout,
+                    attempt=attempt + 1,
                 )
             raise
 
@@ -187,8 +213,13 @@ class CommetHTTPClient:
         if resp.status_code in _RETRYABLE_STATUS_CODES and attempt <= self._max_retries:
             self._wait(attempt)
             return self._execute(
-                method, endpoint, json_body=json_body, params=params,
-                headers=headers, timeout=timeout, attempt=attempt + 1,
+                method,
+                endpoint,
+                json_body=json_body,
+                params=params,
+                headers=headers,
+                timeout=timeout,
+                attempt=attempt + 1,
             )
 
         try:

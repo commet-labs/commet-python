@@ -1,13 +1,20 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
+import builtins
+
 from .._http import ApiResponse, CommetHTTPClient
-from .._resource_mixins import (
-    parse_plan_group,
-    parse_plan_group_detail,
-    parse_plan_group_list,
-)
 from .._shared import build_body
-from ..types import PlanGroup, PlanGroupDetail
+from ..types import (
+    AddedPlanToGroup,
+    DeletedObject,
+    PlanGroup,
+    RemovedPlanFromGroup,
+    ReorderedPlans,
+    _parse,
+    _parse_list,
+)
 
 
 class PlanGroupsResource:
@@ -15,17 +22,15 @@ class PlanGroupsResource:
         self._http = http
 
     def list(
-        self,
-        *,
-        limit: int | None = None,
-        cursor: str | None = None,
+        self, *, limit: int | None = None, cursor: str | None = None
     ) -> ApiResponse[list[PlanGroup]]:
-        return parse_plan_group_list(
-            self._http.get("/plan-groups", build_body(limit=limit, cursor=cursor))
-        )
+        """List plan groups with cursor-based pagination."""
+        query = build_body(limit=limit, cursor=cursor)
+        return _parse_list(self._http.get("/plan-groups", query), PlanGroup)
 
-    def get(self, plan_group_id: str) -> ApiResponse[PlanGroupDetail]:
-        return parse_plan_group_detail(self._http.get(f"/plan-groups/{plan_group_id}"))
+    def get(self, id: str) -> ApiResponse[PlanGroup]:
+        """Retrieve a plan group by ID, including its plans ordered by sortOrder."""
+        return _parse(self._http.get(f"/plan-groups/{id}"), PlanGroup)
 
     def create(
         self,
@@ -35,72 +40,58 @@ class PlanGroupsResource:
         is_public: bool | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[PlanGroup]:
-        return parse_plan_group(self._http.post(
-            "/plan-groups",
-            build_body(name=name, description=description, is_public=is_public),
-            idempotency_key=idempotency_key,
-        ))
+        """Create a new plan group for organizing plans."""
+        body = build_body(name=name, description=description, is_public=is_public)
+        return _parse(
+            self._http.post("/plan-groups", body, idempotency_key=idempotency_key), PlanGroup
+        )
 
     def update(
         self,
-        plan_group_id: str,
+        id: str,
         *,
         name: str | None = None,
         description: str | None = None,
         is_public: bool | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[PlanGroup]:
-        return parse_plan_group(self._http.put(
-            f"/plan-groups/{plan_group_id}",
-            build_body(name=name, description=description, is_public=is_public),
-            idempotency_key=idempotency_key,
-        ))
-
-    def delete(
-        self,
-        plan_group_id: str,
-        *,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[None]:
-        return self._http.delete(
-            f"/plan-groups/{plan_group_id}", idempotency_key=idempotency_key,
+        """Update a plan group's name, description, or visibility."""
+        body = build_body(name=name, description=description, is_public=is_public)
+        return _parse(
+            self._http.put(f"/plan-groups/{id}", body, idempotency_key=idempotency_key), PlanGroup
         )
+
+    def delete(self, id: str) -> ApiResponse[DeletedObject]:
+        """Delete a plan group. Plans in the group are unlinked, not deleted."""
+        return _parse(self._http.delete(f"/plan-groups/{id}"), DeletedObject)
 
     def add_plan(
         self,
-        plan_group_id: str,
+        id: str,
         *,
         plan_id: str,
         sort_order: int | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanGroupDetail]:
-        return parse_plan_group_detail(self._http.post(
-            f"/plan-groups/{plan_group_id}/plans",
-            build_body(plan_id=plan_id, sort_order=sort_order),
-            idempotency_key=idempotency_key,
-        ))
-
-    def remove_plan(
-        self,
-        plan_group_id: str,
-        *,
-        plan_id: str,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[None]:
-        return self._http.delete(
-            f"/plan-groups/{plan_group_id}/plans/{plan_id}",
-            idempotency_key=idempotency_key,
+    ) -> ApiResponse[AddedPlanToGroup]:
+        """Add an existing plan to a plan group with optional sort order."""
+        body = build_body(plan_id=plan_id, sort_order=sort_order)
+        return _parse(
+            self._http.post(f"/plan-groups/{id}/plans", body, idempotency_key=idempotency_key),
+            AddedPlanToGroup,
         )
 
+    def remove_plan(self, id: str, plan_id: str) -> ApiResponse[RemovedPlanFromGroup]:
+        """Remove a plan from a plan group."""
+        return _parse(self._http.delete(f"/plan-groups/{id}/plans/{plan_id}"), RemovedPlanFromGroup)
+
     def reorder_plans(
-        self,
-        plan_group_id: str,
-        *,
-        plan_ids: list[str],
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanGroupDetail]:
-        return parse_plan_group_detail(self._http.put(
-            f"/plan-groups/{plan_group_id}/plans/reorder",
-            build_body(plan_ids=plan_ids),
-            idempotency_key=idempotency_key,
-        ))
+        self, id: str, *, plan_ids: builtins.list[str], idempotency_key: str | None = None
+    ) -> ApiResponse[ReorderedPlans]:
+        """Set the display order of plans within a group. All plan IDs in the group must be provided."""
+        body = build_body(plan_ids=plan_ids)
+        return _parse(
+            self._http.put(
+                f"/plan-groups/{id}/plans/reorder", body, idempotency_key=idempotency_key
+            ),
+            ReorderedPlans,
+        )

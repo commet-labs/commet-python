@@ -1,17 +1,103 @@
+# ruff: noqa: E501
+
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, cast
+
+from ._http import ApiResponse
 
 T = TypeVar("T")
 
+_ENUM_TYPES: dict[str, type[Enum]] = {}
+_DATACLASS_TYPES: dict[str, type[Any]] = {}
 
-class FeatureType(str, Enum):
-    BOOLEAN = "boolean"
-    USAGE = "usage"
-    SEATS = "seats"
-    QUOTA = "quota"
+
+def _coerce_field(annotation: str, value: Any) -> Any:
+    base = annotation.split(" | ")[0].strip()
+
+    enum_cls = _ENUM_TYPES.get(base)
+    if enum_cls is not None:
+        try:
+            return enum_cls(value)
+        except ValueError:
+            return value
+
+    if base.startswith("list[") and base.endswith("]"):
+        inner = base[len("list[") : -1].strip()
+        nested = _DATACLASS_TYPES.get(inner)
+        enum_inner = _ENUM_TYPES.get(inner)
+        if nested is not None and isinstance(value, list):
+            return [_from_dict(nested, item) for item in value]
+        if enum_inner is not None and isinstance(value, list):
+            return [_coerce_field(inner, item) for item in value]
+        return value
+
+    if base.startswith("dict[") and base.endswith("]"):
+        inner = base[len("dict[") : -1].split(",")[-1].strip()
+        nested = _DATACLASS_TYPES.get(inner)
+        if nested is not None and isinstance(value, dict):
+            return {k: _from_dict(nested, v) for k, v in value.items()}
+        return value
+
+    nested = _DATACLASS_TYPES.get(base)
+    if nested is not None and isinstance(value, dict):
+        return _from_dict(nested, value)
+
+    return value
+
+
+def _from_dict(cls: type[T], data: Any) -> T:
+    if not isinstance(data, dict):
+        return cast("T", data)
+    fields_map = cls.__dataclass_fields__  # type: ignore[attr-defined]
+    result: dict[str, Any] = {}
+    for key, value in data.items():
+        if key not in fields_map:
+            continue
+        annotation = fields_map[key].type
+        result[key] = (
+            _coerce_field(annotation, value)
+            if isinstance(annotation, str) and value is not None
+            else value
+        )
+    return cls(**result)
+
+
+def _from_list(cls: type[T], data: list[Any]) -> list[T]:
+    return [_from_dict(cls, item) for item in data]
+
+
+def _parse(response: ApiResponse[Any], cls: type[T]) -> ApiResponse[T]:
+    if isinstance(response.data, dict):
+        response.data = _from_dict(cls, response.data)
+    return response
+
+
+def _parse_list(response: ApiResponse[Any], cls: type[T]) -> ApiResponse[list[T]]:
+    if isinstance(response.data, list):
+        response.data = _from_list(cls, response.data)
+    return response
+
+
+def _parse_map(response: ApiResponse[Any], cls: type[T]) -> ApiResponse[dict[str, T]]:
+    if isinstance(response.data, dict):
+        response.data = {
+            key: _from_dict(cls, value) if isinstance(value, dict) else value
+            for key, value in response.data.items()
+        }
+    return response
+
+
+class SubscriptionStatus(str, Enum):
+    DRAFT = "draft"
+    PENDING_PAYMENT = "pending_payment"
+    TRIALING = "trialing"
+    ACTIVE = "active"
+    PAST_DUE = "past_due"
+    CANCELED = "canceled"
 
 
 class BillingInterval(str, Enum):
@@ -22,42 +108,10 @@ class BillingInterval(str, Enum):
     ONE_TIME = "one_time"
 
 
-class SubscriptionStatus(str, Enum):
-    DRAFT = "draft"
-    PENDING_PAYMENT = "pending_payment"
-    TRIALING = "trialing"
-    ACTIVE = "active"
-    PAUSED = "paused"
-    PAST_DUE = "past_due"
-    CANCELED = "canceled"
-    EXPIRED = "expired"
-
-
 class ConsumptionModel(str, Enum):
     METERED = "metered"
     CREDITS = "credits"
     BALANCE = "balance"
-
-
-class AddonConsumptionModel(str, Enum):
-    BOOLEAN = "boolean"
-    METERED = "metered"
-    CREDITS = "credits"
-    BALANCE = "balance"
-
-
-class DiscountType(str, Enum):
-    PERCENTAGE = "percentage"
-    AMOUNT = "amount"
-
-
-class InvoiceStatus(str, Enum):
-    DRAFT = "draft"
-    UPCOMING = "upcoming"
-    OUTSTANDING = "outstanding"
-    PAID = "paid"
-    VOID = "void"
-    UNCOLLECTIBLE = "uncollectible"
 
 
 class InvoiceType(str, Enum):
@@ -70,22 +124,6 @@ class InvoiceType(str, Enum):
     ADDON_ACTIVATION = "addon_activation"
 
 
-class InvoiceLineType(str, Enum):
-    PLAN_BASE = "plan_base"
-    FEATURE_OVERAGE = "feature_overage"
-    FEATURE_SEATS = "feature_seats"
-    FEATURE_QUOTA = "feature_quota"
-    DISCOUNT = "discount"
-    CREDIT = "credit"
-    ADDON_BASE = "addon_base"
-
-
-class ChargeType(str, Enum):
-    STANDARD = "standard"
-    ADVANCE = "advance"
-    TRUE_UP = "true_up"
-
-
 class TransactionStatus(str, Enum):
     PENDING = "pending"
     SUCCEEDED = "succeeded"
@@ -94,618 +132,189 @@ class TransactionStatus(str, Enum):
     DISPUTED = "disputed"
 
 
-class UsageCheckDenialReason(str, Enum):
-    INCLUDED_LIMIT_REACHED = "included_limit_reached"
-    INSUFFICIENT_CREDITS = "insufficient_credits"
-    INSUFFICIENT_BALANCE = "insufficient_balance"
+class FeatureType(str, Enum):
+    BOOLEAN = "boolean"
+    USAGE = "usage"
+    SEATS = "seats"
+    QUOTA = "quota"
 
 
-class SeatEventType(str, Enum):
-    ADD = "add"
-    REMOVE = "remove"
-    SET = "set"
+class DiscountType(str, Enum):
+    PERCENTAGE = "percentage"
+    AMOUNT = "amount"
 
 
-class OverageModel(str, Enum):
-    PER_UNIT = "per_unit"
-
-
-class Currency(str, Enum):
-    USD = "USD"
-    EUR = "EUR"
-    GBP = "GBP"
-    CAD = "CAD"
-    AUD = "AUD"
-    JPY = "JPY"
-    ARS = "ARS"
-    BRL = "BRL"
-    MXN = "MXN"
-    CLP = "CLP"
-
-
-class PricingMode(str, Enum):
-    FIXED = "fixed"
-    AI_MODEL = "ai_model"
-
-
-_ALL_ENUMS: list[type[Enum]] = [
-    FeatureType,
-    BillingInterval,
-    SubscriptionStatus,
-    ConsumptionModel,
-    AddonConsumptionModel,
-    DiscountType,
-    InvoiceStatus,
-    InvoiceType,
-    InvoiceLineType,
-    ChargeType,
-    TransactionStatus,
-    UsageCheckDenialReason,
-    SeatEventType,
-    OverageModel,
-    Currency,
-    PricingMode,
-]
-
-_ENUM_TYPES: dict[str, type[Enum]] = {cls.__name__: cls for cls in _ALL_ENUMS}
-
-# Registry of nested dataclasses, populated at the end of the module once every
-# dataclass is defined. Lets the parser resolve string annotations like
-# "list[InvoiceLineItem]" or "CreditsSummary | None" into typed objects.
-_DATACLASS_TYPES: dict[str, type[Any]] = {}
-
-
-def _coerce_field(annotation: str, value: Any) -> Any:
-    base = annotation.replace(" | None", "").strip()
-
-    enum_cls = _ENUM_TYPES.get(base)
-    if enum_cls is not None:
-        try:
-            return enum_cls(value)
-        except ValueError:
-            return value
-
-    if base.startswith("list[") and base.endswith("]"):
-        inner = base[len("list[") : -1].strip()
-        nested_cls = _DATACLASS_TYPES.get(inner)
-        if nested_cls is not None and isinstance(value, list):
-            return [_from_dict(nested_cls, item) for item in value]
-        return value
-
-    nested_cls = _DATACLASS_TYPES.get(base)
-    if nested_cls is not None and isinstance(value, dict):
-        return _from_dict(nested_cls, value)
-
-    return value
-
-
-def _coerce_enums(cls: type[T], kwargs: dict[str, Any]) -> dict[str, Any]:
-    fields_map = cls.__dataclass_fields__  # type: ignore[attr-defined]
-    result = {}
-    for k, v in kwargs.items():
-        if k in fields_map and v is not None:
-            annotation = fields_map[k].type
-            if isinstance(annotation, str):
-                v = _coerce_field(annotation, v)
-        result[k] = v
-    return result
-
-
-def _from_dict(cls: type[T], data: dict[str, Any]) -> T:
-    if not isinstance(data, dict):
-        return data  # type: ignore[return-value]
-    fields = {f.name for f in cls.__dataclass_fields__.values()}  # type: ignore[attr-defined]
-    filtered = {k: v for k, v in data.items() if k in fields}
-    return cls(**_coerce_enums(cls, filtered))
-
-
-def _from_list(cls: type[T], data: list[dict[str, Any]]) -> list[T]:
-    return [_from_dict(cls, item) for item in data]
+class Timezone(str, Enum):
+    UTC = "UTC"
+    AMERICA_NEW_YORK = "America/New_York"
+    AMERICA_CHICAGO = "America/Chicago"
+    AMERICA_DENVER = "America/Denver"
+    AMERICA_LOS_ANGELES = "America/Los_Angeles"
+    AMERICA_SAO_PAULO = "America/Sao_Paulo"
+    AMERICA_MEXICO_CITY = "America/Mexico_City"
+    AMERICA_BUENOS_AIRES = "America/Buenos_Aires"
+    AMERICA_SANTIAGO = "America/Santiago"
+    AMERICA_BOGOTA = "America/Bogota"
+    AMERICA_LIMA = "America/Lima"
+    AMERICA_ASUNCION = "America/Asuncion"
+    EUROPE_LONDON = "Europe/London"
+    EUROPE_PARIS = "Europe/Paris"
+    EUROPE_BERLIN = "Europe/Berlin"
+    EUROPE_MADRID = "Europe/Madrid"
+    ASIA_TOKYO = "Asia/Tokyo"
+    ASIA_SHANGHAI = "Asia/Shanghai"
+    ASIA_SINGAPORE = "Asia/Singapore"
+    ASIA_DUBAI = "Asia/Dubai"
+    AUSTRALIA_SYDNEY = "Australia/Sydney"
 
 
 @dataclass
-class Customer:
-    id: str
-    object: str = "customer"
-    livemode: bool = False
-    organization_id: str = ""
-    full_name: str | None = None
-    domain: str | None = None
-    website: str | None = None
-    billing_email: str = ""
-    timezone: str | None = None
-    language: str | None = None
-    industry: str | None = None
-    employee_count: str | None = None
-    metadata: dict[str, Any] | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class Plan:
-    id: str
-    object: str = "plan"
-    livemode: bool = False
-    code: str = ""
+class ActiveAddon:
+    slug: str = ""
     name: str = ""
-    description: str | None = None
-    is_public: bool = True
-    is_free: bool = False
-    is_default: bool = False
-    sort_order: int = 0
-    prices: list[dict[str, Any]] = field(default_factory=list)
-    features: list[dict[str, Any]] = field(default_factory=list)
-    created_at: str = ""
-    updated_at: str | None = None
-
-
-@dataclass
-class Subscription:
-    id: str
-    object: str = "subscription"
-    livemode: bool = False
-    customer_id: str = ""
-    plan_id: str | None = None
-    plan_name: str | None = None
-    name: str = ""
-    description: str | None = None
-    status: SubscriptionStatus = SubscriptionStatus.DRAFT
-    consumption_model: ConsumptionModel | None = None
-    billing_interval: BillingInterval | None = None
-    trial_ends_at: str | None = None
-    start_date: str = ""
-    end_date: str | None = None
-    current_period_start: str | None = None
-    current_period_end: str | None = None
-    billing_day_of_month: int = 1
-    checkout_url: str | None = None
-    plan: dict[str, Any] | None = None
-    current_period: dict[str, Any] | None = None
-    features: list[dict[str, Any]] = field(default_factory=list)
-    credits: dict[str, Any] | None = None
-    balance: dict[str, Any] | None = None
-    cancellation: dict[str, Any] | None = None
-    discount: dict[str, Any] | None = None
-    next_billing_date: str | None = None
-    intro_offer_ends_at: str | None = None
-    intro_offer_discount_type: DiscountType | None = None
-    intro_offer_discount_value: int | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class ChangePlanResult:
-    id: str
-    scheduled: bool = False
-    customer_id: str | None = None
-    previous_plan: dict[str, Any] | None = None
-    current_plan: dict[str, Any] | None = None
-    billing_interval: str | None = None
-    billing: dict[str, Any] | None = None
-    invoice_id: str | None = None
-    scheduled_for: str | None = None
-    change_type: str | None = None
-    requires_checkout: bool | None = None
-    checkout_url: str | None = None
-
-
-@dataclass
-class Feature:
-    code: str
-    name: str = ""
-    type: FeatureType = FeatureType.BOOLEAN
-    unit_name: str | None = None
-    enabled: bool | None = None
-    included_amount: int | None = None
-    unlimited: bool | None = None
-    overage_enabled: bool | None = None
-    overage_unit_price: int | None = None
-
-
-@dataclass
-class FeatureManage:
-    id: str
-    object: str = "feature"
-    livemode: bool = False
-    name: str = ""
-    code: str = ""
-    type: FeatureType = FeatureType.BOOLEAN
-    description: str | None = None
-    unit_name: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class FeatureAccess:
-    code: str
-    object: str = "feature"
-    livemode: bool = False
-    name: str = ""
-    type: FeatureType = FeatureType.BOOLEAN
-    allowed: bool = False
-    enabled: bool | None = None
-    current: int | None = None
-    included: int | None = None
-    remaining: int | None = None
-    overage: int | None = None
-    overage_unit_price: int | None = None
-    billed_quantity: int | None = None
-    unlimited: bool | None = None
-    overage_enabled: bool | None = None
-
-
-@dataclass
-class SeatBalance:
-    current: int = 0
-    as_of: str = ""
-
-
-@dataclass
-class SeatEvent:
-    id: str
-    object: str = "seat"
-    livemode: bool = False
-    organization_id: str = ""
-    customer_id: str = ""
+    base_price: int = 0
     feature_code: str = ""
-    event_type: SeatEventType = SeatEventType.ADD
-    quantity: int = 0
-    previous_balance: int | None = None
-    new_balance: int = 0
-    ts: str = ""
-    created_at: str = ""
-
-
-@dataclass
-class QuotaEvent:
-    id: str
-    customer_id: str = ""
-    feature_code: str = ""
-    previous_balance: int = 0
-    new_balance: int = 0
-    ts: str = ""
-    created_at: str = ""
-
-
-@dataclass
-class QuotaAllowance:
-    feature_code: str = ""
-    current: int = 0
-    included: int = 0
-    remaining: int | None = None
-    billed_quantity: int | None = None
-    unlimited: bool = False
-    overage_enabled: bool = False
-    as_of: str | None = None
-
-
-@dataclass
-class CreditPack:
-    id: str
-    object: str = "credit_pack"
+    feature_name: str = ""
+    feature_type: FeatureType | None = None
+    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = None
+    activated_at: str = ""
+    object: Literal["addon"] | None = None
     livemode: bool = False
-    name: str = ""
-    description: str | None = None
-    credits: int = 0
-    price: int = 0
-    currency: Currency = Currency.USD
 
 
 @dataclass
-class CreditPackDetail:
-    id: str
-    object: str = "credit_pack"
-    livemode: bool = False
-    name: str = ""
-    description: str | None = None
-    credits: int = 0
-    price: int = 0
-    is_active: bool = True
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class PortalSession:
+class AddedPlanToGroup:
     success: bool = False
-    message: str = ""
-    portal_url: str = ""
-
-
-@dataclass
-class UsageEvent:
-    id: str
-    object: str = "usage_event"
+    object: Literal["plan_group"] | None = None
     livemode: bool = False
-    organization_id: str = ""
-    customer_id: str = ""
-    feature: str = ""
-    idempotency_key: str | None = None
-    ts: str = ""
-    properties: list[dict[str, str]] | None = None
-    created_at: str = ""
-
-
-@dataclass
-class ApiKeyData:
-    id: str
-    object: str = "api_key"
-    livemode: bool = False
-    name: str = ""
-    prefix: str = ""
-    expires_at: str | None = None
-    last_used_at: str | None = None
-    created_at: str = ""
-
-
-@dataclass
-class ApiKeyCreated:
-    id: str
-    object: str = "api_key"
-    livemode: bool = False
-    name: str = ""
-    prefix: str = ""
-    api_key: str = ""
-    expires_at: str | None = None
-    last_used_at: str | None = None
-    created_at: str = ""
-
-
-@dataclass
-class InvoiceListItem:
-    id: str
-    object: str = "invoice"
-    livemode: bool = False
-    customer_id: str = ""
-    subscription_id: str | None = None
-    invoice_number: str = ""
-    status: InvoiceStatus = InvoiceStatus.DRAFT
-    invoice_type: InvoiceType = InvoiceType.RECURRING
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    tax_amount: int = 0
-    total: int = 0
-    period_start: str | None = None
-    period_end: str | None = None
-    issue_date: str = ""
-    due_date: str | None = None
-    memo: str | None = None
-    metadata: dict[str, Any] | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class InvoiceDetail:
-    id: str
-    object: str = "invoice"
-    livemode: bool = False
-    customer_id: str = ""
-    subscription_id: str | None = None
-    invoice_number: str = ""
-    status: InvoiceStatus = InvoiceStatus.DRAFT
-    invoice_type: InvoiceType = InvoiceType.RECURRING
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    tax_amount: int = 0
-    total: int = 0
-    credit_applied: int = 0
-    period_start: str | None = None
-    period_end: str | None = None
-    issue_date: str = ""
-    due_date: str | None = None
-    memo: str | None = None
-    plan_name: str | None = None
-    po_number: str | None = None
-    reference: str | None = None
-    metadata: dict[str, Any] | None = None
-    line_items: list[InvoiceLineItem] = field(default_factory=list)
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class TransactionListItem:
-    id: str
-    object: str = "transaction"
-    livemode: bool = False
-    invoice_id: str = ""
-    gross_amount: int = 0
-    subtotal: int = 0
-    tax_amount: int = 0
-    currency: str = ""
-    status: TransactionStatus = TransactionStatus.PENDING
-    customer_email: str = ""
-    customer_name: str | None = None
-    paid_at: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class TransactionDetail:
-    id: str
-    object: str = "transaction"
-    livemode: bool = False
-    invoice_id: str = ""
-    gross_amount: int = 0
-    subtotal: int = 0
-    tax_amount: int = 0
-    currency: str = ""
-    status: TransactionStatus = TransactionStatus.PENDING
-    customer_email: str = ""
-    customer_name: str | None = None
-    paid_at: str | None = None
-    available_at: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class PromoCode:
-    id: str
-    object: str = "promo_code"
-    livemode: bool = False
-    code: str = ""
-    discount_type: DiscountType = DiscountType.PERCENTAGE
-    discount_value: int = 0
-    duration_cycles: int | None = None
-    max_redemptions: int | None = None
-    expires_at: str | None = None
-    active: bool = True
-    redemption_count: int = 0
-    created_at: str = ""
-
-
-@dataclass
-class PromoCodeDetail:
-    id: str
-    object: str = "promo_code"
-    livemode: bool = False
-    code: str = ""
-    discount_type: DiscountType = DiscountType.PERCENTAGE
-    discount_value: int = 0
-    duration_cycles: int | None = None
-    max_redemptions: int | None = None
-    expires_at: str | None = None
-    active: bool = True
-    redemption_count: int = 0
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class PlanGroup:
-    id: str
-    object: str = "plan_group"
-    livemode: bool = False
-    name: str = ""
-    description: str | None = None
-    is_public: bool = True
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class PlanGroupDetail:
-    id: str
-    object: str = "plan_group"
-    livemode: bool = False
-    name: str = ""
-    description: str | None = None
-    is_public: bool = True
-    plans: list[dict[str, Any]] = field(default_factory=list)
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class PlanManage:
-    id: str
-    object: str = "plan"
-    livemode: bool = False
-    name: str = ""
-    code: str = ""
-    description: str | None = None
-    consumption_model: ConsumptionModel | None = None
-    is_public: bool = True
-    is_default: bool = False
-    is_free: bool = False
-    block_on_exhaustion: bool = False
-    sort_order: int = 0
-    plan_group_id: str | None = None
-    metadata: dict[str, Any] | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class PlanPriceManage:
-    id: str
-    object: str = "plan_price"
-    livemode: bool = False
-    plan_id: str = ""
-    billing_interval: BillingInterval = BillingInterval.MONTHLY
-    price: int = 0
-    is_default: bool = False
-    trial_days: int = 0
-    included_balance: int | None = None
-    included_credits: int | None = None
-    intro_offer_enabled: bool = False
-    intro_offer_discount_type: str | None = None
-    intro_offer_discount_value: int | None = None
-    intro_offer_duration_cycles: int | None = None
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class WebhookEndpoint:
-    id: str
-    object: str = "webhook"
-    livemode: bool = False
-    url: str = ""
-    events: list[str] = field(default_factory=list)
-    description: str | None = None
-    is_active: bool = True
-    api_version: str | None = None
-    created_at: str = ""
-
-
-@dataclass
-class WebhookEndpointCreated:
-    id: str
-    object: str = "webhook"
-    livemode: bool = False
-    url: str = ""
-    events: list[str] = field(default_factory=list)
-    description: str | None = None
-    is_active: bool = True
-    api_version: str | None = None
-    secret_key: str = ""
-    created_at: str = ""
 
 
 @dataclass
 class Addon:
-    id: str
-    object: str = "addon"
-    livemode: bool = False
+    id: str = ""
     name: str = ""
     slug: str = ""
     description: str | None = None
     base_price: int = 0
+    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = None
     feature_code: str = ""
     feature_name: str = ""
-    consumption_model: str | None = None
     included_units: int | None = None
     overage_rate: int | None = None
     credit_cost: int | None = None
     created_at: str = ""
     updated_at: str = ""
-
-
-@dataclass
-class ActiveAddon:
-    object: str = "addon"
+    object: Literal["addon"] | None = None
     livemode: bool = False
-    slug: str = ""
-    name: str = ""
-    base_price: int = 0
-    feature_code: str = ""
-    feature_name: str = ""
-    feature_type: FeatureType = FeatureType.BOOLEAN
-    consumption_model: AddonConsumptionModel | None = None
-    activated_at: str = ""
 
 
 @dataclass
-class CustomerAddress:
+class AddPlanFeatureParamsOverage:
+    enabled: bool = False
+    unit_price: int = 0
+
+
+@dataclass
+class AddPlanPriceParamsIntroOffer:
+    enabled: bool = False
+    discount_type: DiscountType | None = None
+    discount_value: int | None = None
+    duration_cycles: int | None = None
+
+
+@dataclass
+class ApiKey:
+    id: str = ""
+    name: str = ""
+    prefix: str = ""
+    expires_at: str | None = None
+    last_used_at: str | None = None
+    created_at: str = ""
+    object: Literal["api_key"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class BalanceAdjustment:
+    amount: int = 0
+    new_balance: int = 0
+    reason: str | None = None
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class BalanceTopup:
+    amount: int = 0
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class BatchCreateCustomersParamsCustomersItem:
+    email: str = ""
+    id: str | None = None
+    external_id: str | None = None
+    full_name: str | None = None
+    timezone: Timezone | None = None
+    metadata: dict[str, Any] | None = None
+    address: BatchCreateCustomersParamsCustomersItemAddress | None = None
+
+
+@dataclass
+class BatchCreateCustomersParamsCustomersItemAddress:
+    line1: str = ""
+    line2: str | None = None
+    city: str = ""
+    state: str | None = None
+    postal_code: str = ""
+    country: str = ""
+    region: str | None = None
+
+
+@dataclass
+class BulkSeatUpdate:
+    id: str = ""
+    feature_code: str = ""
+    previous_balance: int = 0
+    new_balance: int = 0
+    ts: str = ""
+    created_at: str = ""
+    object: Literal["seat"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CanceledSubscription:
+    id: str = ""
+    customer_id: str = ""
+    status: SubscriptionStatus | None = None
+    canceled_at: str = ""
+    cancel_reason: str | None = None
+    scheduled_cancellation_date: str = ""
+    updated_at: str = ""
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CompletePayoutVerificationParamsBank:
+    account_number: str = ""
+    account_holder_name: str = ""
+    routing_number: str | None = None
+    account_type: Literal["checking", "savings"] | None = None
+
+
+@dataclass
+class CompletePayoutVerificationParamsCompany:
+    name: str = ""
+    tax_id: str = ""
+    address: CompletePayoutVerificationParamsCompanyAddress | None = None
+    representative: CompletePayoutVerificationParamsCompanyRepresentative | None = None
+
+
+@dataclass
+class CompletePayoutVerificationParamsCompanyAddress:
     line1: str = ""
     line2: str | None = None
     city: str = ""
@@ -715,304 +324,616 @@ class CustomerAddress:
 
 
 @dataclass
-class CustomersBatchResult:
-    successful: list[Customer] = field(default_factory=list)
-    failed: list[dict[str, Any]] = field(default_factory=list)
+class CompletePayoutVerificationParamsCompanyRepresentative:
+    first_name: str = ""
+    last_name: str = ""
+    phone: str | None = None
+    email: str | None = None
 
 
 @dataclass
-class CanUseResult:
-    allowed: bool = False
-    will_be_charged: bool = False
-    reason: str | None = None
+class CompletePayoutVerificationParamsIndividual:
+    first_name: str = ""
+    last_name: str = ""
+    phone: str = ""
+    date_of_birth: str = ""
+    ssn_last4: str | None = None
+    id_number: str | None = None
+    address: CompletePayoutVerificationParamsIndividualAddress | None = None
 
 
 @dataclass
-class InvoiceLineItem:
-    line_type: InvoiceLineType = InvoiceLineType.PLAN_BASE
-    feature_name: str | None = None
+class CompletePayoutVerificationParamsIndividualAddress:
+    line1: str = ""
+    line2: str | None = None
+    city: str = ""
+    state: str | None = None
+    postal_code: str = ""
+    country: str = ""
+
+
+@dataclass
+class CreateCustomerParamsAddress:
+    line1: str = ""
+    line2: str | None = None
+    city: str = ""
+    state: str | None = None
+    postal_code: str = ""
+    country: str = ""
+    region: str | None = None
+
+
+@dataclass
+class CreatedApiKey:
+    id: str = ""
+    name: str = ""
+    api_key: str = ""
+    prefix: str = ""
+    expires_at: str = ""
+    created_at: str = ""
+    object: Literal["api_key"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CreatedInvoice:
+    id: str = ""
+    customer_id: str = ""
+    invoice_number: str = ""
+    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
+    invoice_type: InvoiceType | None = None
+    currency: str = ""
+    subtotal: int = 0
+    tax_amount: int = 0
+    total: int = 0
+    issue_date: str = ""
+    due_date: str = ""
+    memo: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["invoice"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CreateSubscriptionParamsIntroOffer:
+    discount_type: DiscountType | None = None
+    discount_value: int = 0
+    duration_cycles: int = 0
+
+
+@dataclass
+class CreditGrant:
+    credits: int = 0
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CreditPack:
+    id: str = ""
+    name: str = ""
     description: str | None = None
+    credits: int = 0
+    price: int = 0
+    currency: str | None = None
+    is_active: bool | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    object: Literal["credit_pack"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Customer:
+    id: str = ""
+    external_id: str | None = None
+    full_name: str | None = None
+    email: str = ""
+    timezone: str | None = None
+    metadata: dict[str, Any] | None = None
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["customer"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CustomerBatch:
+    successful: list[CustomerBatchSuccessfulItem] = field(default_factory=list)
+    failed: list[CustomerBatchFailedItem] = field(default_factory=list)
+    object: Literal["customer"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CustomerBatchFailedItem:
+    index: int = 0
+    error: str = ""
+    data: CustomerBatchFailedItemData | None = None
+
+
+@dataclass
+class CustomerBatchFailedItemData:
+    id: str | None = None
+    external_id: str | None = None
+    email: str = ""
+    full_name: str | None = None
+    timezone: str | None = None
+    metadata: dict[str, Any] | None = None
+    address: CustomerBatchFailedItemDataAddress | None = None
+
+
+@dataclass
+class CustomerBatchFailedItemDataAddress:
+    line1: str = ""
+    line2: str | None = None
+    city: str = ""
+    state: str | None = None
+    postal_code: str = ""
+    country: str = ""
+    region: str | None = None
+
+
+@dataclass
+class CustomerBatchSuccessfulItem:
+    id: str = ""
+    external_id: str | None = None
+    email: str = ""
+
+
+@dataclass
+class DefaultPlanPrice:
+    id: str = ""
+    is_default: Literal[True] | None = None
+    object: Literal["plan"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class DeletedObject:
+    id: str = ""
+    deleted: Literal[True] | None = None
+    object: str = ""
+    livemode: bool = False
+
+
+@dataclass
+class DeletedPlanRegionalPricing:
+    deleted: Literal[True] | None = None
+    object: Literal["plan"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class DeletedSubscriptionAddon:
+    id: str = ""
+    status: Literal["inactive"] | None = None
+    deactivated_at: str | None = None
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Feature:
+    id: str = ""
+    name: str = ""
+    code: str = ""
+    type: FeatureType | None = None
+    description: str | None = None
+    unit_name: str | None = None
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["feature"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class FeatureAccess:
+    code: str = ""
+    name: str = ""
+    type: FeatureType | None = None
+    allowed: bool = False
+    enabled: bool | None = None
+    current: float | None = None
+    included: float | None = None
+    remaining: float | None = None
+    overage_quantity: float | None = None
+    overage_unit_price: float | None = None
+    unlimited: bool | None = None
+    overage_enabled: bool | None = None
+    billed_quantity: float | None = None
+    object: Literal["feature"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class FeatureLookup:
+    allowed: bool = False
+    code: str | None = None
+    name: str | None = None
+    type: FeatureType | None = None
+    enabled: bool | None = None
+    current: float | None = None
+    included: float | None = None
+    remaining: float | None = None
+    overage_quantity: float | None = None
+    overage_unit_price: float | None = None
+    unlimited: bool | None = None
+    overage_enabled: bool | None = None
+    billed_quantity: float | None = None
+    will_be_charged: bool | None = None
+    reason: str | None = None
+    object: Literal["feature"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Invoice:
+    id: str = ""
+    customer_id: str = ""
+    subscription_id: str | None = None
+    invoice_number: str = ""
+    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
+    invoice_type: InvoiceType | None = None
+    currency: str = ""
+    subtotal: int = 0
+    discount_amount: int = 0
+    credit_applied: int | None = None
+    tax_amount: int = 0
+    total: int = 0
+    period_start: str = ""
+    period_end: str = ""
+    issue_date: str = ""
+    due_date: str = ""
+    plan_name: str | None = None
+    memo: str | None = None
+    po_number: str | None = None
+    reference: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    updated_at: str = ""
+    line_items: list[InvoiceLineItemsItem] | None = None
+    object: Literal["invoice"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class InvoiceDownload:
+    url: str = ""
+    expires_at: str = ""
+    object: Literal["invoice"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class InvoiceLineItemsItem:
+    line_type: (
+        Literal[
+            "plan_base",
+            "feature_overage",
+            "feature_seats",
+            "feature_quota",
+            "discount",
+            "promo_code_discount",
+            "credit",
+            "balance_overage",
+            "addon_base",
+        ]
+        | None
+    ) = None
+    feature_name: str | None = None
+    description: str = ""
     quantity: int = 0
     unit_amount: int = 0
     amount: int = 0
     included_amount: int | None = None
     used_amount: int | None = None
     overage_amount: int | None = None
-    discount_type: DiscountType | None = None
+    discount_type: str | None = None
     discount_value: int | None = None
     discount_name: str | None = None
-    charge_type: ChargeType | None = None
+    charge_type: Literal["standard", "advance", "true_up"] | None = None
 
 
 @dataclass
-class InvoiceDownloadResult:
-    url: str = ""
-    expires_at: str = ""
-
-
-@dataclass
-class InvoiceSendResult:
-    sent: bool = False
-    sent_at: str = ""
-
-
-@dataclass
-class InvoiceStatusResult:
-    id: str
-    status: Literal["paid", "void"] = "paid"
+class InvoiceStatus:
+    id: str = ""
+    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
     updated_at: str = ""
+    object: Literal["invoice"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class CreateAdjustmentResult:
-    id: str
-    object: str = "invoice"
-    livemode: bool = False
-    customer_id: str = ""
-    invoice_number: str = ""
-    status: Literal["outstanding", "paid"] = "outstanding"
-    invoice_type: InvoiceType = InvoiceType.ADJUSTMENT
+class Payout:
+    id: str = ""
+    status: Literal["pending", "in_transit", "paid", "failed", "canceled"] | None = None
+    amount: int = 0
+    fee: int = 0
+    net_amount: int = 0
     currency: str = ""
-    subtotal: int = 0
-    tax_amount: int = 0
-    total: int = 0
-    issue_date: str = ""
-    due_date: str | None = None
-    memo: str | None = None
+    description: str | None = None
+    provider_transfer_id: str = ""
+    created_at: str = ""
+    object: Literal["payout"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PayoutBankAccount:
+    id: str = ""
+    provider_external_account_id: str | None = None
+    holder_name: str = ""
+    last4: str = ""
+    bank_name: str | None = None
+    country: str = ""
+    currency: str = ""
+    account_type: Literal["checking", "savings"] | None = None
+    is_default: bool = False
+    status: Literal["active", "errored"] | None = None
+    created_at: str = ""
+    object: Literal["payout_bank_account"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PayoutVerification:
+    provider_account_id: str = ""
+    status: Literal["pending_verification", "verified", "restricted", "disabled"] | None = None
+    transfers_enabled: bool = False
+    already_exists: bool | None = None
+    business_type: Literal["individual", "company"] | None = None
+    country: str | None = None
+    object: Literal["payout_account"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Plan:
+    id: str = ""
+    name: str = ""
+    code: str = ""
+    description: str | None = None
+    consumption_model: ConsumptionModel | None = None
+    is_public: bool = False
+    is_default: bool = False
+    is_free: bool = False
+    block_on_exhaustion: bool | None = None
+    sort_order: int = 0
+    plan_group_id: str | None = None
     metadata: dict[str, Any] | None = None
     created_at: str = ""
     updated_at: str = ""
+    features: list[PlanFeaturesItem] | None = None
+    prices: list[PlanPricesItem] | None = None
+    exchange_rates: list[PlanExchangeRatesItem] | None = None
+    object: Literal["plan"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class TransactionRefundResult:
-    id: str
-    status: Literal["refunded"] = "refunded"
+class PlanChange:
+    requires_checkout: bool | None = None
+    checkout_url: str | None = None
+    id: str | None = None
+    scheduled: bool | None = None
+    scheduled_for: str | None = None
+    change_type: (
+        Literal[
+            "subscription.plan_downgrade", "subscription.interval_change", "subscription.cancel"
+        ]
+        | None
+    ) = None
+    customer_id: str | None = None
+    new_plan_id: str | None = None
+    new_plan_name: str | None = None
+    new_billing_interval: str | None = None
+    previous_plan: PlanChangePreviousPlan | None = None
+    current_plan: PlanChangeCurrentPlan | None = None
+    billing_interval: str | None = None
+    billing: PlanChangeBilling | None = None
+    invoice_id: str | None = None
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class TransactionRetryResult:
-    id: str
-    status: Literal["processing"] = "processing"
-    retry_invoice_number: str = ""
+class PlanChangeBilling:
+    credit: int = 0
+    credits_applied: int = 0
+    charge: int = 0
+    tax_amount: int = 0
+    net_amount: int = 0
+    total_charged: int = 0
+    remaining_credit_balance: int = 0
 
 
 @dataclass
-class UsageEventProperty:
-    id: str
-    usage_event_id: str = ""
-    property: str = ""
-    value: str = ""
-    created_at: str = ""
-
-
-@dataclass
-class UsageCheckResult:
-    allowed: bool = False
-    consumption_model: ConsumptionModel = ConsumptionModel.METERED
-    feature: str = ""
-    quantity: int = 0
-    current: int | None = None
-    remaining: int | None = None
-    unlimited: bool | None = None
-    included: int | None = None
-    overage_enabled: bool | None = None
-    overage_unit_price: int | None = None
-    credits_per_unit: int | None = None
-    estimated_credits: int | None = None
-    plan_credits: int | None = None
-    purchased_credits: int | None = None
-    total_credits: int | None = None
-    unit_price: int | None = None
-    estimated_amount: int | None = None
-    current_balance: int | None = None
-    block_on_exhaustion: bool | None = None
-    currency: str | None = None
-    reason: UsageCheckDenialReason | None = None
-    message: str | None = None
-
-
-@dataclass
-class PlanPrice:
-    billing_interval: BillingInterval = BillingInterval.MONTHLY
+class PlanChangeCurrentPlan:
+    id: str = ""
+    name: str = ""
     price: int = 0
-    is_default: bool = False
-    trial_days: int = 0
-    intro_offer: dict[str, Any] | None = None
+
+
+@dataclass
+class PlanChangePreviousPlan:
+    id: str = ""
+    name: str = ""
+
+
+@dataclass
+class PlanExchangeRatesItem:
+    currency: str = ""
+    exchange_rate: float = 0.0
 
 
 @dataclass
 class PlanFeature:
-    code: str = ""
-    name: str = ""
-    type: FeatureType = FeatureType.BOOLEAN
-    unit_name: str | None = None
-    enabled: bool | None = None
-    included_amount: int | None = None
-    unlimited: bool | None = None
-    overage_enabled: bool | None = None
-    overage_unit_price: int | None = None
-    overage: dict[str, Any] | None = None
-
-
-@dataclass
-class PlanDetail:
-    id: str
-    object: str = "plan"
-    livemode: bool = False
-    code: str = ""
-    name: str = ""
-    description: str | None = None
-    is_public: bool = True
-    is_default: bool = False
-    sort_order: int = 0
-    prices: list[PlanPrice] = field(default_factory=list)
-    features: list[PlanFeature] = field(default_factory=list)
-    created_at: str = ""
-    updated_at: str = ""
-
-
-@dataclass
-class PlanFeatureManage:
     plan_id: str = ""
     feature_id: str = ""
     enabled: bool = False
-    included_amount: int | None = None
+    included_amount: int = 0
     unlimited: bool = False
-    overage_enabled: bool = False
+    overage: PlanFeatureOverage | None = None
     credits_per_unit: int | None = None
-    pricing_mode: PricingMode = PricingMode.FIXED
-    overage_unit_price: int | None = None
+    pricing_mode: Literal["fixed", "ai_model"] | None = None
     margin: int | None = None
+    object: Literal["plan"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class RegionalPriceResult:
-    price_id: str = ""
-    overrides: list[dict[str, Any]] = field(default_factory=list)
+class PlanFeatureOverage:
+    enabled: bool = False
+    unit_price: int = 0
 
 
 @dataclass
-class DeleteResult:
-    id: str
-    deleted: bool = True
-
-
-@dataclass
-class RemoveResult:
-    id: str
-    removed: bool = True
-
-
-@dataclass
-class FeatureSummary:
+class PlanFeaturesItem:
     code: str = ""
     name: str = ""
-    type: FeatureType = FeatureType.BOOLEAN
-    enabled: bool | None = None
-    usage: dict[str, Any] | None = None
+    type: FeatureType | None = None
+    unit_name: str | None = None
+    enabled: bool = False
+    included_amount: int | None = None
+    unlimited: bool = False
+    overage: PlanFeaturesItemOverage | None = None
+    regional_prices: list[PlanFeaturesItemRegionalPricesItem] | None = None
 
 
 @dataclass
-class CreditsSummary:
-    remaining: int = 0
-    included: int = 0
-    purchased: int = 0
+class PlanFeaturesItemOverage:
+    enabled: bool = False
+    model: Literal["per_unit"] | None = None
+    unit_price: int | None = None
 
 
 @dataclass
-class BalanceSummary:
-    remaining: int = 0
-    included: int = 0
+class PlanFeaturesItemRegionalPricesItem:
     currency: str = ""
+    overage_unit_price: int | None = None
+    auto_synced: bool = False
 
 
 @dataclass
-class CancellationSummary:
-    scheduled_at: str = ""
-    reason: str | None = None
-    effective_at: str = ""
-
-
-@dataclass
-class DiscountSummary:
-    type: DiscountType = DiscountType.PERCENTAGE
-    value: int = 0
-    name: str | None = None
-    ends_at: str | None = None
-
-
-@dataclass
-class ActiveSubscription:
-    id: str
-    object: str = "subscription"
-    livemode: bool = False
-    customer_id: str = ""
-    plan: dict[str, Any] | None = None
+class PlanGroup:
+    id: str = ""
     name: str = ""
     description: str | None = None
-    status: SubscriptionStatus = SubscriptionStatus.ACTIVE
-    consumption_model: ConsumptionModel | None = None
-    trial_ends_at: str | None = None
-    current_period: dict[str, Any] | None = None
-    features: list[FeatureSummary] = field(default_factory=list)
-    credits: CreditsSummary | None = None
-    balance: BalanceSummary | None = None
-    cancellation: CancellationSummary | None = None
-    discount: DiscountSummary | None = None
-    start_date: str = ""
-    end_date: str | None = None
-    billing_day_of_month: int = 1
-    next_billing_date: str = ""
-    checkout_url: str | None = None
+    is_public: bool = False
     created_at: str = ""
     updated_at: str = ""
+    plans: list[PlanGroupPlansItem] | None = None
+    object: Literal["plan_group"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class CreatedSubscription:
-    id: str
-    object: str = "subscription"
-    livemode: bool = False
-    customer_id: str = ""
-    plan_id: str = ""
-    plan_name: str = ""
+class PlanGroupPlansItem:
+    id: str = ""
     name: str = ""
-    status: SubscriptionStatus = SubscriptionStatus.DRAFT
+    sort_order: int = 0
+
+
+@dataclass
+class PlanPrice:
+    id: str = ""
+    plan_id: str = ""
     billing_interval: BillingInterval | None = None
-    trial_ends_at: str | None = None
-    start_date: str = ""
-    end_date: str | None = None
-    current_period_start: str | None = None
-    current_period_end: str | None = None
-    billing_day_of_month: int = 1
-    checkout_url: str | None = None
+    price: int = 0
+    is_default: bool = False
+    trial_days: int = 0
+    included_balance: int | None = None
+    included_credits: int | None = None
+    intro_offer: PlanPriceIntroOffer | None = None
     created_at: str = ""
     updated_at: str = ""
-    intro_offer_ends_at: str | None = None
-    intro_offer_discount_type: DiscountType | None = None
-    intro_offer_discount_value: int | None = None
-
-
-@dataclass
-class SubscriptionListItem:
-    id: str
-    object: str = "subscription"
+    object: Literal["plan"] | None = None
     livemode: bool = False
-    customer_id: str = ""
-    plan_id: str = ""
-    plan_name: str = ""
-    name: str = ""
-    status: SubscriptionStatus = SubscriptionStatus.DRAFT
-    start_date: str = ""
-    end_date: str = ""
-    billing_day_of_month: int = 1
-    created_at: str = ""
-    updated_at: str = ""
 
 
 @dataclass
-class PreviewChangeResult:
+class PlanPriceIntroOffer:
+    enabled: bool = False
+    discount_type: DiscountType | None = None
+    discount_value: int | None = None
+    duration_cycles: int | None = None
+
+
+@dataclass
+class PlanPricesItem:
+    billing_interval: BillingInterval | None = None
+    price: int = 0
+    is_default: bool = False
+    trial_days: int = 0
+    included_balance: int | None = None
+    included_credits: int | None = None
+    intro_offer: PlanPricesItemIntroOffer | None = None
+    regional_prices: list[PlanPricesItemRegionalPricesItem] | None = None
+
+
+@dataclass
+class PlanPricesItemIntroOffer:
+    enabled: bool = False
+    discount_type: DiscountType | None = None
+    discount_value: int | None = None
+    duration_cycles: int | None = None
+
+
+@dataclass
+class PlanPricesItemRegionalPricesItem:
+    currency: str = ""
+    price: int = 0
+    included_balance: int | None = None
+    auto_synced: bool = False
+
+
+@dataclass
+class PlanRegionalPricing:
+    price_id: str = ""
+    overrides: list[PlanRegionalPricingOverridesItem] = field(default_factory=list)
+    object: Literal["plan"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PlanRegionalPricingOverridesItem:
+    currency: str = ""
+    price: int = 0
+    included_balance: int | None = None
+
+
+@dataclass
+class PlanRegionalPricingResult:
+    plan_id: str = ""
+    currency: str = ""
+    exchange_rate: float = 0.0
+    prices_configured: int = 0
+    features_configured: int = 0
+    object: Literal["plan"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PlanVisibility:
+    id: str = ""
+    is_public: bool = False
+    object: Literal["plan"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PortalAccess:
+    portal_url: str = ""
+    object: Literal["portal_session"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PreviewChange:
+    currency: str = ""
     current_plan_credit: int = 0
     new_plan_charge: int = 0
     estimated_total: int = 0
@@ -1020,59 +941,442 @@ class PreviewChangeResult:
     days_remaining: int = 0
     total_days: int = 0
     is_upgrade: bool = False
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class ActivateAddonResult:
-    addon_id: str = ""
-    status: str = ""
-    prorated_charge: int = 0
+class PromoCode:
+    id: str = ""
+    code: str = ""
+    discount_type: DiscountType | None = None
+    discount_value: int = 0
+    duration_cycles: int | None = None
+    max_redemptions: int | None = None
+    expires_at: str | None = None
+    is_active: bool = False
+    redemption_count: int = 0
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["promo_code"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class DeactivateAddonResult:
-    id: str
-    status: str = ""
-    deactivated_at: str = ""
+class RemovedPlanFeature:
+    id: str = ""
+    removed: Literal[True] | None = None
+    object: Literal["plan"] | None = None
+    livemode: bool = False
 
 
 @dataclass
-class AdjustBalanceResult:
-    amount: int = 0
+class RemovedPlanFromGroup:
+    id: str = ""
+    removed: bool = False
+    object: Literal["plan_group"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class ReorderedPlans:
+    reordered: bool = False
+    object: Literal["plan_group"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SeatBalance:
+    current: int = 0
+    as_of: str = ""
+    object: Literal["seat"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SeatBalanceListItem:
+    object: Literal["seat"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SeatEvent:
+    id: str = ""
+    customer_id: str = ""
+    feature_code: str = ""
+    previous_balance: int = 0
     new_balance: int = 0
+    ts: str = ""
+    created_at: str = ""
+    object: Literal["seat"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SentInvoice:
+    sent: bool = False
+    sent_at: str = ""
+    object: Literal["invoice"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SetPlanRegionalPricingParamsFeaturesItem:
+    feature_id: str = ""
+    overage_unit_price: int = 0
+
+
+@dataclass
+class SetPlanRegionalPricingParamsIntroOffersItem:
+    price_id: str = ""
+    discount_type: DiscountType | None = None
+    discount_value: int = 0
+    duration_cycles: int = 0
+
+
+@dataclass
+class SetPlanRegionalPricingParamsPricesItem:
+    price_id: str = ""
+    price: int = 0
+    included_balance: int | None = None
+
+
+@dataclass
+class Subscription:
+    id: str = ""
+    customer_id: str = ""
+    plan: SubscriptionPlan | None = None
+    name: str = ""
+    description: str | None = None
+    status: SubscriptionStatus | None = None
+    billing_interval: BillingInterval | None = None
+    consumption_model: ConsumptionModel | None = None
+    trial_ends_at: str | None = None
+    current_period: SubscriptionCurrentPeriod | None = None
+    features: list[SubscriptionFeaturesItem] | None = None
+    credits: SubscriptionCredits | None = None
+    balance: SubscriptionBalance | None = None
+    cancellation: SubscriptionCancellation | None = None
+    cancel_at_period_end: bool = False
+    discount: SubscriptionDiscount | None = None
+    start_date: str = ""
+    end_date: str | None = None
+    billing_day_of_month: int | None = None
+    next_billing_date: str | None = None
+    checkout_url: str | None = None
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SubscriptionAddon:
+    addon_id: str = ""
+    status: Literal["active"] | None = None
+    prorated_charge: int = 0
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SubscriptionBalance:
+    remaining: float = 0.0
+    included: float = 0.0
+    currency: str = ""
+
+
+@dataclass
+class SubscriptionCancellation:
+    scheduled_at: str = ""
     reason: str | None = None
+    effective_at: str = ""
 
 
 @dataclass
-class TopupBalanceResult:
-    amount: int = 0
+class SubscriptionCredits:
+    remaining: float = 0.0
+    included: float = 0.0
+    purchased: float = 0.0
 
 
 @dataclass
-class PurchaseCreditsResult:
-    credits: int = 0
+class SubscriptionCurrentPeriod:
+    start: str = ""
+    end: str = ""
+    days_remaining: float = 0.0
 
 
 @dataclass
-class WebhookTestResult:
-    success: bool = False
-    delivery_id: str = ""
-    delivered_at: str = ""
+class SubscriptionDiscount:
+    type: DiscountType | None = None
+    value: float = 0.0
+    name: str | None = None
+    ends_at: str | None = None
 
 
-# Dataclasses that appear as nested fields of other dataclasses. Registered so
-# the parser can resolve their string annotations (e.g. "list[InvoiceLineItem]",
-# "CreditsSummary | None") into typed objects when constructing the parent.
-_NESTED_DATACLASSES: list[type[Any]] = [
-    Customer,
-    InvoiceLineItem,
-    PlanPrice,
-    PlanFeature,
-    FeatureSummary,
-    CreditsSummary,
-    BalanceSummary,
-    CancellationSummary,
-    DiscountSummary,
-]
+@dataclass
+class SubscriptionFeaturesItem:
+    code: str = ""
+    name: str = ""
+    type: FeatureType | None = None
+    enabled: bool | None = None
+    usage: SubscriptionFeaturesItemUsage | None = None
 
-_DATACLASS_TYPES.update({cls.__name__: cls for cls in _NESTED_DATACLASSES})
+
+@dataclass
+class SubscriptionFeaturesItemUsage:
+    current: float = 0.0
+    included: float = 0.0
+    overage_quantity: float = 0.0
+    overage_unit_price: float | None = None
+
+
+@dataclass
+class SubscriptionPlan:
+    id: str = ""
+    name: str = ""
+    base_price: float | None = None
+
+
+@dataclass
+class TestClock:
+    simulated_time: str | None = None
+    is_active: bool = False
+    now: str = ""
+    object: Literal["test_clock"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class TestClockBilling:
+    customers_found: int = 0
+    enqueued: int = 0
+    failed: int = 0
+    object: Literal["test_clock"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Transaction:
+    id: str = ""
+    invoice_id: str | None = None
+    gross_amount: int = 0
+    subtotal: int = 0
+    tax_amount: int = 0
+    currency: str = ""
+    status: TransactionStatus | None = None
+    customer_email: str | None = None
+    customer_name: str | None = None
+    paid_at: str | None = None
+    created_at: str = ""
+    updated_at: str = ""
+    available_at: str | None = None
+    object: Literal["transaction"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class TransactionRefund:
+    id: str = ""
+    status: Literal["refunded"] | None = None
+    object: Literal["transaction"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class TransactionRetry:
+    id: str = ""
+    status: Literal["processing"] | None = None
+    retry_invoice_number: str = ""
+    object: Literal["transaction"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UncanceledSubscription:
+    id: str = ""
+    customer_id: str = ""
+    status: SubscriptionStatus | None = None
+    updated_at: str = ""
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UpdateCustomerParamsAddress:
+    line1: str = ""
+    line2: str | None = None
+    city: str = ""
+    state: str | None = None
+    postal_code: str = ""
+    country: str = ""
+    region: str | None = None
+
+
+@dataclass
+class UpdatePlanFeatureParamsOverage:
+    enabled: bool | None = None
+    unit_price: int | None = None
+
+
+@dataclass
+class UpdatePlanPriceParamsIntroOffer:
+    enabled: bool | None = None
+    discount_type: DiscountType | None = None
+    discount_value: int | None = None
+    duration_cycles: int | None = None
+
+
+@dataclass
+class UpsertRegionalPricesParamsOverridesItem:
+    currency: str = ""
+    price: int = 0
+    included_balance: int | None = None
+
+
+@dataclass
+class UsageQuota:
+    feature_code: str = ""
+    current: float = 0.0
+    included: float = 0.0
+    remaining: float | None = None
+    billed_quantity: float = 0.0
+    unlimited: bool = False
+    overage_enabled: bool = False
+    as_of: str | None = None
+    object: Literal["usage_quota"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UsageQuotaEvent:
+    id: str = ""
+    customer_id: str = ""
+    feature_code: str = ""
+    previous_balance: int = 0
+    new_balance: int = 0
+    ts: str = ""
+    created_at: str = ""
+    object: Literal["usage_quota"] | None = None
+    livemode: bool = False
+
+
+_ENUM_TYPES.update(
+    {
+        "SubscriptionStatus": SubscriptionStatus,
+        "BillingInterval": BillingInterval,
+        "ConsumptionModel": ConsumptionModel,
+        "InvoiceType": InvoiceType,
+        "TransactionStatus": TransactionStatus,
+        "FeatureType": FeatureType,
+        "DiscountType": DiscountType,
+        "Timezone": Timezone,
+    }
+)
+
+_DATACLASS_TYPES.update(
+    {
+        "ActiveAddon": ActiveAddon,
+        "AddedPlanToGroup": AddedPlanToGroup,
+        "Addon": Addon,
+        "AddPlanFeatureParamsOverage": AddPlanFeatureParamsOverage,
+        "AddPlanPriceParamsIntroOffer": AddPlanPriceParamsIntroOffer,
+        "ApiKey": ApiKey,
+        "BalanceAdjustment": BalanceAdjustment,
+        "BalanceTopup": BalanceTopup,
+        "BatchCreateCustomersParamsCustomersItem": BatchCreateCustomersParamsCustomersItem,
+        "BatchCreateCustomersParamsCustomersItemAddress": BatchCreateCustomersParamsCustomersItemAddress,
+        "BulkSeatUpdate": BulkSeatUpdate,
+        "CanceledSubscription": CanceledSubscription,
+        "CompletePayoutVerificationParamsBank": CompletePayoutVerificationParamsBank,
+        "CompletePayoutVerificationParamsCompany": CompletePayoutVerificationParamsCompany,
+        "CompletePayoutVerificationParamsCompanyAddress": CompletePayoutVerificationParamsCompanyAddress,
+        "CompletePayoutVerificationParamsCompanyRepresentative": CompletePayoutVerificationParamsCompanyRepresentative,
+        "CompletePayoutVerificationParamsIndividual": CompletePayoutVerificationParamsIndividual,
+        "CompletePayoutVerificationParamsIndividualAddress": CompletePayoutVerificationParamsIndividualAddress,
+        "CreateCustomerParamsAddress": CreateCustomerParamsAddress,
+        "CreatedApiKey": CreatedApiKey,
+        "CreatedInvoice": CreatedInvoice,
+        "CreateSubscriptionParamsIntroOffer": CreateSubscriptionParamsIntroOffer,
+        "CreditGrant": CreditGrant,
+        "CreditPack": CreditPack,
+        "Customer": Customer,
+        "CustomerBatch": CustomerBatch,
+        "CustomerBatchFailedItem": CustomerBatchFailedItem,
+        "CustomerBatchFailedItemData": CustomerBatchFailedItemData,
+        "CustomerBatchFailedItemDataAddress": CustomerBatchFailedItemDataAddress,
+        "CustomerBatchSuccessfulItem": CustomerBatchSuccessfulItem,
+        "DefaultPlanPrice": DefaultPlanPrice,
+        "DeletedObject": DeletedObject,
+        "DeletedPlanRegionalPricing": DeletedPlanRegionalPricing,
+        "DeletedSubscriptionAddon": DeletedSubscriptionAddon,
+        "Feature": Feature,
+        "FeatureAccess": FeatureAccess,
+        "FeatureLookup": FeatureLookup,
+        "Invoice": Invoice,
+        "InvoiceDownload": InvoiceDownload,
+        "InvoiceLineItemsItem": InvoiceLineItemsItem,
+        "InvoiceStatus": InvoiceStatus,
+        "Payout": Payout,
+        "PayoutBankAccount": PayoutBankAccount,
+        "PayoutVerification": PayoutVerification,
+        "Plan": Plan,
+        "PlanChange": PlanChange,
+        "PlanChangeBilling": PlanChangeBilling,
+        "PlanChangeCurrentPlan": PlanChangeCurrentPlan,
+        "PlanChangePreviousPlan": PlanChangePreviousPlan,
+        "PlanExchangeRatesItem": PlanExchangeRatesItem,
+        "PlanFeature": PlanFeature,
+        "PlanFeatureOverage": PlanFeatureOverage,
+        "PlanFeaturesItem": PlanFeaturesItem,
+        "PlanFeaturesItemOverage": PlanFeaturesItemOverage,
+        "PlanFeaturesItemRegionalPricesItem": PlanFeaturesItemRegionalPricesItem,
+        "PlanGroup": PlanGroup,
+        "PlanGroupPlansItem": PlanGroupPlansItem,
+        "PlanPrice": PlanPrice,
+        "PlanPriceIntroOffer": PlanPriceIntroOffer,
+        "PlanPricesItem": PlanPricesItem,
+        "PlanPricesItemIntroOffer": PlanPricesItemIntroOffer,
+        "PlanPricesItemRegionalPricesItem": PlanPricesItemRegionalPricesItem,
+        "PlanRegionalPricing": PlanRegionalPricing,
+        "PlanRegionalPricingOverridesItem": PlanRegionalPricingOverridesItem,
+        "PlanRegionalPricingResult": PlanRegionalPricingResult,
+        "PlanVisibility": PlanVisibility,
+        "PortalAccess": PortalAccess,
+        "PreviewChange": PreviewChange,
+        "PromoCode": PromoCode,
+        "RemovedPlanFeature": RemovedPlanFeature,
+        "RemovedPlanFromGroup": RemovedPlanFromGroup,
+        "ReorderedPlans": ReorderedPlans,
+        "SeatBalance": SeatBalance,
+        "SeatBalanceListItem": SeatBalanceListItem,
+        "SeatEvent": SeatEvent,
+        "SentInvoice": SentInvoice,
+        "SetPlanRegionalPricingParamsFeaturesItem": SetPlanRegionalPricingParamsFeaturesItem,
+        "SetPlanRegionalPricingParamsIntroOffersItem": SetPlanRegionalPricingParamsIntroOffersItem,
+        "SetPlanRegionalPricingParamsPricesItem": SetPlanRegionalPricingParamsPricesItem,
+        "Subscription": Subscription,
+        "SubscriptionAddon": SubscriptionAddon,
+        "SubscriptionBalance": SubscriptionBalance,
+        "SubscriptionCancellation": SubscriptionCancellation,
+        "SubscriptionCredits": SubscriptionCredits,
+        "SubscriptionCurrentPeriod": SubscriptionCurrentPeriod,
+        "SubscriptionDiscount": SubscriptionDiscount,
+        "SubscriptionFeaturesItem": SubscriptionFeaturesItem,
+        "SubscriptionFeaturesItemUsage": SubscriptionFeaturesItemUsage,
+        "SubscriptionPlan": SubscriptionPlan,
+        "TestClock": TestClock,
+        "TestClockBilling": TestClockBilling,
+        "Transaction": Transaction,
+        "TransactionRefund": TransactionRefund,
+        "TransactionRetry": TransactionRetry,
+        "UncanceledSubscription": UncanceledSubscription,
+        "UpdateCustomerParamsAddress": UpdateCustomerParamsAddress,
+        "UpdatePlanFeatureParamsOverage": UpdatePlanFeatureParamsOverage,
+        "UpdatePlanPriceParamsIntroOffer": UpdatePlanPriceParamsIntroOffer,
+        "UpsertRegionalPricesParamsOverridesItem": UpsertRegionalPricesParamsOverridesItem,
+        "UsageQuota": UsageQuota,
+        "UsageQuotaEvent": UsageQuotaEvent,
+    }
+)

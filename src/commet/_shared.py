@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from enum import Enum
 from typing import Any, Callable
 
 from ._exceptions import CommetAPIError, CommetValidationError
@@ -15,7 +16,7 @@ _RETRYABLE_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 
 _BASE_URL = "https://commet.co"
 
-API_VERSION = "2026-05-25"
+API_VERSION = "2026-06-07"
 
 
 def to_snake(name: str) -> str:
@@ -39,11 +40,15 @@ def build_body(**kwargs: Any) -> dict[str, Any]:
     return {k: v for k, v in kwargs.items() if v is not None}
 
 
+def query_value(value: Any) -> Any:
+    if isinstance(value, Enum):
+        return value.value
+    return value
+
+
 def handle_error(status_code: int, data: Any) -> None:
     if not isinstance(data, dict):
-        raise CommetAPIError(
-            f"Request failed with status {status_code}", status_code=status_code
-        )
+        raise CommetAPIError(f"Request failed with status {status_code}", status_code=status_code)
 
     error_obj = data.get("error")
     if isinstance(error_obj, dict):
@@ -63,9 +68,7 @@ def handle_error(status_code: int, data: Any) -> None:
         for detail in error_details:
             field = detail.get("field", "unknown")
             errors.setdefault(field, []).append(detail.get("message", ""))
-        raise CommetValidationError(
-            error_message, validation_errors=errors
-        )
+        raise CommetValidationError(error_message, validation_errors=errors)
 
     raise CommetAPIError(
         error_message,
