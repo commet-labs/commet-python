@@ -8,8 +8,6 @@ from .._shared import build_body
 from ..types import (
     DeletedObject,
     Feature,
-    FeatureAccess,
-    FeatureLookup,
     FeatureType,
     _parse,
     _parse_list,
@@ -20,22 +18,13 @@ class AsyncFeaturesResource:
     def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
-    async def list(self, *, customer_id: str) -> ApiResponse[list[FeatureAccess]]:
-        """List all features for a customer's active subscription."""
-        query = build_body(customer_id=customer_id)
-        return _parse_list(await self._http.get("/features", query), FeatureAccess)
+    async def list(self) -> ApiResponse[list[Feature]]:
+        """List every feature defined in the organization. This is the organization's feature catalog (definitions), not a customer's feature access."""
+        return _parse_list(await self._http.get("/features"), Feature)
 
-    async def get(
-        self, code: str, *, customer_id: str, action: str | None = None
-    ) -> ApiResponse[FeatureLookup]:
-        """Get feature access details. Use action=canUse to check if customer can consume one more unit."""
-        query = build_body(customer_id=customer_id, action=action)
-        return _parse(await self._http.get(f"/features/{code}", query), FeatureLookup)
-
-    async def can_use(self, code: str, *, customer_id: str) -> ApiResponse[FeatureLookup]:
-        """Get feature access details. Use action=canUse to check if customer can consume one more unit."""
-        query = build_body(action="canUse", customer_id=customer_id)
-        return _parse(await self._http.get(f"/features/{code}", query), FeatureLookup)
+    async def get(self, code: str) -> ApiResponse[Feature]:
+        """Get a single feature definition by code from the organization's feature catalog."""
+        return _parse(await self._http.get(f"/features/{code}"), Feature)
 
     async def create(
         self,

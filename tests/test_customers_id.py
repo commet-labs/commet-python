@@ -69,7 +69,7 @@ def test_create_batch_sends_id(mock_api: respx.MockRouter) -> None:
 
 
 def test_addons_list_active(mock_api: respx.MockRouter) -> None:
-    route = mock_api.get("/addons/active").mock(
+    route = mock_api.get("/active-addons").mock(
         return_value=Response(200, json={"success": True, "data": []})
     )
 

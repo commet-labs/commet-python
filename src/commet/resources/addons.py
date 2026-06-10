@@ -19,10 +19,10 @@ class AddonsResource:
     def __init__(self, http: CommetHTTPClient) -> None:
         self._http = http
 
-    def list_active(self, *, customer_id: str | None = None) -> ApiResponse[list[ActiveAddon]]:
+    def list_active(self, *, customer_id: str) -> ApiResponse[list[ActiveAddon]]:
         """List all active add-ons for a customer's subscription."""
         query = build_body(customer_id=customer_id)
-        return _parse_list(self._http.get("/addons/active", query), ActiveAddon)
+        return _parse_list(self._http.get("/active-addons", query), ActiveAddon)
 
     def list(
         self, *, limit: int | None = None, cursor: str | None = None

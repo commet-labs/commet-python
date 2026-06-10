@@ -7,6 +7,7 @@ from .resources.addons import AddonsResource
 from .resources.api_keys import ApiKeysResource
 from .resources.credit_packs import CreditPacksResource
 from .resources.customers import CustomersResource
+from .resources.feature_access import FeatureAccessResource
 from .resources.features import FeaturesResource
 from .resources.invoices import InvoicesResource
 from .resources.payouts import PayoutsResource
@@ -27,6 +28,7 @@ class GeneratedSyncResources:
         self.api_keys = ApiKeysResource(http)
         self.credit_packs = CreditPacksResource(http)
         self.customers = CustomersResource(http)
+        self.feature_access = FeatureAccessResource(http)
         self.features = FeaturesResource(http)
         self.invoices = InvoicesResource(http)
         self.payouts = PayoutsResource(http)

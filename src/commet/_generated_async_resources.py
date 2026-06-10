@@ -7,6 +7,7 @@ from .async_resources.addons import AsyncAddonsResource
 from .async_resources.api_keys import AsyncApiKeysResource
 from .async_resources.credit_packs import AsyncCreditPacksResource
 from .async_resources.customers import AsyncCustomersResource
+from .async_resources.feature_access import AsyncFeatureAccessResource
 from .async_resources.features import AsyncFeaturesResource
 from .async_resources.invoices import AsyncInvoicesResource
 from .async_resources.payouts import AsyncPayoutsResource
@@ -27,6 +28,7 @@ class GeneratedAsyncResources:
         self.api_keys = AsyncApiKeysResource(http)
         self.credit_packs = AsyncCreditPacksResource(http)
         self.customers = AsyncCustomersResource(http)
+        self.feature_access = AsyncFeatureAccessResource(http)
         self.features = AsyncFeaturesResource(http)
         self.invoices = AsyncInvoicesResource(http)
         self.payouts = AsyncPayoutsResource(http)

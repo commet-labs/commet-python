@@ -16,7 +16,7 @@ _RETRYABLE_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 
 _BASE_URL = "https://commet.co"
 
-API_VERSION = "2026-06-07"
+API_VERSION = "2026-06-10"
 
 
 def to_snake(name: str) -> str:

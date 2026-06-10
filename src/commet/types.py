@@ -1058,6 +1058,7 @@ class Subscription:
     balance: SubscriptionBalance | None = None
     cancellation: SubscriptionCancellation | None = None
     cancel_at_period_end: bool = False
+    scheduled_plan_change: SubscriptionScheduledPlanChange | None = None
     discount: SubscriptionDiscount | None = None
     start_date: str = ""
     end_date: str | None = None
@@ -1137,6 +1138,15 @@ class SubscriptionPlan:
     id: str = ""
     name: str = ""
     base_price: float | None = None
+
+
+@dataclass
+class SubscriptionScheduledPlanChange:
+    change_type: Literal["plan_downgrade", "interval_change"] | None = None
+    new_plan_id: str | None = None
+    new_plan_name: str | None = None
+    new_billing_interval: str | None = None
+    scheduled_for: str = ""
 
 
 @dataclass
@@ -1366,6 +1376,7 @@ _DATACLASS_TYPES.update(
         "SubscriptionFeaturesItem": SubscriptionFeaturesItem,
         "SubscriptionFeaturesItemUsage": SubscriptionFeaturesItemUsage,
         "SubscriptionPlan": SubscriptionPlan,
+        "SubscriptionScheduledPlanChange": SubscriptionScheduledPlanChange,
         "TestClock": TestClock,
         "TestClockBilling": TestClockBilling,
         "Transaction": Transaction,

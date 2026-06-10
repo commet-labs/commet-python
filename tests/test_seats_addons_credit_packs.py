@@ -194,7 +194,7 @@ class TestAddons:
         }
 
     def test_list_active_parses_feature_type_enum(self, mock_api: respx.MockRouter) -> None:
-        mock_api.get("/addons/active").mock(
+        mock_api.get("/active-addons").mock(
             return_value=Response(
                 200,
                 json={
