@@ -14,10 +14,12 @@ from ._shared import (
     _BASE_URL,
     _RETRYABLE_STATUS_CODES,
     API_VERSION,
+    backoff_delay_seconds,
     build_headers,
     convert_keys,
     handle_error,
     query_value,
+    retry_delay_seconds,
     to_camel,
     to_snake,
 )
@@ -182,7 +184,7 @@ class AsyncCommetHTTPClient:
             )
         except httpx.TimeoutException:
             if attempt <= self._max_retries:
-                await self._wait(attempt)
+                await self._wait(backoff_delay_seconds(attempt), attempt)
                 return await self._execute(
                     method,
                     endpoint,
@@ -197,16 +199,20 @@ class AsyncCommetHTTPClient:
         logger.debug("Response: %d", resp.status_code)
 
         if resp.status_code in _RETRYABLE_STATUS_CODES and attempt <= self._max_retries:
-            await self._wait(attempt)
-            return await self._execute(
-                method,
-                endpoint,
-                json_body=json_body,
-                params=params,
-                headers=headers,
-                timeout=timeout,
-                attempt=attempt + 1,
+            delay = retry_delay_seconds(
+                resp.status_code, resp.headers.get("retry-after"), attempt
             )
+            if delay is not None:
+                await self._wait(delay, attempt)
+                return await self._execute(
+                    method,
+                    endpoint,
+                    json_body=json_body,
+                    params=params,
+                    headers=headers,
+                    timeout=timeout,
+                    attempt=attempt + 1,
+                )
 
         try:
             data = resp.json()
@@ -236,7 +242,6 @@ class AsyncCommetHTTPClient:
             next_cursor=converted.get("next_cursor"),
         )
 
-    async def _wait(self, attempt: int) -> None:
-        delay = min(1.0 * (2 ** (attempt - 1)), 8.0)
+    async def _wait(self, delay: float, attempt: int) -> None:
         logger.debug("Retrying in %ss (attempt %d/%d)", delay, attempt, self._max_retries)
         await asyncio.sleep(delay)

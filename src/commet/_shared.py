@@ -14,6 +14,30 @@ _LOWER_BEFORE_UPPER = re.compile(r"([a-z0-9])([A-Z])")
 
 _RETRYABLE_STATUS_CODES = frozenset({408, 429, 500, 502, 503, 504})
 
+_RETRY_AFTER_CAP_SECONDS = 30.0
+
+
+def backoff_delay_seconds(attempt: int) -> float:
+    return min(1.0 * (2 ** (attempt - 1)), 8.0)
+
+
+def retry_delay_seconds(
+    status_code: int, retry_after_header: str | None, attempt: int
+) -> float | None:
+    """429 retries wait exactly what the rate limiter reports in Retry-After
+    (seconds until the window resets); a 429 without the header did not come
+    from the rate limiter, so it is not retried (returns None). Exponential
+    backoff only applies to statuses that carry no server-provided wait."""
+    if status_code != 429:
+        return backoff_delay_seconds(attempt)
+    try:
+        seconds = float(retry_after_header) if retry_after_header is not None else 0.0
+    except ValueError:
+        return None
+    if seconds <= 0:
+        return None
+    return min(seconds, _RETRY_AFTER_CAP_SECONDS)
+
 _BASE_URL = "https://commet.co"
 
 API_VERSION = "2026-06-10"
