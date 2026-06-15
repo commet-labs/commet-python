@@ -38,6 +38,7 @@ def retry_delay_seconds(
         return None
     return min(seconds, _RETRY_AFTER_CAP_SECONDS)
 
+
 _BASE_URL = "https://commet.co"
 
 API_VERSION = "2026-06-10"

@@ -213,9 +213,7 @@ class CommetHTTPClient:
         logger.debug("Response: %d", resp.status_code)
 
         if resp.status_code in _RETRYABLE_STATUS_CODES and attempt <= self._max_retries:
-            delay = retry_delay_seconds(
-                resp.status_code, resp.headers.get("retry-after"), attempt
-            )
+            delay = retry_delay_seconds(resp.status_code, resp.headers.get("retry-after"), attempt)
             if delay is not None:
                 self._wait(delay, attempt)
                 return self._execute(
