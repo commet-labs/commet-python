@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import builtins
-from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
@@ -15,6 +14,7 @@ from .._preserved_types import (
 )
 from .._shared import build_body
 from ..resources.webhooks import verify_and_parse_payload, verify_signature
+from ..webhook_events import WebhookEvent
 
 
 class AsyncWebhooks:
@@ -26,7 +26,7 @@ class AsyncWebhooks:
 
     def verify_and_parse(
         self, *, raw_body: str, signature: str | None, secret: str
-    ) -> dict[str, Any] | None:
+    ) -> WebhookEvent | None:
         return verify_and_parse_payload(raw_body=raw_body, signature=signature, secret=secret)
 
     async def list(

@@ -4,6 +4,12 @@ import hashlib
 import hmac
 import json
 
+from commet import (
+    CustomerStateChangedData,
+    SubscriptionCreatedData,
+    WebhookEvent,
+    WebhookEventType,
+)
 from commet.resources.webhooks import Webhooks
 
 
@@ -79,20 +85,97 @@ class TestWebhookVerification:
             is False
         )
 
-    def test_verify_and_parse_valid(self) -> None:
-        result = self.webhooks.verify_and_parse(
+    def test_verify_and_parse_returns_typed_envelope(self) -> None:
+        event = self.webhooks.verify_and_parse(
             raw_body=self.payload,
             signature=self.valid_signature,
             secret=self.secret,
         )
-        assert result is not None
-        assert result["event"] == "subscription.created"
-        assert result["data"]["id"] == "sub_123"
+        assert isinstance(event, WebhookEvent)
+        assert event.event == WebhookEventType.SUBSCRIPTION_CREATED
+        assert event.data["id"] == "sub_123"
 
     def test_verify_and_parse_invalid_signature(self) -> None:
-        result = self.webhooks.verify_and_parse(
+        event = self.webhooks.verify_and_parse(
             raw_body=self.payload,
             signature="bad_sig",
             secret=self.secret,
         )
-        assert result is None
+        assert event is None
+
+
+class TestWebhookEventNarrowing:
+    def setup_method(self) -> None:
+        self.webhooks = Webhooks()
+        self.secret = "whsec_test_secret_key"
+
+    def _envelope(self, body: dict[str, object]) -> WebhookEvent:
+        raw = json.dumps(body)
+        event = self.webhooks.verify_and_parse(
+            raw_body=raw,
+            signature=_sign(raw, self.secret),
+            secret=self.secret,
+        )
+        assert event is not None
+        return event
+
+    def test_subscription_created_narrowing(self) -> None:
+        event = self._envelope(
+            {
+                "event": "subscription.created",
+                "timestamp": "2026-06-10T00:00:00Z",
+                "organizationId": "org_1",
+                "mode": "live",
+                "apiVersion": "2026-06-10",
+                "data": {
+                    "subscriptionId": "sub_123",
+                    "customerId": "cus_123",
+                    "planId": "plan_123",
+                    "planName": "Pro",
+                    "status": "pending_payment",
+                    "startDate": None,
+                    "name": None,
+                },
+            }
+        )
+        data = event.as_subscription_created()
+        assert isinstance(data, SubscriptionCreatedData)
+        assert data.subscriptionId == "sub_123"
+        assert data.planName == "Pro"
+        assert data.startDate is None
+
+    def test_customer_state_changed_nested_aux_types(self) -> None:
+        event = self._envelope(
+            {
+                "event": "customer.state_changed",
+                "data": {
+                    "customerId": "cus_123",
+                    "trigger": "subscription_activated",
+                    "status": "active",
+                    "subscriptionId": "sub_123",
+                    "plan": {"id": "plan_123", "name": "Pro"},
+                    "consumptionModel": "metered",
+                    "features": [
+                        {
+                            "code": "api_calls",
+                            "name": "API Calls",
+                            "type": "metered",
+                            "allowed": True,
+                            "included": 1000,
+                            "remaining": 250,
+                        }
+                    ],
+                    "seats": [],
+                    "credits": None,
+                    "balance": None,
+                },
+            }
+        )
+        data = event.as_customer_state_changed()
+        assert isinstance(data, CustomerStateChangedData)
+        assert data.plan is not None
+        assert data.plan.name == "Pro"
+        assert len(data.features) == 1
+        assert data.features[0].code == "api_calls"
+        assert data.features[0].remaining == 250
+        assert data.credits is None

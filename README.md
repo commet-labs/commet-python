@@ -69,22 +69,22 @@ commet.quota.get_all(customer_id="cus_123")
 ## Webhook verification
 
 ```python
-from commet import Webhooks
+from commet import WebhookEventType, Webhooks
 
 webhooks = Webhooks()
 
-payload = webhooks.verify_and_parse(
+event = webhooks.verify_and_parse(
     raw_body=request_body,
     signature=request.headers["x-commet-signature"],
     secret="whsec_xxx",
 )
 
-if payload is None:
+if event is None:
     raise ValueError("Invalid webhook signature")
 
-if payload["event"] == "subscription.activated":
-    # handle activation
-    pass
+if event.event == WebhookEventType.SUBSCRIPTION_ACTIVATED:
+    data = event.as_subscription_activated()
+    grant_access(data.customerId, data.invoiceTotal)
 ```
 
 ## Context manager

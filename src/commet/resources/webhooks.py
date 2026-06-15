@@ -4,7 +4,6 @@ import builtins
 import hashlib
 import hmac
 import json
-from typing import Any
 
 from .._http import ApiResponse, CommetHTTPClient
 from .._preserved_types import (
@@ -16,6 +15,8 @@ from .._preserved_types import (
     _parse_list,
 )
 from .._shared import build_body
+from ..types import _from_dict
+from ..webhook_events import WebhookEvent
 
 
 def sign_payload(payload: str, secret: str) -> str:
@@ -30,7 +31,7 @@ def verify_signature(*, payload: str, signature: str | None, secret: str) -> boo
 
 def verify_and_parse_payload(
     *, raw_body: str, signature: str | None, secret: str
-) -> dict[str, Any] | None:
+) -> WebhookEvent | None:
     if not verify_signature(payload=raw_body, signature=signature, secret=secret):
         return None
     try:
@@ -39,7 +40,7 @@ def verify_and_parse_payload(
         return None
     if not isinstance(parsed, dict):
         return None
-    return parsed
+    return _from_dict(WebhookEvent, parsed)
 
 
 class Webhooks:
@@ -51,7 +52,7 @@ class Webhooks:
 
     def verify_and_parse(
         self, *, raw_body: str, signature: str | None, secret: str
-    ) -> dict[str, Any] | None:
+    ) -> WebhookEvent | None:
         return verify_and_parse_payload(raw_body=raw_body, signature=signature, secret=secret)
 
     def list(
