@@ -46,7 +46,7 @@ class TransactionsResource:
     def retry(
         self, id: str, *, idempotency_key: str | None = None
     ) -> ApiResponse[TransactionRetry]:
-        """Retry a failed payment transaction. Creates a new invoice and initiates a new payment attempt."""
+        """Retry a failed subscription renewal. Re-charges the outstanding renewal invoice through the recovery engine."""
         return _parse(
             self._http.post(f"/transactions/{id}/retry", idempotency_key=idempotency_key),
             TransactionRetry,

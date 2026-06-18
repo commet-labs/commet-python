@@ -122,6 +122,7 @@ class InvoiceType(str, Enum):
     CREDIT_PURCHASE = "credit_purchase"
     BALANCE_TOPUP = "balance_topup"
     ADDON_ACTIVATION = "addon_activation"
+    ONE_TIME_PAYMENT = "one_time_payment"
 
 
 class TransactionStatus(str, Enum):
@@ -620,6 +621,7 @@ class InvoiceLineItemsItem:
             "credit",
             "balance_overage",
             "addon_base",
+            "one_time",
         ]
         | None
     ) = None
@@ -643,6 +645,37 @@ class InvoiceStatus:
     status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
     updated_at: str = ""
     object: Literal["invoice"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Payment:
+    id: str = ""
+    customer_id: str | None = None
+    kind: Literal["link", "charge"] | None = None
+    status: (
+        Literal["pending", "processing", "succeeded", "requires_action", "failed", "canceled"]
+        | None
+    ) = None
+    provider: Literal["stripe", "commet"] | None = None
+    amount_subtotal: int = 0
+    tax_amount: int = 0
+    amount_total: int = 0
+    currency: str = ""
+    description: str = ""
+    metadata: dict[str, Any] | None = None
+    url: str | None = None
+    expires_at: str | None = None
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["payment"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PaymentMethodUpdateCheckout:
+    checkout_url: str = ""
+    object: Literal["subscription"] | None = None
     livemode: bool = False
 
 
@@ -735,6 +768,7 @@ class PlanChange:
     billing_interval: str | None = None
     billing: PlanChangeBilling | None = None
     invoice_id: str | None = None
+    seat_limit_warning: PlanChangeSeatLimitWarning | None = None
     object: Literal["subscription"] | None = None
     livemode: bool = False
 
@@ -761,6 +795,16 @@ class PlanChangeCurrentPlan:
 class PlanChangePreviousPlan:
     id: str = ""
     name: str = ""
+
+
+@dataclass
+class PlanChangeSeatLimitWarning:
+    feature_code: str = ""
+    feature_name: str = ""
+    current_seats: int = 0
+    included: int = 0
+    new_plan_name: str = ""
+    effective_date: str = ""
 
 
 @dataclass
@@ -959,6 +1003,22 @@ class PromoCode:
     created_at: str = ""
     updated_at: str = ""
     object: Literal["promo_code"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class ReactivatedSubscription:
+    id: str = ""
+    retry_initiated: bool = False
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class RecoveryLink:
+    url: str = ""
+    token: str = ""
+    object: Literal["subscription"] | None = None
     livemode: bool = False
 
 
@@ -1198,7 +1258,6 @@ class TransactionRefund:
 class TransactionRetry:
     id: str = ""
     status: Literal["processing"] | None = None
-    retry_invoice_number: str = ""
     object: Literal["transaction"] | None = None
     livemode: bool = False
 
@@ -1328,6 +1387,8 @@ _DATACLASS_TYPES.update(
         "InvoiceDownload": InvoiceDownload,
         "InvoiceLineItemsItem": InvoiceLineItemsItem,
         "InvoiceStatus": InvoiceStatus,
+        "Payment": Payment,
+        "PaymentMethodUpdateCheckout": PaymentMethodUpdateCheckout,
         "Payout": Payout,
         "PayoutBankAccount": PayoutBankAccount,
         "PayoutVerification": PayoutVerification,
@@ -1336,6 +1397,7 @@ _DATACLASS_TYPES.update(
         "PlanChangeBilling": PlanChangeBilling,
         "PlanChangeCurrentPlan": PlanChangeCurrentPlan,
         "PlanChangePreviousPlan": PlanChangePreviousPlan,
+        "PlanChangeSeatLimitWarning": PlanChangeSeatLimitWarning,
         "PlanExchangeRatesItem": PlanExchangeRatesItem,
         "PlanFeature": PlanFeature,
         "PlanFeatureOverage": PlanFeatureOverage,
@@ -1356,6 +1418,8 @@ _DATACLASS_TYPES.update(
         "PortalAccess": PortalAccess,
         "PreviewChange": PreviewChange,
         "PromoCode": PromoCode,
+        "ReactivatedSubscription": ReactivatedSubscription,
+        "RecoveryLink": RecoveryLink,
         "RemovedPlanFeature": RemovedPlanFeature,
         "RemovedPlanFromGroup": RemovedPlanFromGroup,
         "ReorderedPlans": ReorderedPlans,

@@ -10,6 +10,7 @@ from .resources.customers import CustomersResource
 from .resources.feature_access import FeatureAccessResource
 from .resources.features import FeaturesResource
 from .resources.invoices import InvoicesResource
+from .resources.payments import PaymentsResource
 from .resources.payouts import PayoutsResource
 from .resources.plan_groups import PlanGroupsResource
 from .resources.plans import PlansResource
@@ -31,6 +32,7 @@ class GeneratedSyncResources:
         self.feature_access = FeatureAccessResource(http)
         self.features = FeaturesResource(http)
         self.invoices = InvoicesResource(http)
+        self.payments = PaymentsResource(http)
         self.payouts = PayoutsResource(http)
         self.plan_groups = PlanGroupsResource(http)
         self.plans = PlansResource(http)

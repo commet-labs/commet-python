@@ -107,7 +107,7 @@ class TestRefundRetry:
         assert result.data.status == "refunded"
         assert route.calls.last.request.content in (b"", b"null")
 
-    def test_retry_parses_new_invoice_number(self, mock_api: respx.MockRouter) -> None:
+    def test_retry_parses_processing_status(self, mock_api: respx.MockRouter) -> None:
         mock_api.post("/transactions/txn_1/retry").mock(
             return_value=Response(
                 200,
@@ -116,7 +116,6 @@ class TestRefundRetry:
                     "data": {
                         "id": "txn_1",
                         "status": "processing",
-                        "retryInvoiceNumber": "INV-RETRY-001",
                     },
                 },
             )
@@ -126,7 +125,6 @@ class TestRefundRetry:
 
         assert isinstance(result.data, TransactionRetry)
         assert result.data.status == "processing"
-        assert result.data.retry_invoice_number == "INV-RETRY-001"
 
 
 @pytest.mark.asyncio

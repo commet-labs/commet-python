@@ -15,8 +15,11 @@ from ..types import (
     CreateSubscriptionParamsIntroOffer,
     CreditGrant,
     DeletedSubscriptionAddon,
+    PaymentMethodUpdateCheckout,
     PlanChange,
     PreviewChange,
+    ReactivatedSubscription,
+    RecoveryLink,
     Subscription,
     SubscriptionAddon,
     SubscriptionStatus,
@@ -103,6 +106,40 @@ class AsyncSubscriptionsResource:
         return _parse(
             await self._http.post(f"/subscriptions/{id}/uncancel", idempotency_key=idempotency_key),
             UncanceledSubscription,
+        )
+
+    async def reactivate(
+        self, id: str, *, idempotency_key: str | None = None
+    ) -> ApiResponse[ReactivatedSubscription]:
+        """Retries the outstanding renewal charge for a past_due subscription. On a successful charge the subscription recovers to active and a payment.recovered webhook is delivered; a declined charge returns an error and the subscription stays past_due."""
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/reactivate", idempotency_key=idempotency_key
+            ),
+            ReactivatedSubscription,
+        )
+
+    async def create_recovery_link(
+        self, id: str, *, idempotency_key: str | None = None
+    ) -> ApiResponse[RecoveryLink]:
+        """Generates a hosted, signed recovery link that lets the customer pay the outstanding renewal charge for a past_due subscription. Unlike reactivate, which charges server-to-server, this returns a link the merchant can deliver through their own email, SMS, or dashboard. The link carries a self-contained signed token and stays valid until the charge is paid or the subscription is no longer past due."""
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/recovery-link", idempotency_key=idempotency_key
+            ),
+            RecoveryLink,
+        )
+
+    async def update_payment_method(
+        self, id: str, *, success_url: str | None = None, idempotency_key: str | None = None
+    ) -> ApiResponse[PaymentMethodUpdateCheckout]:
+        """Creates a hosted checkout session for the customer to update the subscription's default payment method."""
+        body = build_body(success_url=success_url)
+        return _parse(
+            await self._http.post(
+                f"/subscriptions/{id}/payment-method/update", body, idempotency_key=idempotency_key
+            ),
+            PaymentMethodUpdateCheckout,
         )
 
     async def change_plan(

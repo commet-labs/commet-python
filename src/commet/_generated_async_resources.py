@@ -10,6 +10,7 @@ from .async_resources.customers import AsyncCustomersResource
 from .async_resources.feature_access import AsyncFeatureAccessResource
 from .async_resources.features import AsyncFeaturesResource
 from .async_resources.invoices import AsyncInvoicesResource
+from .async_resources.payments import AsyncPaymentsResource
 from .async_resources.payouts import AsyncPayoutsResource
 from .async_resources.plan_groups import AsyncPlanGroupsResource
 from .async_resources.plans import AsyncPlansResource
@@ -31,6 +32,7 @@ class GeneratedAsyncResources:
         self.feature_access = AsyncFeatureAccessResource(http)
         self.features = AsyncFeaturesResource(http)
         self.invoices = AsyncInvoicesResource(http)
+        self.payments = AsyncPaymentsResource(http)
         self.payouts = AsyncPayoutsResource(http)
         self.plan_groups = AsyncPlanGroupsResource(http)
         self.plans = AsyncPlansResource(http)
