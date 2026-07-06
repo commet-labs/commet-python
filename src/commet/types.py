@@ -123,6 +123,7 @@ class InvoiceType(str, Enum):
     BALANCE_TOPUP = "balance_topup"
     ADDON_ACTIVATION = "addon_activation"
     ONE_TIME_PAYMENT = "one_time_payment"
+    REACTIVATION = "reactivation"
 
 
 class TransactionStatus(str, Enum):
@@ -257,6 +258,7 @@ class BatchCreateCustomersParamsCustomersItem:
     id: str | None = None
     external_id: str | None = None
     full_name: str | None = None
+    tax_document: str | None = None
     timezone: Timezone | None = None
     metadata: dict[str, Any] | None = None
     address: BatchCreateCustomersParamsCustomersItemAddress | None = None
@@ -432,6 +434,8 @@ class Customer:
     external_id: str | None = None
     full_name: str | None = None
     email: str = ""
+    tax_document: str | None = None
+    document_type: str | None = None
     timezone: str | None = None
     metadata: dict[str, Any] | None = None
     created_at: str = ""
@@ -461,6 +465,7 @@ class CustomerBatchFailedItemData:
     external_id: str | None = None
     email: str = ""
     full_name: str | None = None
+    tax_document: str | None = None
     timezone: str | None = None
     metadata: dict[str, Any] | None = None
     address: CustomerBatchFailedItemDataAddress | None = None
@@ -657,7 +662,7 @@ class Payment:
         Literal["pending", "processing", "succeeded", "requires_action", "failed", "canceled"]
         | None
     ) = None
-    provider: Literal["stripe", "commet"] | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     amount_subtotal: int = 0
     tax_amount: int = 0
     amount_total: int = 0
@@ -1233,7 +1238,7 @@ class Transaction:
     invoice_id: str | None = None
     gross_amount: int = 0
     subtotal: int = 0
-    tax_amount: int = 0
+    tax_amount: int | None = None
     currency: str = ""
     status: TransactionStatus | None = None
     customer_email: str | None = None
@@ -1329,6 +1334,70 @@ class UsageQuotaEvent:
     created_at: str = ""
     object: Literal["usage_quota"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class WebhookAddonRef:
+    id: str = ""
+    name: str = ""
+
+
+@dataclass
+class WebhookBalance:
+    current_balance: float = 0.0
+
+
+@dataclass
+class WebhookBankRef:
+    bank_name: str | None = None
+    last4: str = ""
+
+
+@dataclass
+class WebhookCardInfo:
+    brand: str = ""
+    last4: str = ""
+    exp_month: float = 0.0
+    exp_year: float = 0.0
+
+
+@dataclass
+class WebhookCreditsBalance:
+    plan_credits: float = 0.0
+    purchased_credits: float = 0.0
+    total_credits: float = 0.0
+
+
+@dataclass
+class WebhookFeatureAccess:
+    code: str = ""
+    name: str = ""
+    type: str = ""
+    allowed: bool = False
+    enabled: bool | None = None
+    current: float | None = None
+    included: float | None = None
+    remaining: float | None = None
+    overage_quantity: float | None = None
+    overage_unit_price: float | None = None
+    unlimited: bool | None = None
+    overage_enabled: bool | None = None
+    billed_quantity: float | None = None
+
+
+@dataclass
+class WebhookPlanRef:
+    id: str = ""
+    name: str = ""
+
+
+@dataclass
+class WebhookSeatSummary:
+    code: str = ""
+    current: float | None = None
+    included: float | None = None
+    remaining: float | None = None
+    unlimited: bool | None = None
 
 
 _ENUM_TYPES.update(
@@ -1453,5 +1522,13 @@ _DATACLASS_TYPES.update(
         "UpsertRegionalPricesParamsOverridesItem": UpsertRegionalPricesParamsOverridesItem,
         "UsageQuota": UsageQuota,
         "UsageQuotaEvent": UsageQuotaEvent,
+        "WebhookAddonRef": WebhookAddonRef,
+        "WebhookBalance": WebhookBalance,
+        "WebhookBankRef": WebhookBankRef,
+        "WebhookCardInfo": WebhookCardInfo,
+        "WebhookCreditsBalance": WebhookCreditsBalance,
+        "WebhookFeatureAccess": WebhookFeatureAccess,
+        "WebhookPlanRef": WebhookPlanRef,
+        "WebhookSeatSummary": WebhookSeatSummary,
     }
 )
