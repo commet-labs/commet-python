@@ -8,6 +8,7 @@ from typing import Any
 
 from .types import (
     _DATACLASS_TYPES,
+    PaymentProvider,
     WebhookAddonRef,
     WebhookBalance,
     WebhookBankRef,
@@ -94,7 +95,7 @@ class SubscriptionCreatedData:
 
 @dataclass
 class SubscriptionActivatedData:
-    """Fired when the first charge succeeds and status becomes active (or trialing if a trial is configured). This is where you grant access."""
+    """Fired once, when the subscription's first charge succeeds and it becomes active — this is where you grant access. Never re-fired on renewals; use payment.received for per-charge notifications."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -295,7 +296,7 @@ class CheckoutReadyData:
 
 @dataclass
 class PaymentReceivedData:
-    """Fired when a recurring payment is successfully processed. This event is for recurring charges only — the first checkout payment triggers subscription.activated instead."""
+    """Fired every time a payment settles successfully — the first payment and every renewal alike. subscription.activated fires alongside it only on the first one."""
 
     invoiceId: str = ""
     invoiceNumber: str = ""
@@ -303,6 +304,7 @@ class PaymentReceivedData:
     customerId: str = ""
     subscriptionId: str | None = None
     paymentTransactionId: str | None = None
+    provider: PaymentProvider | None = None
     grossAmount: float | None = None
     currency: str | None = None
     orgNetAmount: float | None = None
@@ -320,6 +322,7 @@ class PaymentFailedData:
     subscriptionId: str | None = None
     failureCode: str = ""
     failureMessage: str = ""
+    recoveryUrl: str | None = None
 
 
 @dataclass
@@ -349,6 +352,7 @@ class PaymentRefundedData:
     """Fired when a payment is refunded, fully or partially. A full refund of a subscription invoice also cancels the subscription immediately (subscription.canceled fires with reason refund); partial refunds leave the subscription untouched."""
 
     paymentTransactionId: str = ""
+    provider: PaymentProvider | None = None
     paymentLinkId: str | None = None
     invoiceId: str | None = None
     invoiceNumber: str | None = None
@@ -363,6 +367,7 @@ class PaymentDisputedData:
     """Fired when a cardholder opens a dispute (chargeback) against a payment. The disputed amount is frozen from your payout balance while the dispute is open; Commet, as the Merchant of Record, handles the resolution process. payment.dispute_resolved fires with the outcome."""
 
     paymentTransactionId: str = ""
+    provider: PaymentProvider | None = None
     paymentLinkId: str | None = None
     invoiceId: str | None = None
     invoiceNumber: str | None = None
@@ -378,6 +383,7 @@ class PaymentDisputeResolvedData:
     """Fired when a dispute is closed. Carries the same identifiers as payment.disputed plus the outcome: won restores the frozen amount to your balance, lost keeps the chargeback deducted."""
 
     paymentTransactionId: str = ""
+    provider: PaymentProvider | None = None
     paymentLinkId: str | None = None
     invoiceId: str | None = None
     invoiceNumber: str | None = None

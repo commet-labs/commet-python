@@ -134,6 +134,12 @@ class TransactionStatus(str, Enum):
     DISPUTED = "disputed"
 
 
+class PaymentProvider(str, Enum):
+    STRIPE = "stripe"
+    COMMET = "commet"
+    DLOCAL = "dlocal"
+
+
 class FeatureType(str, Enum):
     BOOLEAN = "boolean"
     USAGE = "usage"
@@ -662,7 +668,7 @@ class Payment:
         Literal["pending", "processing", "succeeded", "requires_action", "failed", "canceled"]
         | None
     ) = None
-    provider: Literal["stripe", "commet", "dlocal"] | None = None
+    provider: PaymentProvider | None = None
     amount_subtotal: int = 0
     tax_amount: int = 0
     amount_total: int = 0
@@ -1240,6 +1246,7 @@ class Transaction:
     subtotal: int = 0
     tax_amount: int | None = None
     currency: str = ""
+    provider: PaymentProvider | None = None
     status: TransactionStatus | None = None
     customer_email: str | None = None
     customer_name: str | None = None
@@ -1407,6 +1414,7 @@ _ENUM_TYPES.update(
         "ConsumptionModel": ConsumptionModel,
         "InvoiceType": InvoiceType,
         "TransactionStatus": TransactionStatus,
+        "PaymentProvider": PaymentProvider,
         "FeatureType": FeatureType,
         "DiscountType": DiscountType,
         "Timezone": Timezone,
