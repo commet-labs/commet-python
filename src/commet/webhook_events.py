@@ -107,6 +107,7 @@ class SubscriptionActivatedData:
     invoiceNumber: str = ""
     invoiceTotal: float = 0.0
     invoiceCurrency: str = ""
+    provider: PaymentProvider | None = None
 
 
 @dataclass
@@ -123,6 +124,7 @@ class SubscriptionReactivatedData:
     invoiceNumber: str = ""
     invoiceTotal: float = 0.0
     invoiceCurrency: str = ""
+    provider: PaymentProvider | None = None
 
 
 @dataclass
