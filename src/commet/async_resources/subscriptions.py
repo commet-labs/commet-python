@@ -49,6 +49,7 @@ class AsyncSubscriptionsResource:
         billing_interval: BillingInterval | None = None,
         initial_seats: dict[str, int] | None = None,
         skip_trial: bool | None = None,
+        custom_trial_days: int | None = None,
         intro_offer: CreateSubscriptionParamsIntroOffer | None = None,
         name: str | None = None,
         start_date: str | None = None,
@@ -63,6 +64,7 @@ class AsyncSubscriptionsResource:
             billing_interval=billing_interval,
             initial_seats=initial_seats,
             skip_trial=skip_trial,
+            custom_trial_days=custom_trial_days,
             intro_offer=intro_offer,
             name=name,
             start_date=start_date,
@@ -172,7 +174,7 @@ class AsyncSubscriptionsResource:
         billing_interval: BillingInterval | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[PreviewChange]:
-        """Preview proration details for an immediate plan change (an upgrade or a longer interval) without applying it. Returns credit, charge, and net amount. Downgrades — a cheaper plan in the same group, or a shorter interval — are scheduled for the end of the current period instead of being prorated, so they return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint."""
+        """Preview proration details for an immediate plan change (an upgrade or a longer interval) without applying it. Returns credit, charge, and net amount. The target plan must belong to the same plan group as the current plan, otherwise a 400 with code `plans_not_in_same_group` is returned. A change between two free plans has nothing to prorate and returns a zero-amount estimate. Downgrades — a cheaper plan in the same group, or a shorter interval — are scheduled for the end of the current period instead of being prorated, so they return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint."""
         body = build_body(plan_id=plan_id, billing_interval=billing_interval)
         return _parse(
             await self._http.post(

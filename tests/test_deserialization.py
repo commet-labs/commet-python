@@ -50,8 +50,9 @@ class TestNullability:
     def test_omitted_optional_uses_dataclass_default(self) -> None:
         tx = _from_dict(Transaction, {"id": "txn_1"})
         assert tx.invoice_id is None
-        assert tx.gross_amount == 0
+        assert tx.gross_amount is None
         assert tx.status is None
+        assert tx.livemode is False
 
     def test_unknown_wire_field_is_ignored(self) -> None:
         # Wire fields not present on the dataclass must be dropped, not passed to __init__.

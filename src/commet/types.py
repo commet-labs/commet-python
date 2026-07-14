@@ -1242,9 +1242,10 @@ class TestClockBilling:
 class Transaction:
     id: str = ""
     invoice_id: str | None = None
-    gross_amount: int = 0
-    subtotal: int = 0
+    gross_amount: int | None = None
+    subtotal: int | None = None
     tax_amount: int | None = None
+    presentment_amount: int | None = None
     currency: str = ""
     provider: PaymentProvider | None = None
     status: TransactionStatus | None = None

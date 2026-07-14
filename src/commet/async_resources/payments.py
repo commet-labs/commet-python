@@ -57,7 +57,7 @@ class AsyncPaymentsResource:
         metadata: dict[str, str] | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[Payment]:
-        """Charge a customer's vaulted payment method off-session. Calculates tax, generates an invoice, and sends a receipt. No subscription or plan required."""
+        """Charge a customer's vaulted payment method off-session. Calculates tax, generates an invoice, and sends a receipt. Requires the customer to have a subscription in active, trialing, or past_due state."""
         body = build_body(
             customer_id=customer_id,
             amount=amount,
