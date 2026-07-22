@@ -268,6 +268,7 @@ class AsyncPlansResource:
         id: str,
         *,
         currency: Literal[
+            "usd",
             "ars",
             "brl",
             "clp",
@@ -294,7 +295,7 @@ class AsyncPlansResource:
         intro_offers: builtins.list[SetPlanRegionalPricingParamsIntroOffersItem] | None = None,
         idempotency_key: str | None = None,
     ) -> ApiResponse[PlanRegionalPricingResult]:
-        """Configure a plan's regional pricing for one currency. Sending only currency and exchangeRate derives every regional value (base price, included balance, feature overage, intro offer) from the USD value at that rate. Optional per-price and per-feature overrides are stored as manual values."""
+        """Configure a plan's regional pricing for one currency. USD configures the United States variant; exchangeRate acts as its price multiplier. Sending only currency and exchangeRate derives every regional value (base price, included balance, feature overage, intro offer) from the default USD value. Optional per-price and per-feature overrides are stored as manual values."""
         body = build_body(
             currency=currency,
             exchange_rate=exchange_rate,

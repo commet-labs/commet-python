@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .._async_http import AsyncCommetHTTPClient
 from .._http import ApiResponse
-from .._preserved_types import UsageCheckResult, UsageEvent, _parse
+from .._preserved_types import UsageAdjustment, UsageCheckResult, UsageEvent, _parse
 from .._shared import build_body
 from ..resources.usage import build_usage_track_body
 
@@ -80,3 +80,24 @@ class AsyncUsageResource:
     ) -> ApiResponse[UsageCheckResult]:
         body = build_body(customer_id=customer_id, feature_code=feature_code, quantity=quantity)
         return _parse(await self._http.post("/usage/check", body), UsageCheckResult)
+
+    async def set(
+        self,
+        *,
+        customer_id: str,
+        feature: str,
+        value: int,
+        idempotency_key: str | None = None,
+        reason: str | None = None,
+    ) -> ApiResponse[UsageAdjustment]:
+        body = build_body(
+            customer_id=customer_id,
+            feature=feature,
+            value=value,
+            idempotency_key=idempotency_key,
+            reason=reason,
+        )
+        return _parse(
+            await self._http.put("/usage", body, idempotency_key=idempotency_key),
+            UsageAdjustment,
+        )

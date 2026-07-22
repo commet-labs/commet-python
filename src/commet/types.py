@@ -307,6 +307,14 @@ class CanceledSubscription:
 
 
 @dataclass
+class ClaimLink:
+    url: str = ""
+    expires_at: str = ""
+    object: Literal["claim_link"] | None = None
+    livemode: bool = False
+
+
+@dataclass
 class CompletePayoutVerificationParamsBank:
     account_number: str = ""
     account_holder_name: str = ""
@@ -1007,6 +1015,7 @@ class PromoCode:
     discount_type: DiscountType | None = None
     discount_value: int = 0
     duration_cycles: int | None = None
+    billing_interval: BillingInterval | None = None
     max_redemptions: int | None = None
     expires_at: str | None = None
     is_active: bool = False
@@ -1136,6 +1145,7 @@ class Subscription:
     billing_day_of_month: int | None = None
     next_billing_date: str | None = None
     checkout_url: str | None = None
+    checkout_provider: PaymentProvider | None = None
     created_at: str = ""
     updated_at: str = ""
     object: Literal["subscription"] | None = None
@@ -1234,6 +1244,8 @@ class TestClockBilling:
     customers_found: int = 0
     enqueued: int = 0
     failed: int = 0
+    dunning_retried: int = 0
+    dunning_failed: int = 0
     object: Literal["test_clock"] | None = None
     livemode: bool = False
 
@@ -1436,6 +1448,7 @@ _DATACLASS_TYPES.update(
         "BatchCreateCustomersParamsCustomersItemAddress": BatchCreateCustomersParamsCustomersItemAddress,
         "BulkSeatUpdate": BulkSeatUpdate,
         "CanceledSubscription": CanceledSubscription,
+        "ClaimLink": ClaimLink,
         "CompletePayoutVerificationParamsBank": CompletePayoutVerificationParamsBank,
         "CompletePayoutVerificationParamsCompany": CompletePayoutVerificationParamsCompany,
         "CompletePayoutVerificationParamsCompanyAddress": CompletePayoutVerificationParamsCompanyAddress,

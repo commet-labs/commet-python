@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from .._http import ApiResponse, CommetHTTPClient
-from .._preserved_types import UsageCheckResult, UsageEvent, _parse
+from .._preserved_types import UsageAdjustment, UsageCheckResult, UsageEvent, _parse
 from .._shared import build_body
 
 
@@ -119,3 +119,24 @@ class UsageResource:
     ) -> ApiResponse[UsageCheckResult]:
         body = build_body(customer_id=customer_id, feature_code=feature_code, quantity=quantity)
         return _parse(self._http.post("/usage/check", body), UsageCheckResult)
+
+    def set(
+        self,
+        *,
+        customer_id: str,
+        feature: str,
+        value: int,
+        idempotency_key: str | None = None,
+        reason: str | None = None,
+    ) -> ApiResponse[UsageAdjustment]:
+        body = build_body(
+            customer_id=customer_id,
+            feature=feature,
+            value=value,
+            idempotency_key=idempotency_key,
+            reason=reason,
+        )
+        return _parse(
+            self._http.put("/usage", body, idempotency_key=idempotency_key),
+            UsageAdjustment,
+        )

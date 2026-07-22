@@ -16,6 +16,7 @@ from .async_resources.plan_groups import AsyncPlanGroupsResource
 from .async_resources.plans import AsyncPlansResource
 from .async_resources.portal import AsyncPortalResource
 from .async_resources.promo_codes import AsyncPromoCodesResource
+from .async_resources.provisioning import AsyncProvisioningResource
 from .async_resources.quota import AsyncQuotaResource
 from .async_resources.seats import AsyncSeatsResource
 from .async_resources.subscriptions import AsyncSubscriptionsResource
@@ -38,6 +39,7 @@ class GeneratedAsyncResources:
         self.plans = AsyncPlansResource(http)
         self.portal = AsyncPortalResource(http)
         self.promo_codes = AsyncPromoCodesResource(http)
+        self.provisioning = AsyncProvisioningResource(http)
         self.quota = AsyncQuotaResource(http)
         self.seats = AsyncSeatsResource(http)
         self.subscriptions = AsyncSubscriptionsResource(http)

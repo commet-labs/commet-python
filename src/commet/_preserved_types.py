@@ -61,6 +61,22 @@ class UsageCheckResult:
 
 
 @dataclass
+class UsageAdjustment:
+    id: str
+    feature: str
+    value: int
+    previous_value: int
+    adjustment: int
+    customer_id: str
+    idempotency_key: str | None
+    reason: str | None
+    ts: str
+    created_at: str
+    object: str = "usage_event"
+    livemode: bool = False
+
+
+@dataclass
 class WebhookEndpoint:
     id: str
     object: str = "webhook"
@@ -107,6 +123,7 @@ def _register() -> None:
 
     _ENUM_TYPES.setdefault("UsageCheckDenialReason", UsageCheckDenialReason)
     for cls in (
+        UsageAdjustment,
         UsageEvent,
         UsageCheckResult,
         WebhookEndpoint,
@@ -123,6 +140,7 @@ __all__ = [
     "DeleteResult",
     "UsageCheckDenialReason",
     "UsageCheckResult",
+    "UsageAdjustment",
     "UsageEvent",
     "WebhookEndpoint",
     "WebhookEndpointCreated",

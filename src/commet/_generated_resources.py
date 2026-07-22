@@ -16,6 +16,7 @@ from .resources.plan_groups import PlanGroupsResource
 from .resources.plans import PlansResource
 from .resources.portal import PortalResource
 from .resources.promo_codes import PromoCodesResource
+from .resources.provisioning import ProvisioningResource
 from .resources.quota import QuotaResource
 from .resources.seats import SeatsResource
 from .resources.subscriptions import SubscriptionsResource
@@ -38,6 +39,7 @@ class GeneratedSyncResources:
         self.plans = PlansResource(http)
         self.portal = PortalResource(http)
         self.promo_codes = PromoCodesResource(http)
+        self.provisioning = ProvisioningResource(http)
         self.quota = QuotaResource(http)
         self.seats = SeatsResource(http)
         self.subscriptions = SubscriptionsResource(http)

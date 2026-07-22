@@ -36,7 +36,7 @@ class AsyncTestClockResource:
     async def process_billing(
         self, *, idempotency_key: str | None = None
     ) -> ApiResponse[TestClockBilling]:
-        """Discovers customers due for billing at the org's current (simulated) time and enqueues a billing cycle for each — renewals, expired trials, pending cancellations. Enqueueing is asynchronous. Sandbox only."""
+        """Discovers customers due for billing at the org's current (simulated) time and enqueues a billing cycle for each — renewals, expired trials, pending cancellations. Also fires any dunning retry whose scheduled time has passed. Enqueueing is asynchronous. Sandbox only."""
         return _parse(
             await self._http.post("/test-clock/process-billing", idempotency_key=idempotency_key),
             TestClockBilling,

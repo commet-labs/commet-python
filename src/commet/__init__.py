@@ -8,6 +8,7 @@ from ._exceptions import (
 from ._http import ApiResponse
 from ._preserved_types import (
     DeleteResult,
+    UsageAdjustment,
     UsageCheckDenialReason,
     UsageCheckResult,
     UsageEvent,
@@ -35,6 +36,7 @@ from .types import (
     BillingInterval,
     BulkSeatUpdate,
     CanceledSubscription,
+    ClaimLink,
     CompletePayoutVerificationParamsBank,
     CompletePayoutVerificationParamsCompany,
     CompletePayoutVerificationParamsCompanyAddress,
@@ -239,6 +241,7 @@ __all__ = [
     "BulkSeatUpdate",
     "CanceledSubscription",
     "CheckoutReadyData",
+    "ClaimLink",
     "Commet",
     "CommetAPIError",
     "CommetError",
@@ -394,6 +397,7 @@ __all__ = [
     "UpdatePlanFeatureParamsOverage",
     "UpdatePlanPriceParamsIntroOffer",
     "UpsertRegionalPricesParamsOverridesItem",
+    "UsageAdjustment",
     "UsageCheckDenialReason",
     "UsageCheckResult",
     "UsageEvent",
