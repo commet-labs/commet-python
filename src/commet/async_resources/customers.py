@@ -6,17 +6,16 @@ import builtins
 from typing import Any
 
 from .._async_http import AsyncCommetHTTPClient
-from .._http import ApiResponse
 from .._shared import build_body
 from ..types import (
     BatchCreateCustomersParamsCustomersItem,
     CreateCustomerParamsAddress,
     Customer,
     CustomerBatch,
+    CustomersListResult,
     Timezone,
     UpdateCustomerParamsAddress,
-    _parse,
-    _parse_list,
+    _parse_data,
 )
 
 
@@ -24,12 +23,57 @@ class AsyncCustomersResource:
     def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
+    async def get(self, id: str) -> Customer:
+        """Retrieve a customer by their public ID, including subscription status and metadata."""
+        return _parse_data(await self._http.get(f"/customers/{id}"), Customer)
+
+    async def update(
+        self,
+        id: str,
+        *,
+        email: str | None = None,
+        full_name: str | None = None,
+        tax_document: str | None = None,
+        external_id: str | None = None,
+        timezone: Timezone | None = None,
+        metadata: dict[str, Any] | None = None,
+        address: UpdateCustomerParamsAddress | None = None,
+        idempotency_key: str | None = None,
+    ) -> Customer:
+        """Update a customer's name, external ID, or metadata."""
+        body = build_body(
+            email=email,
+            full_name=full_name,
+            tax_document=tax_document,
+            external_id=external_id,
+            timezone=timezone,
+            metadata=metadata,
+            address=address,
+        )
+        return _parse_data(
+            await self._http.patch(f"/customers/{id}", body, idempotency_key=idempotency_key),
+            Customer,
+        )
+
+    async def create_batch(
+        self,
+        *,
+        customers: builtins.list[BatchCreateCustomersParamsCustomersItem],
+        idempotency_key: str | None = None,
+    ) -> CustomerBatch:
+        """Create up to 100 customers in a single request."""
+        body = build_body(customers=customers)
+        return _parse_data(
+            await self._http.post("/customers/batch", body, idempotency_key=idempotency_key),
+            CustomerBatch,
+        )
+
     async def list(
-        self, *, external_id: str | None = None, limit: int | None = None, cursor: str | None = None
-    ) -> ApiResponse[list[Customer]]:
+        self, *, cursor: str | None = None, limit: int | None = None, external_id: str | None = None
+    ) -> CustomersListResult:
         """List customers with cursor-based pagination."""
-        query = build_body(external_id=external_id, limit=limit, cursor=cursor)
-        return _parse_list(await self._http.get("/customers", query), Customer)
+        query = build_body(cursor=cursor, limit=limit, external_id=external_id)
+        return _parse_data(await self._http.get("/customers", query), CustomersListResult)
 
     async def create(
         self,
@@ -44,7 +88,7 @@ class AsyncCustomersResource:
         timezone: Timezone | None = None,
         metadata: dict[str, Any] | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Customer]:
+    ) -> Customer:
         """Create a new customer. Idempotent when customerId is provided."""
         body = build_body(
             id=id,
@@ -57,51 +101,6 @@ class AsyncCustomersResource:
             timezone=timezone,
             metadata=metadata,
         )
-        return _parse(
+        return _parse_data(
             await self._http.post("/customers", body, idempotency_key=idempotency_key), Customer
-        )
-
-    async def get(self, id: str) -> ApiResponse[Customer]:
-        """Retrieve a customer by their public ID, including subscription status and metadata."""
-        return _parse(await self._http.get(f"/customers/{id}"), Customer)
-
-    async def update(
-        self,
-        id: str,
-        *,
-        email: str | None = None,
-        full_name: str | None = None,
-        tax_document: str | None = None,
-        external_id: str | None = None,
-        timezone: Timezone | None = None,
-        metadata: dict[str, Any] | None = None,
-        address: UpdateCustomerParamsAddress | None = None,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[Customer]:
-        """Update a customer's name, external ID, or metadata."""
-        body = build_body(
-            email=email,
-            full_name=full_name,
-            tax_document=tax_document,
-            external_id=external_id,
-            timezone=timezone,
-            metadata=metadata,
-            address=address,
-        )
-        return _parse(
-            await self._http.put(f"/customers/{id}", body, idempotency_key=idempotency_key),
-            Customer,
-        )
-
-    async def create_batch(
-        self,
-        *,
-        customers: builtins.list[BatchCreateCustomersParamsCustomersItem],
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[CustomerBatch]:
-        """Create up to 100 customers in a single request."""
-        body = build_body(customers=customers)
-        return _parse(
-            await self._http.post("/customers/batch", body, idempotency_key=idempotency_key),
-            CustomerBatch,
         )

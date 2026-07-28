@@ -4,17 +4,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from .types import (
     _DATACLASS_TYPES,
-    PaymentProvider,
     WebhookAddonRef,
     WebhookBalance,
     WebhookBankRef,
     WebhookCardInfo,
     WebhookCreditsBalance,
-    WebhookFeatureAccess,
     WebhookPlanRef,
     WebhookSeatSummary,
     _from_dict,
@@ -107,7 +105,7 @@ class SubscriptionActivatedData:
     invoiceNumber: str = ""
     invoiceTotal: float = 0.0
     invoiceCurrency: str = ""
-    provider: PaymentProvider | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
 
 
 @dataclass
@@ -124,7 +122,7 @@ class SubscriptionReactivatedData:
     invoiceNumber: str = ""
     invoiceTotal: float = 0.0
     invoiceCurrency: str = ""
-    provider: PaymentProvider | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
 
 
 @dataclass
@@ -306,7 +304,7 @@ class PaymentReceivedData:
     customerId: str = ""
     subscriptionId: str | None = None
     paymentTransactionId: str | None = None
-    provider: PaymentProvider | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     grossAmount: float | None = None
     currency: str | None = None
     orgNetAmount: float | None = None
@@ -354,7 +352,7 @@ class PaymentRefundedData:
     """Fired when a payment is refunded, fully or partially. A full refund of a subscription invoice also cancels the subscription immediately (subscription.canceled fires with reason refund); partial refunds leave the subscription untouched."""
 
     paymentTransactionId: str = ""
-    provider: PaymentProvider | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     paymentLinkId: str | None = None
     invoiceId: str | None = None
     invoiceNumber: str | None = None
@@ -369,7 +367,7 @@ class PaymentDisputedData:
     """Fired when a cardholder opens a dispute (chargeback) against a payment. The disputed amount is frozen from your payout balance while the dispute is open; Commet, as the Merchant of Record, handles the resolution process. payment.dispute_resolved fires with the outcome."""
 
     paymentTransactionId: str = ""
-    provider: PaymentProvider | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     paymentLinkId: str | None = None
     invoiceId: str | None = None
     invoiceNumber: str | None = None
@@ -385,7 +383,7 @@ class PaymentDisputeResolvedData:
     """Fired when a dispute is closed. Carries the same identifiers as payment.disputed plus the outcome: won restores the frozen amount to your balance, lost keeps the chargeback deducted."""
 
     paymentTransactionId: str = ""
-    provider: PaymentProvider | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     paymentLinkId: str | None = None
     invoiceId: str | None = None
     invoiceNumber: str | None = None
@@ -577,7 +575,7 @@ class CustomerStateChangedData:
     plan: WebhookPlanRef | None = None
     billingInterval: str | None = None
     consumptionModel: str | None = None
-    features: list[WebhookFeatureAccess] = field(default_factory=list)
+    features: list[dict[str, Any]] = field(default_factory=list)
     seats: list[WebhookSeatSummary] = field(default_factory=list)
     credits: WebhookCreditsBalance | None = None
     balance: WebhookBalance | None = None

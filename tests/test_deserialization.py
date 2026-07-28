@@ -3,7 +3,6 @@ from __future__ import annotations
 from commet.types import (
     BillingInterval,
     ConsumptionModel,
-    DiscountType,
     FeatureType,
     InvoiceType,
     Plan,
@@ -11,7 +10,6 @@ from commet.types import (
     PlanFeaturesItemOverage,
     PlanFeaturesItemRegionalPricesItem,
     PlanPricesItem,
-    PlanPricesItemIntroOffer,
     PlanPricesItemRegionalPricesItem,
     Transaction,
     TransactionStatus,
@@ -81,12 +79,8 @@ class TestNestedDataclassCoercion:
                     "price": 10000,
                     "is_default": True,
                     "trial_days": 14,
-                    "intro_offer": {
-                        "enabled": True,
-                        "discount_type": "percentage",
-                        "discount_value": 2000,
-                        "duration_cycles": 3,
-                    },
+                    "id": "price_1",
+                    "offer_id": "offer_1",
                     "regional_prices": [
                         {"currency": "brl", "price": 5000, "auto_synced": True},
                     ],
@@ -119,10 +113,7 @@ class TestNestedDataclassCoercion:
         assert price.price == 10000
         assert price.trial_days == 14
 
-        assert isinstance(price.intro_offer, PlanPricesItemIntroOffer)
-        assert price.intro_offer.enabled is True
-        assert price.intro_offer.discount_type is DiscountType.PERCENTAGE
-        assert price.intro_offer.discount_value == 2000
+        assert price.offer_id == "offer_1"
 
         assert isinstance(price.regional_prices[0], PlanPricesItemRegionalPricesItem)
         assert price.regional_prices[0].currency == "brl"
@@ -147,9 +138,9 @@ class TestNestedDataclassCoercion:
                 "prices": [{"billingInterval": "monthly", "price": 0}],
             },
         )
-        assert plan.prices[0].intro_offer is None
-        assert plan.prices[0].regional_prices is None
-        assert plan.features is None
+        assert plan.prices[0].offer_id is None
+        assert plan.prices[0].regional_prices == []
+        assert plan.features == []
 
 
 class TestFromList:

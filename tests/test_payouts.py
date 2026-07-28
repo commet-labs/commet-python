@@ -8,7 +8,7 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import Payout, PayoutBankAccount, PayoutVerification
+from commet.types import Payout, PayoutBankAccount, PayoutVerificationVariant2
 
 
 @pytest.fixture
@@ -52,13 +52,12 @@ class TestAddBankAccount:
                 set_default=True,
             )
 
-        assert result.success is True
-        assert isinstance(result.data, PayoutBankAccount)
-        assert result.data.last4 == "6789"
-        assert result.data.account_type == "checking"
-        assert result.data.is_default is True
+        assert isinstance(result, PayoutBankAccount)
+        assert result.last4 == "6789"
+        assert result.account_type == "checking"
+        assert result.is_default is True
         # Full account number must never appear in the parsed response.
-        assert not hasattr(result.data, "account_number")
+        assert not hasattr(result, "account_number")
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {
@@ -124,10 +123,10 @@ class TestRequestPayout:
         with Commet(api_key="ck_test_123") as client:
             result = client.payouts.request(amount=100000, description="Weekly withdrawal")
 
-        assert isinstance(result.data, Payout)
-        assert result.data.status == "pending"
-        assert result.data.net_amount == 99750
-        assert result.data.provider_transfer_id == "tr_1"
+        assert isinstance(result, Payout)
+        assert result.status == "pending"
+        assert result.net_amount == 99750
+        assert result.provider_transfer_id == "tr_1"
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"amount": 100000, "description": "Weekly withdrawal"}
@@ -144,7 +143,7 @@ class TestCompleteVerification:
                         "providerAccountId": "acct_1",
                         "status": "pending_verification",
                         "transfersEnabled": False,
-                        "alreadyExists": False,
+                        "outcome": "created",
                         "businessType": "individual",
                         "country": "US",
                         "object": "payout_account",
@@ -184,10 +183,10 @@ class TestCompleteVerification:
                 individual=individual,
             )
 
-        assert isinstance(result.data, PayoutVerification)
-        assert result.data.status == "pending_verification"
-        assert result.data.transfers_enabled is False
-        assert result.data.business_type == "individual"
+        assert isinstance(result, PayoutVerificationVariant2)
+        assert result.status == "pending_verification"
+        assert result.transfers_enabled is False
+        assert result.business_type == "individual"
 
         sent = json.loads(route.calls.last.request.content)
         assert sent["email"] == "jane@example.com"
@@ -232,9 +231,9 @@ class TestAsyncPayouts:
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.payouts.request(amount=50000)
 
-        assert isinstance(result.data, Payout)
-        assert result.data.status == "in_transit"
-        assert result.data.net_amount == 50000
+        assert isinstance(result, Payout)
+        assert result.status == "in_transit"
+        assert result.net_amount == 50000
 
     async def test_add_bank_account_sends_camel_case(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/payouts/bank-accounts").mock(
@@ -258,8 +257,8 @@ class TestAsyncPayouts:
                 account_number="111", account_holder_name="Async Co", set_default=False
             )
 
-        assert isinstance(result.data, PayoutBankAccount)
-        assert result.data.last4 == "1111"
+        assert isinstance(result, PayoutBankAccount)
+        assert result.last4 == "1111"
         sent = json.loads(route.calls.last.request.content)
         assert sent == {
             "accountNumber": "111",

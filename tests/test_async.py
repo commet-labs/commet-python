@@ -40,10 +40,9 @@ async def test_async_customer_create(mock_api: respx.MockRouter) -> None:
 
     async with AsyncCommet(api_key="ck_test_123") as client:
         result = await client.customers.create(email="user@example.com")
-        assert result.success is True
-        assert isinstance(result.data, Customer)
-        assert result.data.id == "cus_123"
-        assert result.data.email == "user@example.com"
+        assert isinstance(result, Customer)
+        assert result.id == "cus_123"
+        assert result.email == "user@example.com"
 
 
 @pytest.mark.asyncio
@@ -52,7 +51,7 @@ async def test_async_customer_list(mock_api: respx.MockRouter) -> None:
         return_value=Response(
             200,
             json={
-                "success": True,
+                "object": "list",
                 "data": [
                     {
                         "id": "cus_1",
@@ -74,7 +73,6 @@ async def test_async_customer_list(mock_api: respx.MockRouter) -> None:
 
     async with AsyncCommet(api_key="ck_test_123") as client:
         result = await client.customers.list()
-        assert result.success is True
         assert len(result.data) == 2
         assert all(isinstance(c, Customer) for c in result.data)
         assert result.has_more is False
@@ -91,7 +89,7 @@ async def test_async_usage_track(mock_api: respx.MockRouter) -> None:
                     "id": "evt_123",
                     "organizationId": "org_1",
                     "customerId": "cus_1",
-                    "feature": "api_calls",
+                    "featureCode": "api_calls",
                     "ts": "2024-01-01T00:00:00Z",
                     "createdAt": "2024-01-01T00:00:00Z",
                 },
@@ -100,9 +98,8 @@ async def test_async_usage_track(mock_api: respx.MockRouter) -> None:
     )
 
     async with AsyncCommet(api_key="ck_test_123") as client:
-        result = await client.usage.track(feature="api_calls", customer_id="cus_1", value=1)
-        assert result.success is True
-        assert result.data.feature == "api_calls"
+        result = await client.usage.track(feature_code="api_calls", customer_id="cus_1", value=1)
+        assert result.feature_code == "api_calls"
 
 
 @pytest.mark.asyncio
@@ -111,7 +108,7 @@ async def test_async_plans_list(mock_api: respx.MockRouter) -> None:
         return_value=Response(
             200,
             json={
-                "success": True,
+                "object": "list",
                 "data": [
                     {
                         "id": "plan_1",
@@ -132,6 +129,5 @@ async def test_async_plans_list(mock_api: respx.MockRouter) -> None:
 
     async with AsyncCommet(api_key="ck_test_123") as client:
         result = await client.plans.list()
-        assert result.success is True
         assert len(result.data) == 1
         assert result.data[0].code == "pro"

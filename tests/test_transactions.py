@@ -7,8 +7,8 @@ from httpx import Response
 from commet import Commet
 from commet.async_client import AsyncCommet
 from commet.types import (
-    Transaction,
-    TransactionRefund,
+    Refund,
+    TransactionListItem,
     TransactionRetry,
     TransactionStatus,
 )
@@ -20,126 +20,104 @@ def mock_api() -> respx.MockRouter:
         yield mock
 
 
-class TestList:
-    def test_enum_status_filter_serializes_to_wire_string(self, mock_api: respx.MockRouter) -> None:
-        route = mock_api.get("/transactions").mock(
-            return_value=Response(
-                200,
-                json={
-                    "success": True,
-                    "data": [
-                        {
-                            "id": "txn_1",
-                            "invoiceId": "inv_1",
-                            "grossAmount": 10800,
-                            "subtotal": 10000,
-                            "taxAmount": 800,
-                            "currency": "usd",
-                            "status": "succeeded",
-                            "customerEmail": "a@example.com",
-                            "paidAt": "2026-06-01T00:00:00Z",
-                            "createdAt": "2026-06-01T00:00:00Z",
-                            "availableAt": None,
-                        }
-                    ],
-                    "hasMore": True,
-                    "nextCursor": "cur_2",
-                },
-            )
-        )
-        with Commet(api_key="ck_test_123") as client:
-            result = client.transactions.list(
-                status=TransactionStatus.SUCCEEDED, customer_email="a@example.com"
-            )
-
-        assert result.has_more is True
-        assert result.next_cursor == "cur_2"
-        txn = result.data[0]
-        assert isinstance(txn, Transaction)
-        assert txn.status is TransactionStatus.SUCCEEDED
-        assert txn.gross_amount == 10800
-        assert txn.available_at is None
-
-        params = route.calls.last.request.url.params
-        # The Enum member must reach the wire as its string value (".value"),
-        # not the member repr "TransactionStatus.SUCCEEDED".
-        assert params["status"] == "succeeded"
-        assert params["customerEmail"] == "a@example.com"
-
-
-class TestGet:
-    def test_get_parses_status_enum(self, mock_api: respx.MockRouter) -> None:
-        mock_api.get("/transactions/txn_1").mock(
-            return_value=Response(
-                200,
-                json={
-                    "success": True,
-                    "data": {
+def test_list_uses_explicit_list_envelope(mock_api: respx.MockRouter) -> None:
+    route = mock_api.get("/transactions").mock(
+        return_value=Response(
+            200,
+            json={
+                "object": "list",
+                "data": [
+                    {
                         "id": "txn_1",
-                        "grossAmount": 5000,
+                        "grossAmount": 10800,
                         "currency": "usd",
-                        "status": "disputed",
-                    },
-                },
-            )
+                        "status": "succeeded",
+                    }
+                ],
+                "hasMore": True,
+                "nextCursor": "cur_2",
+            },
         )
-        with Commet(api_key="ck_test_123") as client:
-            result = client.transactions.get("txn_1")
-
-        assert result.data.status is TransactionStatus.DISPUTED
-
-
-class TestRefundRetry:
-    def test_refund_no_body_post_parses_refunded_status(self, mock_api: respx.MockRouter) -> None:
-        route = mock_api.post("/transactions/txn_1/refund").mock(
-            return_value=Response(
-                200,
-                json={
-                    "success": True,
-                    "data": {"id": "txn_1", "status": "refunded", "object": "transaction"},
-                },
-            )
+    )
+    with Commet(api_key="ck_test_123") as client:
+        result = client.transactions.list(
+            status=TransactionStatus.SUCCEEDED,
+            customer_email="a@example.com",
         )
-        with Commet(api_key="ck_test_123") as client:
-            result = client.transactions.refund("txn_1")
 
-        assert isinstance(result.data, TransactionRefund)
-        assert result.data.status == "refunded"
-        assert route.calls.last.request.content in (b"", b"null")
+    assert result.has_more is True
+    assert result.next_cursor == "cur_2"
+    assert isinstance(result.data[0], TransactionListItem)
+    assert result.data[0].status is TransactionStatus.SUCCEEDED
+    assert route.calls.last.request.url.params["status"] == "succeeded"
 
-    def test_retry_parses_processing_status(self, mock_api: respx.MockRouter) -> None:
-        mock_api.post("/transactions/txn_1/retry").mock(
-            return_value=Response(
-                200,
-                json={
-                    "success": True,
-                    "data": {
-                        "id": "txn_1",
-                        "status": "processing",
-                    },
-                },
-            )
+
+def test_get_returns_direct_transaction(mock_api: respx.MockRouter) -> None:
+    mock_api.get("/transactions/txn_1").mock(
+        return_value=Response(
+            200,
+            json={
+                "id": "txn_1",
+                "grossAmount": 5000,
+                "currency": "usd",
+                "status": "disputed",
+            },
         )
-        with Commet(api_key="ck_test_123") as client:
-            result = client.transactions.retry("txn_1")
+    )
+    with Commet(api_key="ck_test_123") as client:
+        transaction = client.transactions.get("txn_1")
 
-        assert isinstance(result.data, TransactionRetry)
-        assert result.data.status == "processing"
+    assert transaction.status is TransactionStatus.DISPUTED
+
+
+def test_refund_returns_refund_resource(mock_api: respx.MockRouter) -> None:
+    route = mock_api.post("/transactions/txn_1/refund").mock(
+        return_value=Response(
+            200,
+            json={
+                "id": "ref_1",
+                "transactionId": "txn_1",
+                "amount": 5000,
+                "currency": "usd",
+                "status": "succeeded",
+            },
+        )
+    )
+    with Commet(api_key="ck_test_123") as client:
+        refund = client.transactions.refund("txn_1")
+
+    assert isinstance(refund, Refund)
+    assert refund.transaction_id == "txn_1"
+    assert route.calls.last.request.content in (b"", b"null")
+
+
+def test_retry_returns_retry_result(mock_api: respx.MockRouter) -> None:
+    mock_api.post("/transactions/txn_1/retry").mock(
+        return_value=Response(
+            200,
+            json={"id": "txn_2", "status": "processing"},
+        )
+    )
+    with Commet(api_key="ck_test_123") as client:
+        retry = client.transactions.retry("txn_1")
+
+    assert isinstance(retry, TransactionRetry)
+    assert retry.status == "processing"
 
 
 @pytest.mark.asyncio
-class TestAsyncTransactions:
-    async def test_list_parses_enums(self, mock_api: respx.MockRouter) -> None:
-        mock_api.get("/transactions").mock(
-            return_value=Response(
-                200,
-                json={
-                    "success": True,
-                    "data": [{"id": "txn_a", "status": "failed", "currency": "usd"}],
-                },
-            )
+async def test_async_list_parses_enums(mock_api: respx.MockRouter) -> None:
+    mock_api.get("/transactions").mock(
+        return_value=Response(
+            200,
+            json={
+                "object": "list",
+                "data": [{"id": "txn_a", "status": "failed", "currency": "usd"}],
+                "hasMore": False,
+            },
         )
-        async with AsyncCommet(api_key="ck_test_123") as client:
-            result = await client.transactions.list()
+    )
+    async with AsyncCommet(api_key="ck_test_123") as client:
+        result = await client.transactions.list()
 
-        assert result.data[0].status is TransactionStatus.FAILED
+    assert result.data[0].status is TransactionStatus.FAILED

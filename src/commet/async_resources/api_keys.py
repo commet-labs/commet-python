@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 from .._async_http import AsyncCommetHTTPClient
-from .._http import ApiResponse
 from .._shared import build_body
 from ..types import (
-    ApiKey,
+    ApiKeysListResult,
     CreatedApiKey,
     DeletedObject,
-    _parse,
-    _parse_list,
+    _parse_data,
 )
 
 
@@ -18,22 +16,22 @@ class AsyncApiKeysResource:
     def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
 
+    async def delete(self, id: str) -> DeletedObject:
+        """Permanently revoke and delete an API key."""
+        return _parse_data(await self._http.delete(f"/api-keys/{id}"), DeletedObject)
+
     async def list(
         self, *, cursor: str | None = None, limit: int | None = None
-    ) -> ApiResponse[list[ApiKey]]:
+    ) -> ApiKeysListResult:
         """List API keys with cursor-based pagination. Keys are returned without the full secret."""
         query = build_body(cursor=cursor, limit=limit)
-        return _parse_list(await self._http.get("/api-keys", query), ApiKey)
+        return _parse_data(await self._http.get("/api-keys", query), ApiKeysListResult)
 
     async def create(
         self, *, name: str, expires_in_days: int | None = None, idempotency_key: str | None = None
-    ) -> ApiResponse[CreatedApiKey]:
+    ) -> CreatedApiKey:
         """Create a new API key. The full key is only returned once in the response."""
         body = build_body(name=name, expires_in_days=expires_in_days)
-        return _parse(
+        return _parse_data(
             await self._http.post("/api-keys", body, idempotency_key=idempotency_key), CreatedApiKey
         )
-
-    async def delete(self, id: str) -> ApiResponse[DeletedObject]:
-        """Permanently revoke and delete an API key."""
-        return _parse(await self._http.delete(f"/api-keys/{id}"), DeletedObject)

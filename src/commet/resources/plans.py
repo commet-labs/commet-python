@@ -5,14 +5,11 @@ from __future__ import annotations
 import builtins
 from typing import Any, Literal
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._http import CommetHTTPClient
 from .._shared import build_body
 from ..types import (
     AddPlanFeatureParamsOverage,
-    AddPlanPriceParamsIntroOffer,
-    BillingInterval,
-    ConsumptionModel,
-    DefaultPlanPrice,
+    AddPlanPriceParamsMarketPricesItem,
     DeletedObject,
     DeletedPlanRegionalPricing,
     Plan,
@@ -20,16 +17,14 @@ from ..types import (
     PlanPrice,
     PlanRegionalPricing,
     PlanRegionalPricingResult,
-    PlanVisibility,
+    PlansListResult,
     RemovedPlanFeature,
     SetPlanRegionalPricingParamsFeaturesItem,
-    SetPlanRegionalPricingParamsIntroOffersItem,
     SetPlanRegionalPricingParamsPricesItem,
     UpdatePlanFeatureParamsOverage,
-    UpdatePlanPriceParamsIntroOffer,
+    UpdatePlanPriceParamsMarketPricesItem,
     UpsertRegionalPricesParamsOverridesItem,
-    _parse,
-    _parse_list,
+    _parse_data,
 )
 
 
@@ -37,75 +32,37 @@ class PlansResource:
     def __init__(self, http: CommetHTTPClient) -> None:
         self._http = http
 
-    def list(
-        self, *, include_private: Literal["true", "false"] | None = None
-    ) -> ApiResponse[list[Plan]]:
-        """List all plans with their prices and features. Optionally include private plans."""
-        query = build_body(include_private=include_private)
-        return _parse_list(self._http.get("/plans", query), Plan)
-
-    def get(self, id: str) -> ApiResponse[Plan]:
-        """Get detailed plan information by code or ID."""
-        return _parse(self._http.get(f"/plans/{id}"), Plan)
-
-    def create(
-        self,
-        *,
-        name: str,
-        code: str,
-        description: str | None = None,
-        consumption_model: ConsumptionModel | None = None,
-        is_public: bool | None = None,
-        is_free: bool | None = None,
-        block_on_exhaustion: bool | None = None,
-        plan_group_id: str | None = None,
-        metadata: dict[str, Any] | None = None,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[Plan]:
-        """Create a new plan with optional consumption model, visibility, and plan group assignment."""
-        body = build_body(
-            name=name,
-            code=code,
-            description=description,
-            consumption_model=consumption_model,
-            is_public=is_public,
-            is_free=is_free,
-            block_on_exhaustion=block_on_exhaustion,
-            plan_group_id=plan_group_id,
-            metadata=metadata,
-        )
-        return _parse(self._http.post("/plans/manage", body, idempotency_key=idempotency_key), Plan)
-
-    def update(
+    def update_feature(
         self,
         id: str,
+        feature_id: str,
         *,
-        name: str | None = None,
-        description: str | None = None,
-        metadata: dict[str, Any] | None = None,
-        is_public: bool | None = None,
+        enabled: bool | None = None,
+        included_amount: int | None = None,
+        unlimited: bool | None = None,
+        overage: UpdatePlanFeatureParamsOverage | None = None,
+        credits_per_unit: int | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[Plan]:
-        """Update a plan's name, description, visibility, or metadata."""
+    ) -> PlanFeature:
+        """Update limits, overage, or enabled status of a feature on a plan."""
         body = build_body(
-            name=name, description=description, metadata=metadata, is_public=is_public
+            enabled=enabled,
+            included_amount=included_amount,
+            unlimited=unlimited,
+            overage=overage,
+            credits_per_unit=credits_per_unit,
         )
-        return _parse(
-            self._http.put(f"/plans/{id}/manage", body, idempotency_key=idempotency_key), Plan
+        return _parse_data(
+            self._http.patch(
+                f"/plans/{id}/features/{feature_id}", body, idempotency_key=idempotency_key
+            ),
+            PlanFeature,
         )
 
-    def delete(self, id: str) -> ApiResponse[DeletedObject]:
-        """Soft-delete a plan."""
-        return _parse(self._http.delete(f"/plans/{id}/manage"), DeletedObject)
-
-    def set_visibility(
-        self, id: str, *, is_public: bool, idempotency_key: str | None = None
-    ) -> ApiResponse[PlanVisibility]:
-        """Toggle a plan between public and private."""
-        body = build_body(is_public=is_public)
-        return _parse(
-            self._http.put(f"/plans/{id}/visibility", body, idempotency_key=idempotency_key),
-            PlanVisibility,
+    def remove_feature(self, id: str, feature_id: str) -> RemovedPlanFeature:
+        """Detach a feature from a plan."""
+        return _parse_data(
+            self._http.delete(f"/plans/{id}/features/{feature_id}"), RemovedPlanFeature
         )
 
     def add_feature(
@@ -121,7 +78,7 @@ class PlansResource:
         pricing_mode: Literal["fixed", "ai_model"] | None = None,
         margin: int | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanFeature]:
+    ) -> PlanFeature:
         """Attach a feature to a plan with limits, overage, and credits configuration."""
         body = build_body(
             feature_id=feature_id,
@@ -133,67 +90,43 @@ class PlansResource:
             pricing_mode=pricing_mode,
             margin=margin,
         )
-        return _parse(
+        return _parse_data(
             self._http.post(f"/plans/{id}/features", body, idempotency_key=idempotency_key),
             PlanFeature,
         )
 
-    def update_feature(
-        self,
-        id: str,
-        feature_id: str,
-        *,
-        enabled: bool | None = None,
-        included_amount: int | None = None,
-        unlimited: bool | None = None,
-        overage: UpdatePlanFeatureParamsOverage | None = None,
-        credits_per_unit: int | None = None,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanFeature]:
-        """Update limits, overage, or enabled status of a feature on a plan."""
-        body = build_body(
-            enabled=enabled,
-            included_amount=included_amount,
-            unlimited=unlimited,
-            overage=overage,
-            credits_per_unit=credits_per_unit,
-        )
-        return _parse(
+    def set_default_price(
+        self, id: str, price_id: str, *, idempotency_key: str | None = None
+    ) -> PlanPrice:
+        """Set a specific price as the default and return the updated plan price."""
+        return _parse_data(
             self._http.put(
-                f"/plans/{id}/features/{feature_id}", body, idempotency_key=idempotency_key
+                f"/plans/{id}/prices/{price_id}/default", idempotency_key=idempotency_key
             ),
-            PlanFeature,
+            PlanPrice,
         )
 
-    def remove_feature(self, id: str, feature_id: str) -> ApiResponse[RemovedPlanFeature]:
-        """Detach a feature from a plan."""
-        return _parse(self._http.delete(f"/plans/{id}/features/{feature_id}"), RemovedPlanFeature)
-
-    def add_price(
+    def set_regional_prices(
         self,
         id: str,
+        price_id: str,
         *,
-        billing_interval: BillingInterval,
-        price: int,
-        trial_days: int | None = None,
-        is_default: bool | None = None,
-        included_balance: int | None = None,
-        included_credits: int | None = None,
-        intro_offer: AddPlanPriceParamsIntroOffer | None = None,
+        overrides: builtins.list[UpsertRegionalPricesParamsOverridesItem],
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanPrice]:
-        """Add a billing interval price to a plan with optional trial days and included balance/credits."""
-        body = build_body(
-            billing_interval=billing_interval,
-            price=price,
-            trial_days=trial_days,
-            is_default=is_default,
-            included_balance=included_balance,
-            included_credits=included_credits,
-            intro_offer=intro_offer,
+    ) -> PlanRegionalPricing:
+        """Create or update regional currency price overrides for a plan price."""
+        body = build_body(overrides=overrides)
+        return _parse_data(
+            self._http.put(
+                f"/plans/{id}/prices/{price_id}/regional", body, idempotency_key=idempotency_key
+            ),
+            PlanRegionalPricing,
         )
-        return _parse(
-            self._http.post(f"/plans/{id}/prices", body, idempotency_key=idempotency_key), PlanPrice
+
+    def delete_regional_prices(self, id: str, price_id: str) -> DeletedPlanRegionalPricing:
+        """Remove all regional currency overrides for a plan price. The request is rejected while billable subscriptions depend on an override."""
+        return _parse_data(
+            self._http.delete(f"/plans/{id}/prices/{price_id}/regional"), DeletedPlanRegionalPricing
         )
 
     def update_price(
@@ -206,53 +139,60 @@ class PlansResource:
         trial_days: int | None = None,
         included_balance: int | None = None,
         included_credits: int | None = None,
-        intro_offer: UpdatePlanPriceParamsIntroOffer | None = None,
+        metadata: dict[str, Any] | None = None,
+        market_prices: builtins.list[UpdatePlanPriceParamsMarketPricesItem] | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanPrice]:
-        """Update an existing price on a plan."""
+    ) -> PlanPrice:
+        """Update a base price or market price variant. Removing a base market override is rejected while a variant depends on it. Offer terms are managed through Offers."""
         body = build_body(
             price=price,
             is_default=is_default,
             trial_days=trial_days,
             included_balance=included_balance,
             included_credits=included_credits,
-            intro_offer=intro_offer,
+            metadata=metadata,
+            market_prices=market_prices,
         )
-        return _parse(
-            self._http.put(f"/plans/{id}/prices/{price_id}", body, idempotency_key=idempotency_key),
+        return _parse_data(
+            self._http.patch(
+                f"/plans/{id}/prices/{price_id}", body, idempotency_key=idempotency_key
+            ),
             PlanPrice,
         )
 
-    def delete_price(self, id: str, price_id: str) -> ApiResponse[DeletedObject]:
-        """Remove a price from a plan."""
-        return _parse(self._http.delete(f"/plans/{id}/prices/{price_id}"), DeletedObject)
+    def delete_price(self, id: str, price_id: str) -> DeletedObject:
+        """Archive a price for new subscriptions. Existing subscriptions that selected it continue using its current catalog value."""
+        return _parse_data(self._http.delete(f"/plans/{id}/prices/{price_id}"), DeletedObject)
 
-    def set_default_price(
-        self, id: str, price_id: str, *, idempotency_key: str | None = None
-    ) -> ApiResponse[DefaultPlanPrice]:
-        """Set a specific price as the default for its plan. Unsets previous default."""
-        return _parse(
-            self._http.put(
-                f"/plans/{id}/prices/{price_id}/default", idempotency_key=idempotency_key
-            ),
-            DefaultPlanPrice,
-        )
-
-    def set_regional_prices(
+    def add_price(
         self,
         id: str,
-        price_id: str,
         *,
-        overrides: builtins.list[UpsertRegionalPricesParamsOverridesItem],
+        billing_interval: Literal["weekly", "monthly", "quarterly", "yearly", "one_time"],
+        metadata: dict[str, Any] | None = None,
+        price: int | None = None,
+        trial_days: int | None = None,
+        is_default: bool | None = None,
+        included_balance: int | None = None,
+        included_credits: int | None = None,
+        market_prices: builtins.list[AddPlanPriceParamsMarketPricesItem] | None = None,
+        inherits_from_price_id: str | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanRegionalPricing]:
-        """Create or update regional currency price overrides for a plan price."""
-        body = build_body(overrides=overrides)
-        return _parse(
-            self._http.put(
-                f"/plans/{id}/prices/{price_id}/regional", body, idempotency_key=idempotency_key
-            ),
-            PlanRegionalPricing,
+    ) -> PlanPrice:
+        """Add a base price or a selectable market price variant. Variants inherit their base price outside the markets they override. Configure introductory and promotional benefits through Offers."""
+        body = build_body(
+            billing_interval=billing_interval,
+            metadata=metadata,
+            price=price,
+            trial_days=trial_days,
+            is_default=is_default,
+            included_balance=included_balance,
+            included_credits=included_credits,
+            market_prices=market_prices,
+            inherits_from_price_id=inherits_from_price_id,
+        )
+        return _parse_data(
+            self._http.post(f"/plans/{id}/prices", body, idempotency_key=idempotency_key), PlanPrice
         )
 
     def set_regional_pricing(
@@ -284,26 +224,81 @@ class PlansResource:
         exchange_rate: float,
         prices: builtins.list[SetPlanRegionalPricingParamsPricesItem] | None = None,
         features: builtins.list[SetPlanRegionalPricingParamsFeaturesItem] | None = None,
-        intro_offers: builtins.list[SetPlanRegionalPricingParamsIntroOffersItem] | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PlanRegionalPricingResult]:
-        """Configure a plan's regional pricing for one currency. USD configures the United States variant; exchangeRate acts as its price multiplier. Sending only currency and exchangeRate derives every regional value (base price, included balance, feature overage, intro offer) from the default USD value. Optional per-price and per-feature overrides are stored as manual values."""
+    ) -> PlanRegionalPricingResult:
+        """Configure regional prices and feature overage values for one currency. Currency-specific offer terms are managed through Offers."""
         body = build_body(
-            currency=currency,
-            exchange_rate=exchange_rate,
-            prices=prices,
-            features=features,
-            intro_offers=intro_offers,
+            currency=currency, exchange_rate=exchange_rate, prices=prices, features=features
         )
-        return _parse(
+        return _parse_data(
             self._http.put(f"/plans/{id}/regional", body, idempotency_key=idempotency_key),
             PlanRegionalPricingResult,
         )
 
-    def delete_regional_prices(
-        self, id: str, price_id: str
-    ) -> ApiResponse[DeletedPlanRegionalPricing]:
-        """Remove all regional currency overrides for a plan price."""
-        return _parse(
-            self._http.delete(f"/plans/{id}/prices/{price_id}/regional"), DeletedPlanRegionalPricing
+    def get(self, id: str) -> Plan:
+        """Get a plan with public price IDs and their automatic introductory offer IDs."""
+        return _parse_data(self._http.get(f"/plans/{id}"), Plan)
+
+    def update(
+        self,
+        id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        is_public: bool | None = None,
+        idempotency_key: str | None = None,
+    ) -> Plan:
+        """Update a plan's name, description, visibility, or metadata."""
+        body = build_body(
+            name=name, description=description, metadata=metadata, is_public=is_public
         )
+        return _parse_data(
+            self._http.patch(f"/plans/{id}", body, idempotency_key=idempotency_key), Plan
+        )
+
+    def delete(self, id: str) -> DeletedObject:
+        """Soft-delete a plan."""
+        return _parse_data(self._http.delete(f"/plans/{id}"), DeletedObject)
+
+    def set_visibility(
+        self, id: str, *, is_public: bool, idempotency_key: str | None = None
+    ) -> Plan:
+        """Set a plan's public visibility and return the updated plan."""
+        body = build_body(is_public=is_public)
+        return _parse_data(
+            self._http.put(f"/plans/{id}/visibility", body, idempotency_key=idempotency_key), Plan
+        )
+
+    def list(self, *, include_private: bool | None = None) -> PlansListResult:
+        """List plans with public price IDs and their automatic introductory offer IDs."""
+        query = build_body(include_private=include_private)
+        return _parse_data(self._http.get("/plans", query), PlansListResult)
+
+    def create(
+        self,
+        *,
+        name: str,
+        code: str,
+        description: str | None = None,
+        consumption_model: Literal["metered", "credits", "balance"] | None = None,
+        is_public: bool | None = None,
+        is_free: bool | None = None,
+        block_on_exhaustion: bool | None = None,
+        plan_group_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        idempotency_key: str | None = None,
+    ) -> Plan:
+        """Create a new plan with optional consumption model, visibility, and plan group assignment."""
+        body = build_body(
+            name=name,
+            code=code,
+            description=description,
+            consumption_model=consumption_model,
+            is_public=is_public,
+            is_free=is_free,
+            block_on_exhaustion=block_on_exhaustion,
+            plan_group_id=plan_group_id,
+            metadata=metadata,
+        )
+        return _parse_data(self._http.post("/plans", body, idempotency_key=idempotency_key), Plan)

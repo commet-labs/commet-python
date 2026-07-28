@@ -5,7 +5,6 @@ import logging
 from ._generated_resources import GeneratedSyncResources
 from ._http import CommetHTTPClient
 from ._shared import API_VERSION
-from .resources.usage import UsageResource
 from .resources.webhooks import Webhooks
 
 logger = logging.getLogger("commet")
@@ -33,7 +32,6 @@ class Commet(GeneratedSyncResources):
 
         self._init_resources(self._http)
 
-        self.usage = UsageResource(self._http)
         self.webhooks = Webhooks(self._http)
 
         logger.debug("Commet client initialized")

@@ -8,13 +8,7 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import Subscription
-
-_INTRO_OFFER = {
-    "discount_type": "percentage",
-    "discount_value": 1000,
-    "duration_cycles": 3,
-}
+from commet.types import CreatedSubscription
 
 
 def _create_response() -> Response:
@@ -38,53 +32,33 @@ def mock_api() -> respx.MockRouter:
 
 
 class TestCreate:
-    def test_create_sends_custom_intro_offer_as_camel_case(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    def test_create_sends_offer_id_from_contract(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/subscriptions").mock(return_value=_create_response())
         with Commet(api_key="ck_test_123") as client:
             result = client.subscriptions.create(
                 customer_id="cus_1",
                 plan_code="pro",
-                intro_offer=_INTRO_OFFER,
+                offer_id="offer_1",
             )
-            assert result.success is True
-            assert isinstance(result.data, Subscription)
+            assert isinstance(result, CreatedSubscription)
 
         sent = json.loads(route.calls.last.request.content)
-        assert sent["introOffer"] == {
-            "discountType": "percentage",
-            "discountValue": 1000,
-            "durationCycles": 3,
-        }
-        assert "intro_offer" not in sent
-        assert "discount_type" not in sent["introOffer"]
-        assert "discount_value" not in sent["introOffer"]
-        assert "duration_cycles" not in sent["introOffer"]
+        assert sent["offerId"] == "offer_1"
+        assert "introOffer" not in sent
 
 
 @pytest.mark.asyncio
 class TestAsyncCreate:
-    async def test_create_sends_custom_intro_offer_as_camel_case(
-        self, mock_api: respx.MockRouter
-    ) -> None:
+    async def test_create_sends_offer_id_from_contract(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/subscriptions").mock(return_value=_create_response())
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.subscriptions.create(
                 customer_id="cus_1",
                 plan_code="pro",
-                intro_offer=_INTRO_OFFER,
+                offer_id="offer_1",
             )
-            assert result.success is True
-            assert isinstance(result.data, Subscription)
+            assert isinstance(result, CreatedSubscription)
 
         sent = json.loads(route.calls.last.request.content)
-        assert sent["introOffer"] == {
-            "discountType": "percentage",
-            "discountValue": 1000,
-            "durationCycles": 3,
-        }
-        assert "intro_offer" not in sent
-        assert "discount_type" not in sent["introOffer"]
-        assert "discount_value" not in sent["introOffer"]
-        assert "duration_cycles" not in sent["introOffer"]
+        assert sent["offerId"] == "offer_1"
+        assert "introOffer" not in sent

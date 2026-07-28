@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Literal, TypeVar, cast
+from typing import Any, Literal, TypeVar, Union, cast
 
 from ._http import ApiResponse
 
@@ -13,10 +13,31 @@ T = TypeVar("T")
 
 _ENUM_TYPES: dict[str, type[Enum]] = {}
 _DATACLASS_TYPES: dict[str, type[Any]] = {}
+_UNION_TYPES: dict[str, tuple[str | None, dict[Any, type[Any]], list[type[Any]]]] = {}
+
+
+def _from_union(name: str, data: Any) -> Any:
+    if not isinstance(data, dict):
+        return data
+    field, variants, fallbacks = _UNION_TYPES[name]
+    if field is not None:
+        selected = variants.get(data.get(field))
+        if selected is not None:
+            return _from_dict(selected, data)
+    if fallbacks:
+        selected = max(
+            fallbacks,
+            key=lambda candidate: len(set(candidate.__dataclass_fields__) & set(data)),
+        )
+        return _from_dict(selected, data)
+    return data
 
 
 def _coerce_field(annotation: str, value: Any) -> Any:
     base = annotation.split(" | ")[0].strip()
+
+    if base in _UNION_TYPES:
+        return _from_union(base, value)
 
     enum_cls = _ENUM_TYPES.get(base)
     if enum_cls is not None:
@@ -29,6 +50,8 @@ def _coerce_field(annotation: str, value: Any) -> Any:
         inner = base[len("list[") : -1].strip()
         nested = _DATACLASS_TYPES.get(inner)
         enum_inner = _ENUM_TYPES.get(inner)
+        if inner in _UNION_TYPES and isinstance(value, list):
+            return [_from_union(inner, item) for item in value]
         if nested is not None and isinstance(value, list):
             return [_from_dict(nested, item) for item in value]
         if enum_inner is not None and isinstance(value, list):
@@ -76,9 +99,20 @@ def _parse(response: ApiResponse[Any], cls: type[T]) -> ApiResponse[T]:
     return response
 
 
+def _parse_union(response: ApiResponse[Any], name: str) -> ApiResponse[Any]:
+    response.data = _from_union(name, response.data)
+    return response
+
+
 def _parse_list(response: ApiResponse[Any], cls: type[T]) -> ApiResponse[list[T]]:
     if isinstance(response.data, list):
         response.data = _from_list(cls, response.data)
+    return response
+
+
+def _parse_union_list(response: ApiResponse[Any], name: str) -> ApiResponse[list[Any]]:
+    if isinstance(response.data, list):
+        response.data = [_from_union(name, item) for item in response.data]
     return response
 
 
@@ -91,13 +125,28 @@ def _parse_map(response: ApiResponse[Any], cls: type[T]) -> ApiResponse[dict[str
     return response
 
 
-class SubscriptionStatus(str, Enum):
-    DRAFT = "draft"
-    PENDING_PAYMENT = "pending_payment"
-    TRIALING = "trialing"
-    ACTIVE = "active"
-    PAST_DUE = "past_due"
-    CANCELED = "canceled"
+def _data(response: ApiResponse[T]) -> T:
+    return cast("T", response.data)
+
+
+def _parse_data(response: ApiResponse[Any], cls: type[T]) -> T:
+    return cast("T", _parse(response, cls).data)
+
+
+def _parse_union_data(response: ApiResponse[Any], name: str) -> Any:
+    return _parse_union(response, name).data
+
+
+def _parse_list_data(response: ApiResponse[Any], cls: type[T]) -> list[T]:
+    return cast("list[T]", _parse_list(response, cls).data)
+
+
+def _parse_union_list_data(response: ApiResponse[Any], name: str) -> list[Any]:
+    return cast("list[Any]", _parse_union_list(response, name).data)
+
+
+def _parse_map_data(response: ApiResponse[Any], cls: type[T]) -> dict[str, T]:
+    return cast("dict[str, T]", _parse_map(response, cls).data)
 
 
 class BillingInterval(str, Enum):
@@ -114,6 +163,13 @@ class ConsumptionModel(str, Enum):
     BALANCE = "balance"
 
 
+class FeatureType(str, Enum):
+    BOOLEAN = "boolean"
+    USAGE = "usage"
+    SEATS = "seats"
+    QUOTA = "quota"
+
+
 class InvoiceType(str, Enum):
     RECURRING = "recurring"
     OVERAGE = "overage"
@@ -126,30 +182,19 @@ class InvoiceType(str, Enum):
     REACTIVATION = "reactivation"
 
 
-class TransactionStatus(str, Enum):
-    PENDING = "pending"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-    REFUNDED = "refunded"
-    DISPUTED = "disputed"
-
-
 class PaymentProvider(str, Enum):
     STRIPE = "stripe"
     COMMET = "commet"
     DLOCAL = "dlocal"
 
 
-class FeatureType(str, Enum):
-    BOOLEAN = "boolean"
-    USAGE = "usage"
-    SEATS = "seats"
-    QUOTA = "quota"
-
-
-class DiscountType(str, Enum):
-    PERCENTAGE = "percentage"
-    AMOUNT = "amount"
+class SubscriptionStatus(str, Enum):
+    DRAFT = "draft"
+    PENDING_PAYMENT = "pending_payment"
+    TRIALING = "trialing"
+    ACTIVE = "active"
+    PAST_DUE = "past_due"
+    CANCELED = "canceled"
 
 
 class Timezone(str, Enum):
@@ -176,6 +221,14 @@ class Timezone(str, Enum):
     AUSTRALIA_SYDNEY = "Australia/Sydney"
 
 
+class TransactionStatus(str, Enum):
+    PENDING = "pending"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+    DISPUTED = "disputed"
+
+
 @dataclass
 class ActiveAddon:
     slug: str = ""
@@ -186,14 +239,14 @@ class ActiveAddon:
     feature_type: FeatureType | None = None
     consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = None
     activated_at: str = ""
-    object: Literal["addon"] | None = None
+    object: Literal["subscription_addon"] | None = None
     livemode: bool = False
 
 
 @dataclass
 class AddedPlanToGroup:
     success: bool = False
-    object: Literal["plan_group"] | None = None
+    object: Literal["plan_group_membership"] | None = None
     livemode: bool = False
 
 
@@ -204,30 +257,69 @@ class Addon:
     slug: str = ""
     description: str | None = None
     base_price: int = 0
-    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = None
     feature_code: str = ""
     feature_name: str = ""
+    created_at: str = ""
+    updated_at: str = ""
+    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = None
     included_units: int | None = None
     overage_rate: int | None = None
     credit_cost: int | None = None
-    created_at: str = ""
-    updated_at: str = ""
     object: Literal["addon"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class AddPlanFeatureParamsOverage:
-    enabled: bool = False
-    unit_price: int = 0
+class AddonsListActiveResult:
+    object: Literal["list"] | None = None
+    data: list[ActiveAddon] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
-class AddPlanPriceParamsIntroOffer:
-    enabled: bool = False
-    discount_type: DiscountType | None = None
-    discount_value: int | None = None
-    duration_cycles: int | None = None
+class AddonsListResult:
+    object: Literal["list"] | None = None
+    data: list[Addon] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
+class AddPlanFeatureParamsOverage:
+    enabled: bool | None = None
+    unit_price: int | None = None
+
+
+@dataclass
+class AddPlanPriceParamsMarketPricesItem:
+    market_group_id: str = ""
+    currency: (
+        Literal[
+            "usd",
+            "ars",
+            "brl",
+            "clp",
+            "cop",
+            "pen",
+            "uyu",
+            "pyg",
+            "bob",
+            "mxn",
+            "cad",
+            "eur",
+            "jpy",
+            "cny",
+            "krw",
+            "hkd",
+            "sgd",
+            "twd",
+            "inr",
+            "thb",
+        ]
+        | None
+    ) = None
+    price: int = 0
 
 
 @dataclass
@@ -243,18 +335,26 @@ class ApiKey:
 
 
 @dataclass
+class ApiKeysListResult:
+    object: Literal["list"] | None = None
+    data: list[ApiKey] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
 class BalanceAdjustment:
     amount: int = 0
     new_balance: int = 0
     reason: str | None = None
-    object: Literal["subscription"] | None = None
+    object: Literal["balance_transaction"] | None = None
     livemode: bool = False
 
 
 @dataclass
 class BalanceTopup:
     amount: int = 0
-    object: Literal["subscription"] | None = None
+    object: Literal["balance_topup"] | None = None
     livemode: bool = False
 
 
@@ -279,31 +379,6 @@ class BatchCreateCustomersParamsCustomersItemAddress:
     postal_code: str = ""
     country: str = ""
     region: str | None = None
-
-
-@dataclass
-class BulkSeatUpdate:
-    id: str = ""
-    feature_code: str = ""
-    previous_balance: int = 0
-    new_balance: int = 0
-    ts: str = ""
-    created_at: str = ""
-    object: Literal["seat"] | None = None
-    livemode: bool = False
-
-
-@dataclass
-class CanceledSubscription:
-    id: str = ""
-    customer_id: str = ""
-    status: SubscriptionStatus | None = None
-    canceled_at: str = ""
-    cancel_reason: str | None = None
-    scheduled_cancellation_date: str = ""
-    updated_at: str = ""
-    object: Literal["subscription"] | None = None
-    livemode: bool = False
 
 
 @dataclass
@@ -393,37 +468,127 @@ class CreatedApiKey:
 
 
 @dataclass
-class CreatedInvoice:
+class CreatedSubscription:
     id: str = ""
     customer_id: str = ""
-    invoice_number: str = ""
-    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
-    invoice_type: InvoiceType | None = None
-    currency: str = ""
-    subtotal: int = 0
-    tax_amount: int = 0
-    total: int = 0
-    issue_date: str = ""
-    due_date: str = ""
-    memo: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    plan: CreatedSubscriptionPlan | None = None
+    name: str = ""
+    description: str | None = None
+    status: SubscriptionStatus | None = None
+    billing_interval: BillingInterval | None = None
+    trial_ends_at: str | None = None
+    current_period: CreatedSubscriptionCurrentPeriod | None = None
+    cancellation: CreatedSubscriptionCancellation | None = None
+    cancel_at_period_end: bool = False
+    scheduled_plan_change: CreatedSubscriptionScheduledPlanChange | None = None
+    discount: CreatedSubscriptionDiscount | None = None
+    start_date: str = ""
+    end_date: str | None = None
+    billing_day_of_month: int | None = None
+    next_billing_date: str | None = None
+    checkout_url: str | None = None
     created_at: str = ""
     updated_at: str = ""
-    object: Literal["invoice"] | None = None
+    checkout_provider: PaymentProvider | None = None
+    price_id: str | None = None
+    object: Literal["subscription"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class CreateSubscriptionParamsIntroOffer:
-    discount_type: DiscountType | None = None
-    discount_value: int = 0
+class CreatedSubscriptionCancellation:
+    scheduled_at: str = ""
+    reason: str | None = None
+    effective_at: str = ""
+
+
+@dataclass
+class CreatedSubscriptionCurrentPeriod:
+    start: str = ""
+    end: str = ""
+    days_remaining: float = 0.0
+
+
+@dataclass
+class CreatedSubscriptionDiscount:
+    type: Literal["percentage", "amount"] | None = None
+    value: float = 0.0
+    name: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class CreatedSubscriptionPlan:
+    id: str = ""
+    name: str = ""
+
+
+@dataclass
+class CreatedSubscriptionScheduledPlanChange:
+    change_type: Literal["plan_downgrade", "interval_change"] | None = None
+    new_plan_id: str | None = None
+    new_plan_name: str | None = None
+    new_billing_interval: str | None = None
+    scheduled_for: str = ""
+
+
+@dataclass
+class CreatedWebhook:
+    id: str = ""
+    url: str = ""
+    events: list[str] = field(default_factory=list)
+    description: str | None = None
+    is_active: bool = False
+    api_version: str | None = None
+    created_at: str = ""
+    secret_key: str = ""
+    object: Literal["webhook"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CreateOfferParamsPhasesItemVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+
+
+@dataclass
+class CreateOfferParamsPhasesItemVariant2:
+    type: Literal["percentage"] | None = None
     duration_cycles: int = 0
+    percentage: int = 0
+
+
+@dataclass
+class CreateOfferParamsPhasesItemVariant3:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int = 0
+    amounts: list[CreateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
+
+
+@dataclass
+class CreateOfferParamsPhasesItemVariant3AmountsItem:
+    currency: str = ""
+    amount: int = 0
+
+
+@dataclass
+class CreateOfferParamsPhasesItemVariant4:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int = 0
+    prices: list[CreateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
+
+
+@dataclass
+class CreateOfferParamsPhasesItemVariant4PricesItem:
+    currency: str = ""
+    amount: int = 0
 
 
 @dataclass
 class CreditGrant:
     credits: int = 0
-    object: Literal["subscription"] | None = None
+    object: Literal["credit_grant"] | None = None
     livemode: bool = False
 
 
@@ -434,12 +599,31 @@ class CreditPack:
     description: str | None = None
     credits: int = 0
     price: int = 0
-    currency: str | None = None
-    is_active: bool | None = None
-    created_at: str | None = None
-    updated_at: str | None = None
+    is_active: bool = False
+    created_at: str = ""
+    updated_at: str = ""
     object: Literal["credit_pack"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class CreditPackListItem:
+    id: str = ""
+    name: str = ""
+    description: str | None = None
+    credits: int = 0
+    price: int = 0
+    currency: str = ""
+    object: Literal["credit_pack"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CreditPacksListResult:
+    object: Literal["list"] | None = None
+    data: list[CreditPackListItem] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -462,7 +646,7 @@ class Customer:
 class CustomerBatch:
     successful: list[CustomerBatchSuccessfulItem] = field(default_factory=list)
     failed: list[CustomerBatchFailedItem] = field(default_factory=list)
-    object: Literal["customer"] | None = None
+    object: Literal["customer_batch"] | None = None
     livemode: bool = False
 
 
@@ -504,11 +688,11 @@ class CustomerBatchSuccessfulItem:
 
 
 @dataclass
-class DefaultPlanPrice:
-    id: str = ""
-    is_default: Literal[True] | None = None
-    object: Literal["plan"] | None = None
-    livemode: bool = False
+class CustomersListResult:
+    object: Literal["list"] | None = None
+    data: list[Customer] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -520,9 +704,16 @@ class DeletedObject:
 
 
 @dataclass
+class DeletedOffer:
+    deleted: Literal[True] | None = None
+    object: Literal["offer"] | None = None
+    livemode: bool = False
+
+
+@dataclass
 class DeletedPlanRegionalPricing:
     deleted: Literal[True] | None = None
-    object: Literal["plan"] | None = None
+    object: Literal["plan_regional_pricing"] | None = None
     livemode: bool = False
 
 
@@ -531,7 +722,7 @@ class DeletedSubscriptionAddon:
     id: str = ""
     status: Literal["inactive"] | None = None
     deactivated_at: str | None = None
-    object: Literal["subscription"] | None = None
+    object: Literal["subscription_addon"] | None = None
     livemode: bool = False
 
 
@@ -550,43 +741,204 @@ class Feature:
 
 
 @dataclass
-class FeatureAccess:
+class FeatureAccessListResult:
+    object: Literal["list"] | None = None
+    data: list[FeatureAccess] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
+class FeatureAccessVariant1:
     code: str = ""
     name: str = ""
-    type: FeatureType | None = None
+    unit_name: str | None = None
     allowed: bool = False
-    enabled: bool | None = None
-    current: float | None = None
-    included: float | None = None
-    remaining: float | None = None
-    overage_quantity: float | None = None
-    overage_unit_price: float | None = None
-    unlimited: bool | None = None
-    overage_enabled: bool | None = None
-    billed_quantity: float | None = None
-    object: Literal["feature"] | None = None
+    type: Literal["boolean"] | None = None
+    enabled: bool = False
+    object: Literal["feature_access"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class FeatureLookup:
+class FeatureAccessVariant2:
+    code: str = ""
+    name: str = ""
+    unit_name: str | None = None
     allowed: bool = False
-    code: str | None = None
-    name: str | None = None
-    type: FeatureType | None = None
-    enabled: bool | None = None
-    current: float | None = None
-    included: float | None = None
-    remaining: float | None = None
-    overage_quantity: float | None = None
-    overage_unit_price: float | None = None
-    unlimited: bool | None = None
-    overage_enabled: bool | None = None
-    billed_quantity: float | None = None
-    will_be_charged: bool | None = None
-    reason: str | None = None
-    object: Literal["feature"] | None = None
+    type: Literal["usage"] | None = None
+    consumption: FeatureAccessVariant2Consumption | None = None
+    object: Literal["feature_access"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant1:
+    model: Literal["metered"] | None = None
+    period: FeatureAccessVariant2ConsumptionVariant1Period | None = None
+    units_used: float = 0.0
+    included_units: float = 0.0
+    remaining_units: float | None = None
+    unlimited: bool = False
+    overage: FeatureAccessVariant2ConsumptionVariant1Overage | None = None
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant1Overage:
+    enabled: bool = False
+    units: float = 0.0
+    unit_price: FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice | None = None
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice:
+    amount: int = 0
+    currency: str = ""
+    scale: Literal[10000] | None = None
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant1Period:
+    start: str = ""
+    end: str = ""
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant2:
+    model: Literal["credits"] | None = None
+    period: FeatureAccessVariant2ConsumptionVariant2Period | None = None
+    units_used: float = 0.0
+    credits_per_unit: int = 0
+    credits_consumed: float = 0.0
+    available_units: int = 0
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant2Period:
+    start: str = ""
+    end: str = ""
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant3:
+    model: Literal["balance"] | None = None
+    period: FeatureAccessVariant2ConsumptionVariant3Period | None = None
+    units_used: float = 0.0
+    spent: FeatureAccessVariant2ConsumptionVariant3Spent | None = None
+    available_units: int | None = None
+    unit_price: FeatureAccessVariant2ConsumptionVariant3UnitPrice | None = None
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant3Period:
+    start: str = ""
+    end: str = ""
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant3Spent:
+    amount: int = 0
+    currency: str = ""
+
+
+@dataclass
+class FeatureAccessVariant2ConsumptionVariant3UnitPrice:
+    amount: int = 0
+    currency: str = ""
+    scale: Literal[10000] | None = None
+
+
+@dataclass
+class FeatureAccessVariant3:
+    code: str = ""
+    name: str = ""
+    unit_name: str | None = None
+    allowed: bool = False
+    type: Literal["seats"] | None = None
+    usage: FeatureAccessVariant3Usage | None = None
+    object: Literal["feature_access"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class FeatureAccessVariant3Usage:
+    period: FeatureAccessVariant3UsagePeriod | None = None
+    units_used: float = 0.0
+    included_units: float = 0.0
+    remaining_units: float | None = None
+    unlimited: bool = False
+    overage: FeatureAccessVariant3UsageOverage | None = None
+
+
+@dataclass
+class FeatureAccessVariant3UsageOverage:
+    enabled: bool = False
+    units: float = 0.0
+    unit_price: FeatureAccessVariant3UsageOverageUnitPrice | None = None
+
+
+@dataclass
+class FeatureAccessVariant3UsageOverageUnitPrice:
+    amount: int = 0
+    currency: str = ""
+    scale: Literal[10000] | None = None
+
+
+@dataclass
+class FeatureAccessVariant3UsagePeriod:
+    start: str = ""
+    end: str = ""
+
+
+@dataclass
+class FeatureAccessVariant4:
+    code: str = ""
+    name: str = ""
+    unit_name: str | None = None
+    allowed: bool = False
+    type: Literal["quota"] | None = None
+    usage: FeatureAccessVariant4Usage | None = None
+    object: Literal["feature_access"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class FeatureAccessVariant4Usage:
+    period: FeatureAccessVariant4UsagePeriod | None = None
+    units_used: float = 0.0
+    included_units: float = 0.0
+    remaining_units: float | None = None
+    unlimited: bool = False
+    overage: FeatureAccessVariant4UsageOverage | None = None
+    billed_units: float = 0.0
+
+
+@dataclass
+class FeatureAccessVariant4UsageOverage:
+    enabled: bool = False
+    units: float = 0.0
+    unit_price: FeatureAccessVariant4UsageOverageUnitPrice | None = None
+
+
+@dataclass
+class FeatureAccessVariant4UsageOverageUnitPrice:
+    amount: int = 0
+    currency: str = ""
+    scale: Literal[10000] | None = None
+
+
+@dataclass
+class FeatureAccessVariant4UsagePeriod:
+    start: str = ""
+    end: str = ""
+
+
+@dataclass
+class FeaturesListResult:
+    object: Literal["list"] | None = None
+    data: list[Feature] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -600,21 +952,21 @@ class Invoice:
     currency: str = ""
     subtotal: int = 0
     discount_amount: int = 0
-    credit_applied: int | None = None
     tax_amount: int = 0
     total: int = 0
     period_start: str = ""
     period_end: str = ""
     issue_date: str = ""
     due_date: str = ""
-    plan_name: str | None = None
     memo: str | None = None
-    po_number: str | None = None
-    reference: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
     created_at: str = ""
     updated_at: str = ""
-    line_items: list[InvoiceLineItemsItem] | None = None
+    credit_applied: int = 0
+    plan_name: str | None = None
+    po_number: str | None = None
+    reference: str | None = None
+    line_items: list[InvoiceLineItemsItem] = field(default_factory=list)
     object: Literal["invoice"] | None = None
     livemode: bool = False
 
@@ -623,7 +975,7 @@ class Invoice:
 class InvoiceDownload:
     url: str = ""
     expires_at: str = ""
-    object: Literal["invoice"] | None = None
+    object: Literal["invoice_download_link"] | None = None
     livemode: bool = False
 
 
@@ -659,12 +1011,112 @@ class InvoiceLineItemsItem:
 
 
 @dataclass
-class InvoiceStatus:
+class InvoiceListItem:
     id: str = ""
+    customer_id: str = ""
+    subscription_id: str | None = None
+    invoice_number: str = ""
     status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
+    invoice_type: InvoiceType | None = None
+    currency: str = ""
+    subtotal: int = 0
+    discount_amount: int = 0
+    tax_amount: int = 0
+    total: int = 0
+    period_start: str = ""
+    period_end: str = ""
+    issue_date: str = ""
+    due_date: str = ""
+    memo: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
     updated_at: str = ""
     object: Literal["invoice"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class InvoicesListResult:
+    object: Literal["list"] | None = None
+    data: list[InvoiceListItem] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
+class MarketGroup:
+    id: str = ""
+    name: str = ""
+    country_codes: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["market_group"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Offer:
+    id: str = ""
+    name: str = ""
+    purpose: Literal["introductory", "promotional"] | None = None
+    plan_price_ids: list[str] = field(default_factory=list)
+    phases: list[OfferPhasesItem] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    starts_at: str | None = None
+    ends_at: str | None = None
+    active: bool = False
+    created_at: str = ""
+    updated_at: str = ""
+    object: Literal["offer"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class OfferPhasesItemVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+
+
+@dataclass
+class OfferPhasesItemVariant2:
+    type: Literal["percentage"] | None = None
+    duration_cycles: int = 0
+    percentage: int = 0
+
+
+@dataclass
+class OfferPhasesItemVariant3:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int = 0
+    amounts: list[OfferPhasesItemVariant3AmountsItem] = field(default_factory=list)
+
+
+@dataclass
+class OfferPhasesItemVariant3AmountsItem:
+    currency: str = ""
+    amount: int = 0
+
+
+@dataclass
+class OfferPhasesItemVariant4:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int = 0
+    prices: list[OfferPhasesItemVariant4PricesItem] = field(default_factory=list)
+
+
+@dataclass
+class OfferPhasesItemVariant4PricesItem:
+    currency: str = ""
+    amount: int = 0
+
+
+@dataclass
+class OffersListResult:
+    object: Literal["list"] | None = None
+    data: list[Offer] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -676,7 +1128,7 @@ class Payment:
         Literal["pending", "processing", "succeeded", "requires_action", "failed", "canceled"]
         | None
     ) = None
-    provider: PaymentProvider | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     amount_subtotal: int = 0
     tax_amount: int = 0
     amount_total: int = 0
@@ -694,8 +1146,16 @@ class Payment:
 @dataclass
 class PaymentMethodUpdateCheckout:
     checkout_url: str = ""
-    object: Literal["subscription"] | None = None
+    object: Literal["checkout_session"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class PaymentsListResult:
+    object: Literal["list"] | None = None
+    data: list[Payment] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -731,13 +1191,23 @@ class PayoutBankAccount:
 
 
 @dataclass
-class PayoutVerification:
+class PayoutVerificationVariant1:
     provider_account_id: str = ""
     status: Literal["pending_verification", "verified", "restricted", "disabled"] | None = None
     transfers_enabled: bool = False
-    already_exists: bool | None = None
+    outcome: Literal["existing"] | None = None
+    object: Literal["payout_account"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PayoutVerificationVariant2:
+    provider_account_id: str = ""
+    status: Literal["pending_verification", "verified", "restricted", "disabled"] | None = None
+    transfers_enabled: bool = False
+    outcome: Literal["created"] | None = None
     business_type: Literal["individual", "company"] | None = None
-    country: str | None = None
+    country: str = ""
     object: Literal["payout_account"] | None = None
     livemode: bool = False
 
@@ -758,42 +1228,111 @@ class Plan:
     metadata: dict[str, Any] | None = None
     created_at: str = ""
     updated_at: str = ""
-    features: list[PlanFeaturesItem] | None = None
-    prices: list[PlanPricesItem] | None = None
-    exchange_rates: list[PlanExchangeRatesItem] | None = None
+    features: list[PlanFeaturesItem] = field(default_factory=list)
+    prices: list[PlanPricesItem] = field(default_factory=list)
+    exchange_rates: list[PlanExchangeRatesItem] = field(default_factory=list)
     object: Literal["plan"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class PlanChange:
-    requires_checkout: bool | None = None
-    checkout_url: str | None = None
-    id: str | None = None
-    scheduled: bool | None = None
-    scheduled_for: str | None = None
+class PlanChangeVariant1:
+    outcome: Literal["requires_checkout"] | None = None
+    requires_checkout: Literal[True] | None = None
+    checkout_url: str = ""
+    offer_application: PlanChangeVariant1OfferApplication | None = None
+    object: Literal["plan_change"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PlanChangeVariant1OfferApplication:
+    id: str = ""
+    offer_id: str = ""
+    name: str = ""
+    currency: str = ""
+    subtotal: int = 0
+    discount_amount: int = 0
+    total: int = 0
+    phases: list[PlanChangeVariant1OfferApplicationPhasesItem] = field(default_factory=list)
+
+
+@dataclass
+class PlanChangeVariant1OfferApplicationPhasesItemVariant1:
+    type: Literal["percentage"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    percentage: int = 0
+
+
+@dataclass
+class PlanChangeVariant1OfferApplicationPhasesItemVariant2:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    amount: int = 0
+
+
+@dataclass
+class PlanChangeVariant1OfferApplicationPhasesItemVariant3:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    price: int = 0
+
+
+@dataclass
+class PlanChangeVariant2:
+    outcome: Literal["scheduled"] | None = None
+    id: str = ""
+    scheduled: Literal[True] | None = None
+    scheduled_for: str = ""
     change_type: (
         Literal[
             "subscription.plan_downgrade", "subscription.interval_change", "subscription.cancel"
         ]
         | None
     ) = None
-    customer_id: str | None = None
+    customer_id: str = ""
     new_plan_id: str | None = None
     new_plan_name: str | None = None
     new_billing_interval: str | None = None
-    previous_plan: PlanChangePreviousPlan | None = None
-    current_plan: PlanChangeCurrentPlan | None = None
-    billing_interval: str | None = None
-    billing: PlanChangeBilling | None = None
-    invoice_id: str | None = None
-    seat_limit_warning: PlanChangeSeatLimitWarning | None = None
-    object: Literal["subscription"] | None = None
+    seat_limit_warning: PlanChangeVariant2SeatLimitWarning | None = None
+    object: Literal["plan_change"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class PlanChangeBilling:
+class PlanChangeVariant2SeatLimitWarning:
+    feature_code: str = ""
+    feature_name: str = ""
+    current_seats: int = 0
+    included: int = 0
+    new_plan_name: str = ""
+    effective_date: str = ""
+
+
+@dataclass
+class PlanChangeVariant3:
+    outcome: Literal["completed"] | None = None
+    id: str = ""
+    scheduled: Literal[False] | None = None
+    customer_id: str = ""
+    previous_plan: PlanChangeVariant3PreviousPlan | None = None
+    current_plan: PlanChangeVariant3CurrentPlan | None = None
+    billing_interval: str = ""
+    billing: PlanChangeVariant3Billing | None = None
+    invoice_id: str | None = None
+    offer_application: PlanChangeVariant3OfferApplication | None = None
+    object: Literal["plan_change"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PlanChangeVariant3Billing:
     credit: int = 0
     credits_applied: int = 0
     charge: int = 0
@@ -804,26 +1343,55 @@ class PlanChangeBilling:
 
 
 @dataclass
-class PlanChangeCurrentPlan:
+class PlanChangeVariant3CurrentPlan:
     id: str = ""
     name: str = ""
     price: int = 0
 
 
 @dataclass
-class PlanChangePreviousPlan:
+class PlanChangeVariant3OfferApplication:
     id: str = ""
+    offer_id: str = ""
     name: str = ""
+    currency: str = ""
+    subtotal: int = 0
+    discount_amount: int = 0
+    total: int = 0
+    phases: list[PlanChangeVariant3OfferApplicationPhasesItem] = field(default_factory=list)
 
 
 @dataclass
-class PlanChangeSeatLimitWarning:
-    feature_code: str = ""
-    feature_name: str = ""
-    current_seats: int = 0
-    included: int = 0
-    new_plan_name: str = ""
-    effective_date: str = ""
+class PlanChangeVariant3OfferApplicationPhasesItemVariant1:
+    type: Literal["percentage"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    percentage: int = 0
+
+
+@dataclass
+class PlanChangeVariant3OfferApplicationPhasesItemVariant2:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    amount: int = 0
+
+
+@dataclass
+class PlanChangeVariant3OfferApplicationPhasesItemVariant3:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    price: int = 0
+
+
+@dataclass
+class PlanChangeVariant3PreviousPlan:
+    id: str = ""
+    name: str = ""
 
 
 @dataclass
@@ -843,7 +1411,7 @@ class PlanFeature:
     credits_per_unit: int | None = None
     pricing_mode: Literal["fixed", "ai_model"] | None = None
     margin: int | None = None
-    object: Literal["plan"] | None = None
+    object: Literal["plan_feature"] | None = None
     livemode: bool = False
 
 
@@ -863,7 +1431,7 @@ class PlanFeaturesItem:
     included_amount: int | None = None
     unlimited: bool = False
     overage: PlanFeaturesItemOverage | None = None
-    regional_prices: list[PlanFeaturesItemRegionalPricesItem] | None = None
+    regional_prices: list[PlanFeaturesItemRegionalPricesItem] = field(default_factory=list)
 
 
 @dataclass
@@ -888,16 +1456,36 @@ class PlanGroup:
     is_public: bool = False
     created_at: str = ""
     updated_at: str = ""
-    plans: list[PlanGroupPlansItem] | None = None
     object: Literal["plan_group"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class PlanGroupPlansItem:
+class PlanGroupDetail:
+    id: str = ""
+    name: str = ""
+    description: str | None = None
+    is_public: bool = False
+    created_at: str = ""
+    updated_at: str = ""
+    plans: list[PlanGroupDetailPlansItem] = field(default_factory=list)
+    object: Literal["plan_group"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PlanGroupDetailPlansItem:
     id: str = ""
     name: str = ""
     sort_order: int = 0
+
+
+@dataclass
+class PlanGroupsListResult:
+    object: Literal["list"] | None = None
+    data: list[PlanGroup] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -910,39 +1498,44 @@ class PlanPrice:
     trial_days: int = 0
     included_balance: int | None = None
     included_credits: int | None = None
-    intro_offer: PlanPriceIntroOffer | None = None
+    offer_id: str | None = None
+    inherits_from_price_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    market_prices: list[PlanPriceMarketPricesItem] = field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""
-    object: Literal["plan"] | None = None
+    object: Literal["plan_price"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class PlanPriceIntroOffer:
-    enabled: bool = False
-    discount_type: DiscountType | None = None
-    discount_value: int | None = None
-    duration_cycles: int | None = None
+class PlanPriceMarketPricesItem:
+    market_group_id: str = ""
+    currency: str = ""
+    price: int = 0
 
 
 @dataclass
 class PlanPricesItem:
+    id: str = ""
     billing_interval: BillingInterval | None = None
     price: int = 0
     is_default: bool = False
     trial_days: int = 0
     included_balance: int | None = None
     included_credits: int | None = None
-    intro_offer: PlanPricesItemIntroOffer | None = None
-    regional_prices: list[PlanPricesItemRegionalPricesItem] | None = None
+    offer_id: str | None = None
+    inherits_from_price_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    market_prices: list[PlanPricesItemMarketPricesItem] = field(default_factory=list)
+    regional_prices: list[PlanPricesItemRegionalPricesItem] = field(default_factory=list)
 
 
 @dataclass
-class PlanPricesItemIntroOffer:
-    enabled: bool = False
-    discount_type: DiscountType | None = None
-    discount_value: int | None = None
-    duration_cycles: int | None = None
+class PlanPricesItemMarketPricesItem:
+    market_group_id: str = ""
+    currency: str = ""
+    price: int = 0
 
 
 @dataclass
@@ -957,7 +1550,7 @@ class PlanPricesItemRegionalPricesItem:
 class PlanRegionalPricing:
     price_id: str = ""
     overrides: list[PlanRegionalPricingOverridesItem] = field(default_factory=list)
-    object: Literal["plan"] | None = None
+    object: Literal["plan_regional_pricing"] | None = None
     livemode: bool = False
 
 
@@ -975,16 +1568,16 @@ class PlanRegionalPricingResult:
     exchange_rate: float = 0.0
     prices_configured: int = 0
     features_configured: int = 0
-    object: Literal["plan"] | None = None
+    object: Literal["plan_regional_pricing"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class PlanVisibility:
-    id: str = ""
-    is_public: bool = False
-    object: Literal["plan"] | None = None
-    livemode: bool = False
+class PlansListResult:
+    object: Literal["list"] | None = None
+    data: list[Plan] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -1004,17 +1597,63 @@ class PreviewChange:
     days_remaining: int = 0
     total_days: int = 0
     is_upgrade: bool = False
-    object: Literal["subscription"] | None = None
+    offer_application: PreviewChangeOfferApplication | None = None
+    object: Literal["plan_change_preview"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class PreviewChangeOfferApplication:
+    id: str = ""
+    offer_id: str = ""
+    name: str = ""
+    currency: str = ""
+    subtotal: int = 0
+    discount_amount: int = 0
+    total: int = 0
+    phases: list[PreviewChangeOfferApplicationPhasesItem] = field(default_factory=list)
+
+
+@dataclass
+class PreviewChangeOfferApplicationPhasesItemVariant1:
+    type: Literal["percentage"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    percentage: int = 0
+
+
+@dataclass
+class PreviewChangeOfferApplicationPhasesItemVariant2:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    amount: int = 0
+
+
+@dataclass
+class PreviewChangeOfferApplicationPhasesItemVariant3:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    price: int = 0
+
+
+@dataclass
+class PricingListMarketGroupsResult:
+    object: Literal["list"] | None = None
+    data: list[MarketGroup] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
 class PromoCode:
     id: str = ""
     code: str = ""
-    discount_type: DiscountType | None = None
-    discount_value: int = 0
-    duration_cycles: int | None = None
+    offer_id: str = ""
     billing_interval: BillingInterval | None = None
     max_redemptions: int | None = None
     expires_at: str | None = None
@@ -1027,18 +1666,88 @@ class PromoCode:
 
 
 @dataclass
+class PromoCodesListResult:
+    object: Literal["list"] | None = None
+    data: list[PromoCode] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
+class QuotaGetAllResult:
+    object: Literal["list"] | None = None
+    data: list[UsageQuota] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
 class ReactivatedSubscription:
-    id: str = ""
-    retry_initiated: bool = False
-    object: Literal["subscription"] | None = None
+    subscription_id: str = ""
+    invoice_id: str = ""
+    status: Literal["processing", "succeeded"] | None = None
+    offer_application: ReactivatedSubscriptionOfferApplication | None = None
+    object: Literal["subscription_reactivation"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplication:
+    id: str = ""
+    offer_id: str = ""
+    name: str = ""
+    currency: str = ""
+    subtotal: int = 0
+    discount_amount: int = 0
+    total: int = 0
+    phases: list[ReactivatedSubscriptionOfferApplicationPhasesItem] = field(default_factory=list)
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplicationPhasesItemVariant1:
+    type: Literal["percentage"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    percentage: int = 0
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplicationPhasesItemVariant2:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    amount: int = 0
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplicationPhasesItemVariant3:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+    price: int = 0
 
 
 @dataclass
 class RecoveryLink:
     url: str = ""
     token: str = ""
-    object: Literal["subscription"] | None = None
+    object: Literal["recovery_link"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Refund:
+    id: str = ""
+    transaction_id: str = ""
+    amount: int = 0
+    currency: str = ""
+    charge_id: str | None = None
+    status: Literal["pending", "requires_action", "succeeded", "failed", "canceled"] | None = None
+    reason: Literal["duplicate", "fraudulent", "requested_by_customer"] | None = None
+    object: Literal["refund"] | None = None
     livemode: bool = False
 
 
@@ -1046,7 +1755,7 @@ class RecoveryLink:
 class RemovedPlanFeature:
     id: str = ""
     removed: Literal[True] | None = None
-    object: Literal["plan"] | None = None
+    object: Literal["plan_feature"] | None = None
     livemode: bool = False
 
 
@@ -1054,14 +1763,14 @@ class RemovedPlanFeature:
 class RemovedPlanFromGroup:
     id: str = ""
     removed: bool = False
-    object: Literal["plan_group"] | None = None
+    object: Literal["plan_group_membership"] | None = None
     livemode: bool = False
 
 
 @dataclass
 class ReorderedPlans:
     reordered: bool = False
-    object: Literal["plan_group"] | None = None
+    object: Literal["plan_group_order"] | None = None
     livemode: bool = False
 
 
@@ -1069,14 +1778,21 @@ class ReorderedPlans:
 class SeatBalance:
     current: int = 0
     as_of: str = ""
-    object: Literal["seat"] | None = None
+    object: Literal["seat_balance"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class SeatBalanceListItem:
-    object: Literal["seat"] | None = None
+class SeatBalanceCollection:
+    balances: dict[str, SeatBalanceCollectionBalancesValue] = field(default_factory=dict)
+    object: Literal["seat_balance_collection"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class SeatBalanceCollectionBalancesValue:
+    current: int = 0
+    as_of: str = ""
 
 
 @dataclass
@@ -1088,15 +1804,23 @@ class SeatEvent:
     new_balance: int = 0
     ts: str = ""
     created_at: str = ""
-    object: Literal["seat"] | None = None
+    object: Literal["seat_event"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class SeatsSetAllResult:
+    object: Literal["list"] | None = None
+    data: list[SeatEvent] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
 class SentInvoice:
     sent: bool = False
     sent_at: str = ""
-    object: Literal["invoice"] | None = None
+    object: Literal["invoice_delivery"] | None = None
     livemode: bool = False
 
 
@@ -1104,14 +1828,6 @@ class SentInvoice:
 class SetPlanRegionalPricingParamsFeaturesItem:
     feature_id: str = ""
     overage_unit_price: int = 0
-
-
-@dataclass
-class SetPlanRegionalPricingParamsIntroOffersItem:
-    price_id: str = ""
-    discount_type: DiscountType | None = None
-    discount_value: int = 0
-    duration_cycles: int = 0
 
 
 @dataclass
@@ -1130,12 +1846,8 @@ class Subscription:
     description: str | None = None
     status: SubscriptionStatus | None = None
     billing_interval: BillingInterval | None = None
-    consumption_model: ConsumptionModel | None = None
     trial_ends_at: str | None = None
     current_period: SubscriptionCurrentPeriod | None = None
-    features: list[SubscriptionFeaturesItem] | None = None
-    credits: SubscriptionCredits | None = None
-    balance: SubscriptionBalance | None = None
     cancellation: SubscriptionCancellation | None = None
     cancel_at_period_end: bool = False
     scheduled_plan_change: SubscriptionScheduledPlanChange | None = None
@@ -1145,9 +1857,13 @@ class Subscription:
     billing_day_of_month: int | None = None
     next_billing_date: str | None = None
     checkout_url: str | None = None
-    checkout_provider: PaymentProvider | None = None
     created_at: str = ""
     updated_at: str = ""
+    consumption_model: ConsumptionModel | None = None
+    features: list[SubscriptionFeaturesItem] = field(default_factory=list)
+    credits: SubscriptionCredits | None = None
+    balance: SubscriptionBalance | None = None
+    price_id: str | None = None
     object: Literal["subscription"] | None = None
     livemode: bool = False
 
@@ -1157,7 +1873,7 @@ class SubscriptionAddon:
     addon_id: str = ""
     status: Literal["active"] | None = None
     prorated_charge: int = 0
-    object: Literal["subscription"] | None = None
+    object: Literal["subscription_addon"] | None = None
     livemode: bool = False
 
 
@@ -1191,23 +1907,30 @@ class SubscriptionCurrentPeriod:
 
 @dataclass
 class SubscriptionDiscount:
-    type: DiscountType | None = None
+    type: Literal["percentage", "amount"] | None = None
     value: float = 0.0
     name: str | None = None
     ends_at: str | None = None
 
 
 @dataclass
-class SubscriptionFeaturesItem:
+class SubscriptionFeaturesItemVariant1:
     code: str = ""
     name: str = ""
-    type: FeatureType | None = None
-    enabled: bool | None = None
-    usage: SubscriptionFeaturesItemUsage | None = None
+    type: Literal["boolean"] | None = None
+    enabled: bool = False
 
 
 @dataclass
-class SubscriptionFeaturesItemUsage:
+class SubscriptionFeaturesItemVariant2:
+    code: str = ""
+    name: str = ""
+    type: Literal["usage"] | None = None
+    usage: SubscriptionFeaturesItemVariant2Usage | None = None
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant2Usage:
     current: float = 0.0
     included: float = 0.0
     overage_quantity: float = 0.0
@@ -1215,14 +1938,109 @@ class SubscriptionFeaturesItemUsage:
 
 
 @dataclass
+class SubscriptionFeaturesItemVariant3:
+    code: str = ""
+    name: str = ""
+    type: Literal["seats"] | None = None
+    usage: SubscriptionFeaturesItemVariant3Usage | None = None
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant3Usage:
+    current: float = 0.0
+    included: float = 0.0
+    overage_quantity: float = 0.0
+    overage_unit_price: float | None = None
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant4:
+    code: str = ""
+    name: str = ""
+    type: Literal["quota"] | None = None
+
+
+@dataclass
 class SubscriptionPlan:
     id: str = ""
     name: str = ""
-    base_price: float | None = None
+    base_price: float = 0.0
 
 
 @dataclass
 class SubscriptionScheduledPlanChange:
+    change_type: Literal["plan_downgrade", "interval_change"] | None = None
+    new_plan_id: str | None = None
+    new_plan_name: str | None = None
+    new_billing_interval: str | None = None
+    scheduled_for: str = ""
+
+
+@dataclass
+class SubscriptionsListResult:
+    object: Literal["list"] | None = None
+    data: list[SubscriptionSummary] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
+class SubscriptionSummary:
+    id: str = ""
+    customer_id: str = ""
+    plan: SubscriptionSummaryPlan | None = None
+    name: str = ""
+    description: str | None = None
+    status: SubscriptionStatus | None = None
+    billing_interval: BillingInterval | None = None
+    trial_ends_at: str | None = None
+    current_period: SubscriptionSummaryCurrentPeriod | None = None
+    cancellation: SubscriptionSummaryCancellation | None = None
+    cancel_at_period_end: bool = False
+    scheduled_plan_change: SubscriptionSummaryScheduledPlanChange | None = None
+    discount: SubscriptionSummaryDiscount | None = None
+    start_date: str = ""
+    end_date: str | None = None
+    billing_day_of_month: int | None = None
+    next_billing_date: str | None = None
+    checkout_url: str | None = None
+    created_at: str = ""
+    updated_at: str = ""
+    price_id: str | None = None
+    object: Literal["subscription"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class SubscriptionSummaryCancellation:
+    scheduled_at: str = ""
+    reason: str | None = None
+    effective_at: str = ""
+
+
+@dataclass
+class SubscriptionSummaryCurrentPeriod:
+    start: str = ""
+    end: str = ""
+    days_remaining: float = 0.0
+
+
+@dataclass
+class SubscriptionSummaryDiscount:
+    type: Literal["percentage", "amount"] | None = None
+    value: float = 0.0
+    name: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class SubscriptionSummaryPlan:
+    id: str = ""
+    name: str = ""
+
+
+@dataclass
+class SubscriptionSummaryScheduledPlanChange:
     change_type: Literal["plan_downgrade", "interval_change"] | None = None
     new_plan_id: str | None = None
     new_plan_name: str | None = None
@@ -1246,8 +2064,14 @@ class TestClockBilling:
     failed: int = 0
     dunning_retried: int = 0
     dunning_failed: int = 0
-    object: Literal["test_clock"] | None = None
+    object: Literal["test_clock_run"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class TrackUsageParamsPropertiesItem:
+    property: str = ""
+    value: str = ""
 
 
 @dataclass
@@ -1272,29 +2096,40 @@ class Transaction:
 
 
 @dataclass
-class TransactionRefund:
+class TransactionListItem:
     id: str = ""
-    status: Literal["refunded"] | None = None
+    invoice_id: str | None = None
+    gross_amount: int | None = None
+    subtotal: int | None = None
+    tax_amount: int | None = None
+    presentment_amount: int | None = None
+    currency: str = ""
+    provider: PaymentProvider | None = None
+    status: TransactionStatus | None = None
+    customer_email: str | None = None
+    customer_name: str | None = None
+    paid_at: str | None = None
+    created_at: str = ""
+    updated_at: str = ""
     object: Literal["transaction"] | None = None
     livemode: bool = False
 
 
 @dataclass
 class TransactionRetry:
-    id: str = ""
-    status: Literal["processing"] | None = None
-    object: Literal["transaction"] | None = None
+    original_transaction_id: str = ""
+    invoice_id: str = ""
+    status: Literal["processing", "succeeded"] | None = None
+    object: Literal["transaction_retry"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class UncanceledSubscription:
-    id: str = ""
-    customer_id: str = ""
-    status: SubscriptionStatus | None = None
-    updated_at: str = ""
-    object: Literal["subscription"] | None = None
-    livemode: bool = False
+class TransactionsListResult:
+    object: Literal["list"] | None = None
+    data: list[TransactionListItem] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
@@ -1309,17 +2144,79 @@ class UpdateCustomerParamsAddress:
 
 
 @dataclass
+class UpdateOfferParamsPhasesItemVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+
+
+@dataclass
+class UpdateOfferParamsPhasesItemVariant2:
+    type: Literal["percentage"] | None = None
+    duration_cycles: int = 0
+    percentage: int = 0
+
+
+@dataclass
+class UpdateOfferParamsPhasesItemVariant3:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int = 0
+    amounts: list[UpdateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
+
+
+@dataclass
+class UpdateOfferParamsPhasesItemVariant3AmountsItem:
+    currency: str = ""
+    amount: int = 0
+
+
+@dataclass
+class UpdateOfferParamsPhasesItemVariant4:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int = 0
+    prices: list[UpdateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
+
+
+@dataclass
+class UpdateOfferParamsPhasesItemVariant4PricesItem:
+    currency: str = ""
+    amount: int = 0
+
+
+@dataclass
 class UpdatePlanFeatureParamsOverage:
     enabled: bool | None = None
     unit_price: int | None = None
 
 
 @dataclass
-class UpdatePlanPriceParamsIntroOffer:
-    enabled: bool | None = None
-    discount_type: DiscountType | None = None
-    discount_value: int | None = None
-    duration_cycles: int | None = None
+class UpdatePlanPriceParamsMarketPricesItem:
+    market_group_id: str = ""
+    currency: (
+        Literal[
+            "usd",
+            "ars",
+            "brl",
+            "clp",
+            "cop",
+            "pen",
+            "uyu",
+            "pyg",
+            "bob",
+            "mxn",
+            "cad",
+            "eur",
+            "jpy",
+            "cny",
+            "krw",
+            "hkd",
+            "sgd",
+            "twd",
+            "inr",
+            "thb",
+        ]
+        | None
+    ) = None
+    price: int = 0
 
 
 @dataclass
@@ -1327,6 +2224,105 @@ class UpsertRegionalPricesParamsOverridesItem:
     currency: str = ""
     price: int = 0
     included_balance: int | None = None
+
+
+@dataclass
+class UsageAdjustment:
+    id: str = ""
+    value: int = 0
+    previous_value: int = 0
+    adjustment: int = 0
+    customer_id: str = ""
+    reason: str | None = None
+    ts: str = ""
+    created_at: str = ""
+    feature_code: str = ""
+    object: Literal["usage_adjustment"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UsageCheckVariant1:
+    allowed: bool = False
+    subscription_status: str = ""
+    feature_code: str = ""
+    quantity: int = 0
+    reason: str | None = None
+    message: str | None = None
+    consumption_model: Literal["metered"] | None = None
+    current: float = 0.0
+    remaining: float = 0.0
+    unlimited: bool = False
+    included: float = 0.0
+    overage_enabled: bool = False
+    overage_unit_price: float | None = None
+    object: Literal["usage_check"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UsageCheckVariant2:
+    allowed: bool = False
+    subscription_status: str = ""
+    feature_code: str = ""
+    quantity: int = 0
+    reason: str | None = None
+    message: str | None = None
+    consumption_model: Literal["credits"] | None = None
+    credits_per_unit: int = 0
+    estimated_credits: int = 0
+    plan_credits: int = 0
+    purchased_credits: int = 0
+    total_credits: int = 0
+    object: Literal["usage_check"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UsageCheckVariant3:
+    allowed: bool = False
+    subscription_status: str = ""
+    feature_code: str = ""
+    quantity: int = 0
+    reason: str | None = None
+    message: str | None = None
+    consumption_model: Literal["balance"] | None = None
+    unit_price: float = 0.0
+    estimated_amount: float = 0.0
+    current_balance: float = 0.0
+    block_on_exhaustion: bool = False
+    currency: str = ""
+    object: Literal["usage_check"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UsageEvent:
+    id: str = ""
+    feature_code: str = ""
+    value: float = 0.0
+    customer_id: str = ""
+    event_id: str | None = None
+    ts: str = ""
+    created_at: str = ""
+    properties: list[UsageEventPropertiesItem] = field(default_factory=list)
+    consumption: UsageEventConsumption | None = None
+    object: Literal["usage_event"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class UsageEventConsumption:
+    model: Literal["credits", "balance"] | None = None
+    deducted: float = 0.0
+    remaining: float = 0.0
+    blocked: bool = False
+
+
+@dataclass
+class UsageEventPropertiesItem:
+    property: str = ""
+    value: str = ""
 
 
 @dataclass
@@ -1352,7 +2348,20 @@ class UsageQuotaEvent:
     new_balance: int = 0
     ts: str = ""
     created_at: str = ""
-    object: Literal["usage_quota"] | None = None
+    object: Literal["usage_quota_event"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class Webhook:
+    id: str = ""
+    url: str = ""
+    events: list[str] = field(default_factory=list)
+    description: str | None = None
+    is_active: bool = False
+    api_version: str | None = None
+    created_at: str = ""
+    object: Literal["webhook"] | None = None
     livemode: bool = False
 
 
@@ -1389,23 +2398,6 @@ class WebhookCreditsBalance:
 
 
 @dataclass
-class WebhookFeatureAccess:
-    code: str = ""
-    name: str = ""
-    type: str = ""
-    allowed: bool = False
-    enabled: bool | None = None
-    current: float | None = None
-    included: float | None = None
-    remaining: float | None = None
-    overage_quantity: float | None = None
-    overage_unit_price: float | None = None
-    unlimited: bool | None = None
-    overage_enabled: bool | None = None
-    billed_quantity: float | None = None
-
-
-@dataclass
 class WebhookPlanRef:
     id: str = ""
     name: str = ""
@@ -1420,17 +2412,114 @@ class WebhookSeatSummary:
     unlimited: bool | None = None
 
 
+@dataclass
+class WebhooksListResult:
+    object: Literal["list"] | None = None
+    data: list[Webhook] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
+class WebhookTest:
+    success: bool = False
+    delivery_id: str = ""
+    delivered_at: str = ""
+    object: Literal["webhook_delivery"] | None = None
+    livemode: bool = False
+
+
+ReactivatedSubscriptionOfferApplicationPhasesItem = Union[
+    ReactivatedSubscriptionOfferApplicationPhasesItemVariant1,
+    ReactivatedSubscriptionOfferApplicationPhasesItemVariant2,
+    ReactivatedSubscriptionOfferApplicationPhasesItemVariant3,
+]
+
+
+PlanChangeVariant1OfferApplicationPhasesItem = Union[
+    PlanChangeVariant1OfferApplicationPhasesItemVariant1,
+    PlanChangeVariant1OfferApplicationPhasesItemVariant2,
+    PlanChangeVariant1OfferApplicationPhasesItemVariant3,
+]
+
+
+PlanChangeVariant3OfferApplicationPhasesItem = Union[
+    PlanChangeVariant3OfferApplicationPhasesItemVariant1,
+    PlanChangeVariant3OfferApplicationPhasesItemVariant2,
+    PlanChangeVariant3OfferApplicationPhasesItemVariant3,
+]
+
+
+PreviewChangeOfferApplicationPhasesItem = Union[
+    PreviewChangeOfferApplicationPhasesItemVariant1,
+    PreviewChangeOfferApplicationPhasesItemVariant2,
+    PreviewChangeOfferApplicationPhasesItemVariant3,
+]
+
+
+FeatureAccessVariant2Consumption = Union[
+    FeatureAccessVariant2ConsumptionVariant1,
+    FeatureAccessVariant2ConsumptionVariant2,
+    FeatureAccessVariant2ConsumptionVariant3,
+]
+
+
+CreateOfferParamsPhasesItem = Union[
+    CreateOfferParamsPhasesItemVariant1,
+    CreateOfferParamsPhasesItemVariant2,
+    CreateOfferParamsPhasesItemVariant3,
+    CreateOfferParamsPhasesItemVariant4,
+]
+
+
+UpdateOfferParamsPhasesItem = Union[
+    UpdateOfferParamsPhasesItemVariant1,
+    UpdateOfferParamsPhasesItemVariant2,
+    UpdateOfferParamsPhasesItemVariant3,
+    UpdateOfferParamsPhasesItemVariant4,
+]
+
+
+SubscriptionFeaturesItem = Union[
+    SubscriptionFeaturesItemVariant1,
+    SubscriptionFeaturesItemVariant2,
+    SubscriptionFeaturesItemVariant3,
+    SubscriptionFeaturesItemVariant4,
+]
+
+
+PayoutVerification = Union[PayoutVerificationVariant1, PayoutVerificationVariant2]
+
+
+OfferPhasesItem = Union[
+    OfferPhasesItemVariant1,
+    OfferPhasesItemVariant2,
+    OfferPhasesItemVariant3,
+    OfferPhasesItemVariant4,
+]
+
+
+FeatureAccess = Union[
+    FeatureAccessVariant1, FeatureAccessVariant2, FeatureAccessVariant3, FeatureAccessVariant4
+]
+
+
+PlanChange = Union[PlanChangeVariant1, PlanChangeVariant2, PlanChangeVariant3]
+
+
+UsageCheck = Union[UsageCheckVariant1, UsageCheckVariant2, UsageCheckVariant3]
+
+
 _ENUM_TYPES.update(
     {
-        "SubscriptionStatus": SubscriptionStatus,
         "BillingInterval": BillingInterval,
         "ConsumptionModel": ConsumptionModel,
-        "InvoiceType": InvoiceType,
-        "TransactionStatus": TransactionStatus,
-        "PaymentProvider": PaymentProvider,
         "FeatureType": FeatureType,
-        "DiscountType": DiscountType,
+        "InvoiceType": InvoiceType,
+        "PaymentProvider": PaymentProvider,
+        "SubscriptionStatus": SubscriptionStatus,
         "Timezone": Timezone,
+        "TransactionStatus": TransactionStatus,
     }
 )
 
@@ -1439,15 +2528,16 @@ _DATACLASS_TYPES.update(
         "ActiveAddon": ActiveAddon,
         "AddedPlanToGroup": AddedPlanToGroup,
         "Addon": Addon,
+        "AddonsListActiveResult": AddonsListActiveResult,
+        "AddonsListResult": AddonsListResult,
         "AddPlanFeatureParamsOverage": AddPlanFeatureParamsOverage,
-        "AddPlanPriceParamsIntroOffer": AddPlanPriceParamsIntroOffer,
+        "AddPlanPriceParamsMarketPricesItem": AddPlanPriceParamsMarketPricesItem,
         "ApiKey": ApiKey,
+        "ApiKeysListResult": ApiKeysListResult,
         "BalanceAdjustment": BalanceAdjustment,
         "BalanceTopup": BalanceTopup,
         "BatchCreateCustomersParamsCustomersItem": BatchCreateCustomersParamsCustomersItem,
         "BatchCreateCustomersParamsCustomersItemAddress": BatchCreateCustomersParamsCustomersItemAddress,
-        "BulkSeatUpdate": BulkSeatUpdate,
-        "CanceledSubscription": CanceledSubscription,
         "ClaimLink": ClaimLink,
         "CompletePayoutVerificationParamsBank": CompletePayoutVerificationParamsBank,
         "CompletePayoutVerificationParamsCompany": CompletePayoutVerificationParamsCompany,
@@ -1457,38 +2547,96 @@ _DATACLASS_TYPES.update(
         "CompletePayoutVerificationParamsIndividualAddress": CompletePayoutVerificationParamsIndividualAddress,
         "CreateCustomerParamsAddress": CreateCustomerParamsAddress,
         "CreatedApiKey": CreatedApiKey,
-        "CreatedInvoice": CreatedInvoice,
-        "CreateSubscriptionParamsIntroOffer": CreateSubscriptionParamsIntroOffer,
+        "CreatedSubscription": CreatedSubscription,
+        "CreatedSubscriptionCancellation": CreatedSubscriptionCancellation,
+        "CreatedSubscriptionCurrentPeriod": CreatedSubscriptionCurrentPeriod,
+        "CreatedSubscriptionDiscount": CreatedSubscriptionDiscount,
+        "CreatedSubscriptionPlan": CreatedSubscriptionPlan,
+        "CreatedSubscriptionScheduledPlanChange": CreatedSubscriptionScheduledPlanChange,
+        "CreatedWebhook": CreatedWebhook,
+        "CreateOfferParamsPhasesItemVariant1": CreateOfferParamsPhasesItemVariant1,
+        "CreateOfferParamsPhasesItemVariant2": CreateOfferParamsPhasesItemVariant2,
+        "CreateOfferParamsPhasesItemVariant3": CreateOfferParamsPhasesItemVariant3,
+        "CreateOfferParamsPhasesItemVariant3AmountsItem": CreateOfferParamsPhasesItemVariant3AmountsItem,
+        "CreateOfferParamsPhasesItemVariant4": CreateOfferParamsPhasesItemVariant4,
+        "CreateOfferParamsPhasesItemVariant4PricesItem": CreateOfferParamsPhasesItemVariant4PricesItem,
         "CreditGrant": CreditGrant,
         "CreditPack": CreditPack,
+        "CreditPackListItem": CreditPackListItem,
+        "CreditPacksListResult": CreditPacksListResult,
         "Customer": Customer,
         "CustomerBatch": CustomerBatch,
         "CustomerBatchFailedItem": CustomerBatchFailedItem,
         "CustomerBatchFailedItemData": CustomerBatchFailedItemData,
         "CustomerBatchFailedItemDataAddress": CustomerBatchFailedItemDataAddress,
         "CustomerBatchSuccessfulItem": CustomerBatchSuccessfulItem,
-        "DefaultPlanPrice": DefaultPlanPrice,
+        "CustomersListResult": CustomersListResult,
         "DeletedObject": DeletedObject,
+        "DeletedOffer": DeletedOffer,
         "DeletedPlanRegionalPricing": DeletedPlanRegionalPricing,
         "DeletedSubscriptionAddon": DeletedSubscriptionAddon,
         "Feature": Feature,
-        "FeatureAccess": FeatureAccess,
-        "FeatureLookup": FeatureLookup,
+        "FeatureAccessListResult": FeatureAccessListResult,
+        "FeatureAccessVariant1": FeatureAccessVariant1,
+        "FeatureAccessVariant2": FeatureAccessVariant2,
+        "FeatureAccessVariant2ConsumptionVariant1": FeatureAccessVariant2ConsumptionVariant1,
+        "FeatureAccessVariant2ConsumptionVariant1Overage": FeatureAccessVariant2ConsumptionVariant1Overage,
+        "FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice": FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice,
+        "FeatureAccessVariant2ConsumptionVariant1Period": FeatureAccessVariant2ConsumptionVariant1Period,
+        "FeatureAccessVariant2ConsumptionVariant2": FeatureAccessVariant2ConsumptionVariant2,
+        "FeatureAccessVariant2ConsumptionVariant2Period": FeatureAccessVariant2ConsumptionVariant2Period,
+        "FeatureAccessVariant2ConsumptionVariant3": FeatureAccessVariant2ConsumptionVariant3,
+        "FeatureAccessVariant2ConsumptionVariant3Period": FeatureAccessVariant2ConsumptionVariant3Period,
+        "FeatureAccessVariant2ConsumptionVariant3Spent": FeatureAccessVariant2ConsumptionVariant3Spent,
+        "FeatureAccessVariant2ConsumptionVariant3UnitPrice": FeatureAccessVariant2ConsumptionVariant3UnitPrice,
+        "FeatureAccessVariant3": FeatureAccessVariant3,
+        "FeatureAccessVariant3Usage": FeatureAccessVariant3Usage,
+        "FeatureAccessVariant3UsageOverage": FeatureAccessVariant3UsageOverage,
+        "FeatureAccessVariant3UsageOverageUnitPrice": FeatureAccessVariant3UsageOverageUnitPrice,
+        "FeatureAccessVariant3UsagePeriod": FeatureAccessVariant3UsagePeriod,
+        "FeatureAccessVariant4": FeatureAccessVariant4,
+        "FeatureAccessVariant4Usage": FeatureAccessVariant4Usage,
+        "FeatureAccessVariant4UsageOverage": FeatureAccessVariant4UsageOverage,
+        "FeatureAccessVariant4UsageOverageUnitPrice": FeatureAccessVariant4UsageOverageUnitPrice,
+        "FeatureAccessVariant4UsagePeriod": FeatureAccessVariant4UsagePeriod,
+        "FeaturesListResult": FeaturesListResult,
         "Invoice": Invoice,
         "InvoiceDownload": InvoiceDownload,
         "InvoiceLineItemsItem": InvoiceLineItemsItem,
-        "InvoiceStatus": InvoiceStatus,
+        "InvoiceListItem": InvoiceListItem,
+        "InvoicesListResult": InvoicesListResult,
+        "MarketGroup": MarketGroup,
+        "Offer": Offer,
+        "OfferPhasesItemVariant1": OfferPhasesItemVariant1,
+        "OfferPhasesItemVariant2": OfferPhasesItemVariant2,
+        "OfferPhasesItemVariant3": OfferPhasesItemVariant3,
+        "OfferPhasesItemVariant3AmountsItem": OfferPhasesItemVariant3AmountsItem,
+        "OfferPhasesItemVariant4": OfferPhasesItemVariant4,
+        "OfferPhasesItemVariant4PricesItem": OfferPhasesItemVariant4PricesItem,
+        "OffersListResult": OffersListResult,
         "Payment": Payment,
         "PaymentMethodUpdateCheckout": PaymentMethodUpdateCheckout,
+        "PaymentsListResult": PaymentsListResult,
         "Payout": Payout,
         "PayoutBankAccount": PayoutBankAccount,
-        "PayoutVerification": PayoutVerification,
+        "PayoutVerificationVariant1": PayoutVerificationVariant1,
+        "PayoutVerificationVariant2": PayoutVerificationVariant2,
         "Plan": Plan,
-        "PlanChange": PlanChange,
-        "PlanChangeBilling": PlanChangeBilling,
-        "PlanChangeCurrentPlan": PlanChangeCurrentPlan,
-        "PlanChangePreviousPlan": PlanChangePreviousPlan,
-        "PlanChangeSeatLimitWarning": PlanChangeSeatLimitWarning,
+        "PlanChangeVariant1": PlanChangeVariant1,
+        "PlanChangeVariant1OfferApplication": PlanChangeVariant1OfferApplication,
+        "PlanChangeVariant1OfferApplicationPhasesItemVariant1": PlanChangeVariant1OfferApplicationPhasesItemVariant1,
+        "PlanChangeVariant1OfferApplicationPhasesItemVariant2": PlanChangeVariant1OfferApplicationPhasesItemVariant2,
+        "PlanChangeVariant1OfferApplicationPhasesItemVariant3": PlanChangeVariant1OfferApplicationPhasesItemVariant3,
+        "PlanChangeVariant2": PlanChangeVariant2,
+        "PlanChangeVariant2SeatLimitWarning": PlanChangeVariant2SeatLimitWarning,
+        "PlanChangeVariant3": PlanChangeVariant3,
+        "PlanChangeVariant3Billing": PlanChangeVariant3Billing,
+        "PlanChangeVariant3CurrentPlan": PlanChangeVariant3CurrentPlan,
+        "PlanChangeVariant3OfferApplication": PlanChangeVariant3OfferApplication,
+        "PlanChangeVariant3OfferApplicationPhasesItemVariant1": PlanChangeVariant3OfferApplicationPhasesItemVariant1,
+        "PlanChangeVariant3OfferApplicationPhasesItemVariant2": PlanChangeVariant3OfferApplicationPhasesItemVariant2,
+        "PlanChangeVariant3OfferApplicationPhasesItemVariant3": PlanChangeVariant3OfferApplicationPhasesItemVariant3,
+        "PlanChangeVariant3PreviousPlan": PlanChangeVariant3PreviousPlan,
         "PlanExchangeRatesItem": PlanExchangeRatesItem,
         "PlanFeature": PlanFeature,
         "PlanFeatureOverage": PlanFeatureOverage,
@@ -1496,30 +2644,45 @@ _DATACLASS_TYPES.update(
         "PlanFeaturesItemOverage": PlanFeaturesItemOverage,
         "PlanFeaturesItemRegionalPricesItem": PlanFeaturesItemRegionalPricesItem,
         "PlanGroup": PlanGroup,
-        "PlanGroupPlansItem": PlanGroupPlansItem,
+        "PlanGroupDetail": PlanGroupDetail,
+        "PlanGroupDetailPlansItem": PlanGroupDetailPlansItem,
+        "PlanGroupsListResult": PlanGroupsListResult,
         "PlanPrice": PlanPrice,
-        "PlanPriceIntroOffer": PlanPriceIntroOffer,
+        "PlanPriceMarketPricesItem": PlanPriceMarketPricesItem,
         "PlanPricesItem": PlanPricesItem,
-        "PlanPricesItemIntroOffer": PlanPricesItemIntroOffer,
+        "PlanPricesItemMarketPricesItem": PlanPricesItemMarketPricesItem,
         "PlanPricesItemRegionalPricesItem": PlanPricesItemRegionalPricesItem,
         "PlanRegionalPricing": PlanRegionalPricing,
         "PlanRegionalPricingOverridesItem": PlanRegionalPricingOverridesItem,
         "PlanRegionalPricingResult": PlanRegionalPricingResult,
-        "PlanVisibility": PlanVisibility,
+        "PlansListResult": PlansListResult,
         "PortalAccess": PortalAccess,
         "PreviewChange": PreviewChange,
+        "PreviewChangeOfferApplication": PreviewChangeOfferApplication,
+        "PreviewChangeOfferApplicationPhasesItemVariant1": PreviewChangeOfferApplicationPhasesItemVariant1,
+        "PreviewChangeOfferApplicationPhasesItemVariant2": PreviewChangeOfferApplicationPhasesItemVariant2,
+        "PreviewChangeOfferApplicationPhasesItemVariant3": PreviewChangeOfferApplicationPhasesItemVariant3,
+        "PricingListMarketGroupsResult": PricingListMarketGroupsResult,
         "PromoCode": PromoCode,
+        "PromoCodesListResult": PromoCodesListResult,
+        "QuotaGetAllResult": QuotaGetAllResult,
         "ReactivatedSubscription": ReactivatedSubscription,
+        "ReactivatedSubscriptionOfferApplication": ReactivatedSubscriptionOfferApplication,
+        "ReactivatedSubscriptionOfferApplicationPhasesItemVariant1": ReactivatedSubscriptionOfferApplicationPhasesItemVariant1,
+        "ReactivatedSubscriptionOfferApplicationPhasesItemVariant2": ReactivatedSubscriptionOfferApplicationPhasesItemVariant2,
+        "ReactivatedSubscriptionOfferApplicationPhasesItemVariant3": ReactivatedSubscriptionOfferApplicationPhasesItemVariant3,
         "RecoveryLink": RecoveryLink,
+        "Refund": Refund,
         "RemovedPlanFeature": RemovedPlanFeature,
         "RemovedPlanFromGroup": RemovedPlanFromGroup,
         "ReorderedPlans": ReorderedPlans,
         "SeatBalance": SeatBalance,
-        "SeatBalanceListItem": SeatBalanceListItem,
+        "SeatBalanceCollection": SeatBalanceCollection,
+        "SeatBalanceCollectionBalancesValue": SeatBalanceCollectionBalancesValue,
         "SeatEvent": SeatEvent,
+        "SeatsSetAllResult": SeatsSetAllResult,
         "SentInvoice": SentInvoice,
         "SetPlanRegionalPricingParamsFeaturesItem": SetPlanRegionalPricingParamsFeaturesItem,
-        "SetPlanRegionalPricingParamsIntroOffersItem": SetPlanRegionalPricingParamsIntroOffersItem,
         "SetPlanRegionalPricingParamsPricesItem": SetPlanRegionalPricingParamsPricesItem,
         "Subscription": Subscription,
         "SubscriptionAddon": SubscriptionAddon,
@@ -1528,29 +2691,179 @@ _DATACLASS_TYPES.update(
         "SubscriptionCredits": SubscriptionCredits,
         "SubscriptionCurrentPeriod": SubscriptionCurrentPeriod,
         "SubscriptionDiscount": SubscriptionDiscount,
-        "SubscriptionFeaturesItem": SubscriptionFeaturesItem,
-        "SubscriptionFeaturesItemUsage": SubscriptionFeaturesItemUsage,
+        "SubscriptionFeaturesItemVariant1": SubscriptionFeaturesItemVariant1,
+        "SubscriptionFeaturesItemVariant2": SubscriptionFeaturesItemVariant2,
+        "SubscriptionFeaturesItemVariant2Usage": SubscriptionFeaturesItemVariant2Usage,
+        "SubscriptionFeaturesItemVariant3": SubscriptionFeaturesItemVariant3,
+        "SubscriptionFeaturesItemVariant3Usage": SubscriptionFeaturesItemVariant3Usage,
+        "SubscriptionFeaturesItemVariant4": SubscriptionFeaturesItemVariant4,
         "SubscriptionPlan": SubscriptionPlan,
         "SubscriptionScheduledPlanChange": SubscriptionScheduledPlanChange,
+        "SubscriptionsListResult": SubscriptionsListResult,
+        "SubscriptionSummary": SubscriptionSummary,
+        "SubscriptionSummaryCancellation": SubscriptionSummaryCancellation,
+        "SubscriptionSummaryCurrentPeriod": SubscriptionSummaryCurrentPeriod,
+        "SubscriptionSummaryDiscount": SubscriptionSummaryDiscount,
+        "SubscriptionSummaryPlan": SubscriptionSummaryPlan,
+        "SubscriptionSummaryScheduledPlanChange": SubscriptionSummaryScheduledPlanChange,
         "TestClock": TestClock,
         "TestClockBilling": TestClockBilling,
+        "TrackUsageParamsPropertiesItem": TrackUsageParamsPropertiesItem,
         "Transaction": Transaction,
-        "TransactionRefund": TransactionRefund,
+        "TransactionListItem": TransactionListItem,
         "TransactionRetry": TransactionRetry,
-        "UncanceledSubscription": UncanceledSubscription,
+        "TransactionsListResult": TransactionsListResult,
         "UpdateCustomerParamsAddress": UpdateCustomerParamsAddress,
+        "UpdateOfferParamsPhasesItemVariant1": UpdateOfferParamsPhasesItemVariant1,
+        "UpdateOfferParamsPhasesItemVariant2": UpdateOfferParamsPhasesItemVariant2,
+        "UpdateOfferParamsPhasesItemVariant3": UpdateOfferParamsPhasesItemVariant3,
+        "UpdateOfferParamsPhasesItemVariant3AmountsItem": UpdateOfferParamsPhasesItemVariant3AmountsItem,
+        "UpdateOfferParamsPhasesItemVariant4": UpdateOfferParamsPhasesItemVariant4,
+        "UpdateOfferParamsPhasesItemVariant4PricesItem": UpdateOfferParamsPhasesItemVariant4PricesItem,
         "UpdatePlanFeatureParamsOverage": UpdatePlanFeatureParamsOverage,
-        "UpdatePlanPriceParamsIntroOffer": UpdatePlanPriceParamsIntroOffer,
+        "UpdatePlanPriceParamsMarketPricesItem": UpdatePlanPriceParamsMarketPricesItem,
         "UpsertRegionalPricesParamsOverridesItem": UpsertRegionalPricesParamsOverridesItem,
+        "UsageAdjustment": UsageAdjustment,
+        "UsageCheckVariant1": UsageCheckVariant1,
+        "UsageCheckVariant2": UsageCheckVariant2,
+        "UsageCheckVariant3": UsageCheckVariant3,
+        "UsageEvent": UsageEvent,
+        "UsageEventConsumption": UsageEventConsumption,
+        "UsageEventPropertiesItem": UsageEventPropertiesItem,
         "UsageQuota": UsageQuota,
         "UsageQuotaEvent": UsageQuotaEvent,
+        "Webhook": Webhook,
         "WebhookAddonRef": WebhookAddonRef,
         "WebhookBalance": WebhookBalance,
         "WebhookBankRef": WebhookBankRef,
         "WebhookCardInfo": WebhookCardInfo,
         "WebhookCreditsBalance": WebhookCreditsBalance,
-        "WebhookFeatureAccess": WebhookFeatureAccess,
         "WebhookPlanRef": WebhookPlanRef,
         "WebhookSeatSummary": WebhookSeatSummary,
+        "WebhooksListResult": WebhooksListResult,
+        "WebhookTest": WebhookTest,
+    }
+)
+
+_UNION_TYPES.update(
+    {
+        "ReactivatedSubscriptionOfferApplicationPhasesItem": (
+            "type",
+            {
+                "percentage": ReactivatedSubscriptionOfferApplicationPhasesItemVariant1,
+                "amount_off": ReactivatedSubscriptionOfferApplicationPhasesItemVariant2,
+                "fixed_price": ReactivatedSubscriptionOfferApplicationPhasesItemVariant3,
+            },
+            [],
+        ),
+        "PlanChangeVariant1OfferApplicationPhasesItem": (
+            "type",
+            {
+                "percentage": PlanChangeVariant1OfferApplicationPhasesItemVariant1,
+                "amount_off": PlanChangeVariant1OfferApplicationPhasesItemVariant2,
+                "fixed_price": PlanChangeVariant1OfferApplicationPhasesItemVariant3,
+            },
+            [],
+        ),
+        "PlanChangeVariant3OfferApplicationPhasesItem": (
+            "type",
+            {
+                "percentage": PlanChangeVariant3OfferApplicationPhasesItemVariant1,
+                "amount_off": PlanChangeVariant3OfferApplicationPhasesItemVariant2,
+                "fixed_price": PlanChangeVariant3OfferApplicationPhasesItemVariant3,
+            },
+            [],
+        ),
+        "PreviewChangeOfferApplicationPhasesItem": (
+            "type",
+            {
+                "percentage": PreviewChangeOfferApplicationPhasesItemVariant1,
+                "amount_off": PreviewChangeOfferApplicationPhasesItemVariant2,
+                "fixed_price": PreviewChangeOfferApplicationPhasesItemVariant3,
+            },
+            [],
+        ),
+        "FeatureAccessVariant2Consumption": (
+            "model",
+            {
+                "metered": FeatureAccessVariant2ConsumptionVariant1,
+                "credits": FeatureAccessVariant2ConsumptionVariant2,
+                "balance": FeatureAccessVariant2ConsumptionVariant3,
+            },
+            [],
+        ),
+        "CreateOfferParamsPhasesItem": (
+            "type",
+            {
+                "free_trial": CreateOfferParamsPhasesItemVariant1,
+                "percentage": CreateOfferParamsPhasesItemVariant2,
+                "amount_off": CreateOfferParamsPhasesItemVariant3,
+                "fixed_price": CreateOfferParamsPhasesItemVariant4,
+            },
+            [],
+        ),
+        "UpdateOfferParamsPhasesItem": (
+            "type",
+            {
+                "free_trial": UpdateOfferParamsPhasesItemVariant1,
+                "percentage": UpdateOfferParamsPhasesItemVariant2,
+                "amount_off": UpdateOfferParamsPhasesItemVariant3,
+                "fixed_price": UpdateOfferParamsPhasesItemVariant4,
+            },
+            [],
+        ),
+        "SubscriptionFeaturesItem": (
+            "type",
+            {
+                "boolean": SubscriptionFeaturesItemVariant1,
+                "usage": SubscriptionFeaturesItemVariant2,
+                "seats": SubscriptionFeaturesItemVariant3,
+                "quota": SubscriptionFeaturesItemVariant4,
+            },
+            [],
+        ),
+        "PayoutVerification": (
+            "outcome",
+            {"existing": PayoutVerificationVariant1, "created": PayoutVerificationVariant2},
+            [],
+        ),
+        "OfferPhasesItem": (
+            "type",
+            {
+                "free_trial": OfferPhasesItemVariant1,
+                "percentage": OfferPhasesItemVariant2,
+                "amount_off": OfferPhasesItemVariant3,
+                "fixed_price": OfferPhasesItemVariant4,
+            },
+            [],
+        ),
+        "FeatureAccess": (
+            "type",
+            {
+                "boolean": FeatureAccessVariant1,
+                "usage": FeatureAccessVariant2,
+                "seats": FeatureAccessVariant3,
+                "quota": FeatureAccessVariant4,
+            },
+            [],
+        ),
+        "PlanChange": (
+            "outcome",
+            {
+                "requires_checkout": PlanChangeVariant1,
+                "scheduled": PlanChangeVariant2,
+                "completed": PlanChangeVariant3,
+            },
+            [],
+        ),
+        "UsageCheck": (
+            "consumptionModel",
+            {
+                "metered": UsageCheckVariant1,
+                "credits": UsageCheckVariant2,
+                "balance": UsageCheckVariant3,
+            },
+            [],
+        ),
     }
 )

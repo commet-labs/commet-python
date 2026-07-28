@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from .._async_http import AsyncCommetHTTPClient
-from .._http import ApiResponse
 from .._shared import build_body
 from ..types import (
     PortalAccess,
-    _parse,
+    _parse_data,
 )
 
 
@@ -19,13 +18,13 @@ class AsyncPortalResource:
         self,
         *,
         email: str | None = None,
-        customer_id: str | None = None,
         return_url: str | None = None,
+        customer_id: str | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[PortalAccess]:
+    ) -> PortalAccess:
         """Generate a customer portal URL. Exactly one identifier (email or customerId) is required."""
-        body = build_body(email=email, customer_id=customer_id, return_url=return_url)
-        return _parse(
-            await self._http.post("/portal/request-access", body, idempotency_key=idempotency_key),
+        body = build_body(email=email, return_url=return_url, customer_id=customer_id)
+        return _parse_data(
+            await self._http.post("/portal/sessions", body, idempotency_key=idempotency_key),
             PortalAccess,
         )

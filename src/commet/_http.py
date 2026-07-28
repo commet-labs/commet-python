@@ -124,6 +124,24 @@ class CommetHTTPClient:
             timeout=timeout,
         )
 
+    def patch(
+        self,
+        endpoint: str,
+        body: dict[str, Any] | None = None,
+        *,
+        api_version: str | None = None,
+        idempotency_key: str | None = None,
+        timeout: float | None = None,
+    ) -> ApiResponse[Any]:
+        return self._request(
+            "PATCH",
+            endpoint,
+            body=body,
+            api_version=api_version,
+            idempotency_key=idempotency_key,
+            timeout=timeout,
+        )
+
     def delete(
         self,
         endpoint: str,
@@ -245,6 +263,13 @@ class CommetHTTPClient:
             self._last_request_metrics = {"request_id": request_id, "duration_ms": duration_ms}
 
         converted = convert_keys(data, to_snake)
+        is_envelope = (
+            isinstance(converted, dict)
+            and isinstance(converted.get("success"), bool)
+            and "data" in converted
+        )
+        if not is_envelope:
+            return ApiResponse(success=True, data=converted)
         return ApiResponse(
             success=converted.get("success", True),
             data=converted.get("data"),

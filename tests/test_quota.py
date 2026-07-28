@@ -38,10 +38,9 @@ class TestQuotaAdd:
         )
         with Commet(api_key="ck_test_123") as client:
             result = client.quota.add(feature_code="storage", count=1, customer_id="cus_1")
-            assert result.success is True
-            assert isinstance(result.data, UsageQuotaEvent)
-            assert result.data.id == "qe_1"
-            assert result.data.new_balance == 1
+            assert isinstance(result, UsageQuotaEvent)
+            assert result.id == "qe_1"
+            assert result.new_balance == 1
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"featureCode": "storage", "count": 1, "customerId": "cus_1"}
@@ -68,10 +67,9 @@ class TestQuotaSet:
         )
         with Commet(api_key="ck_test_123") as client:
             result = client.quota.set(feature_code="storage", count=5, customer_id="cus_1")
-            assert result.success is True
-            assert isinstance(result.data, UsageQuotaEvent)
-            assert result.data.previous_balance == 1
-            assert result.data.new_balance == 5
+            assert isinstance(result, UsageQuotaEvent)
+            assert result.previous_balance == 1
+            assert result.new_balance == 5
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"featureCode": "storage", "count": 5, "customerId": "cus_1"}
@@ -79,7 +77,7 @@ class TestQuotaSet:
 
 class TestQuotaRemove:
     def test_remove_sends_count(self, mock_api: respx.MockRouter) -> None:
-        route = mock_api.delete("/usage/quota").mock(
+        route = mock_api.post("/usage/quota/remove").mock(
             return_value=Response(
                 200,
                 json={
@@ -98,9 +96,8 @@ class TestQuotaRemove:
         )
         with Commet(api_key="ck_test_123") as client:
             result = client.quota.remove(feature_code="storage", count=1, customer_id="cus_1")
-            assert result.success is True
-            assert isinstance(result.data, UsageQuotaEvent)
-            assert result.data.new_balance == 4
+            assert isinstance(result, UsageQuotaEvent)
+            assert result.new_balance == 4
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"featureCode": "storage", "count": 1, "customerId": "cus_1"}
@@ -128,15 +125,14 @@ class TestQuotaGet:
         )
         with Commet(api_key="ck_test_123") as client:
             result = client.quota.get(feature_code="storage", customer_id="cus_1")
-            assert result.success is True
-            assert isinstance(result.data, UsageQuota)
-            assert result.data.feature_code == "storage"
-            assert result.data.current == 4
-            assert result.data.included == 10
-            assert result.data.remaining == 6
-            assert result.data.billed_quantity == 12
-            assert result.data.unlimited is False
-            assert result.data.overage_enabled is True
+            assert isinstance(result, UsageQuota)
+            assert result.feature_code == "storage"
+            assert result.current == 4
+            assert result.included == 10
+            assert result.remaining == 6
+            assert result.billed_quantity == 12
+            assert result.unlimited is False
+            assert result.overage_enabled is True
 
         assert route.calls.last.request.url.params["featureCode"] == "storage"
         assert route.calls.last.request.url.params["customerId"] == "cus_1"
@@ -148,7 +144,7 @@ class TestQuotaGetAll:
             return_value=Response(
                 200,
                 json={
-                    "success": True,
+                    "object": "list",
                     "data": [
                         {
                             "featureCode": "storage",
@@ -174,8 +170,6 @@ class TestQuotaGetAll:
         )
         with Commet(api_key="ck_test_123") as client:
             result = client.quota.get_all(customer_id="cus_1")
-            assert result.success is True
-            assert isinstance(result.data, list)
             assert len(result.data) == 2
             assert all(isinstance(item, UsageQuota) for item in result.data)
             assert result.data[0].feature_code == "storage"
@@ -208,16 +202,15 @@ class TestAsyncQuota:
         )
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.quota.add(feature_code="storage", count=1, customer_id="cus_1")
-            assert result.success is True
-            assert isinstance(result.data, UsageQuotaEvent)
-            assert result.data.new_balance == 1
+            assert isinstance(result, UsageQuotaEvent)
+            assert result.new_balance == 1
 
     async def test_get_all_returns_list(self, mock_api: respx.MockRouter) -> None:
         mock_api.get("/usage/quota/all").mock(
             return_value=Response(
                 200,
                 json={
-                    "success": True,
+                    "object": "list",
                     "data": [
                         {
                             "featureCode": "storage",
@@ -234,6 +227,4 @@ class TestAsyncQuota:
         )
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.quota.get_all(customer_id="cus_1")
-            assert result.success is True
-            assert isinstance(result.data, list)
             assert result.data[0].feature_code == "storage"

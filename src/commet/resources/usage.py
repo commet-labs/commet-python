@@ -1,142 +1,86 @@
+# ruff: noqa: E501
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import builtins
 
-from .._http import ApiResponse, CommetHTTPClient
-from .._preserved_types import UsageAdjustment, UsageCheckResult, UsageEvent, _parse
+from .._http import CommetHTTPClient
 from .._shared import build_body
-
-
-def build_usage_track_body(
-    *,
-    feature: str,
-    customer_id: str,
-    value: int | None = None,
-    model: str | None = None,
-    input_tokens: int | None = None,
-    output_tokens: int | None = None,
-    cache_read_tokens: int | None = None,
-    cache_write_tokens: int | None = None,
-    idempotency_key: str | None = None,
-    timestamp: str | None = None,
-    properties: dict[str, str] | None = None,
-) -> dict[str, object]:
-    props = [{"property": k, "value": v} for k, v in properties.items()] if properties else None
-
-    body = build_body(
-        feature=feature,
-        customer_id=customer_id,
-        idempotency_key=idempotency_key,
-        timestamp=timestamp or datetime.now(timezone.utc).isoformat(),
-        properties=props,
-    )
-
-    if model:
-        body.update(
-            build_body(
-                model=model,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
-                cache_read_tokens=cache_read_tokens,
-                cache_write_tokens=cache_write_tokens,
-            )
-        )
-    elif value is not None:
-        body["value"] = value
-
-    return body
+from ..types import (
+    TrackUsageParamsPropertiesItem,
+    UsageAdjustment,
+    UsageCheck,
+    UsageEvent,
+    _parse_data,
+    _parse_union_data,
+)
 
 
 class UsageResource:
     def __init__(self, http: CommetHTTPClient) -> None:
         self._http = http
 
-    def track(
-        self,
-        *,
-        feature: str,
-        customer_id: str,
-        value: int | None = None,
-        model: str | None = None,
-        input_tokens: int | None = None,
-        output_tokens: int | None = None,
-        cache_read_tokens: int | None = None,
-        cache_write_tokens: int | None = None,
-        idempotency_key: str | None = None,
-        timestamp: str | None = None,
-        properties: dict[str, str] | None = None,
-    ) -> ApiResponse[UsageEvent]:
-        body = build_usage_track_body(
-            feature=feature,
-            customer_id=customer_id,
-            value=value,
-            model=model,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cache_read_tokens=cache_read_tokens,
-            cache_write_tokens=cache_write_tokens,
-            idempotency_key=idempotency_key,
-            timestamp=timestamp,
-            properties=properties,
-        )
-        return _parse(
-            self._http.post("/usage/events", body, idempotency_key=idempotency_key), UsageEvent
-        )
-
-    def track_model_tokens(
-        self,
-        *,
-        feature: str,
-        customer_id: str,
-        model: str,
-        input_tokens: int,
-        output_tokens: int,
-        cache_read_tokens: int | None = None,
-        cache_write_tokens: int | None = None,
-        idempotency_key: str | None = None,
-        timestamp: str | None = None,
-        properties: dict[str, str] | None = None,
-    ) -> ApiResponse[UsageEvent]:
-        return self.track(
-            feature=feature,
-            customer_id=customer_id,
-            model=model,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens,
-            cache_read_tokens=cache_read_tokens,
-            cache_write_tokens=cache_write_tokens,
-            idempotency_key=idempotency_key,
-            timestamp=timestamp,
-            properties=properties,
-        )
-
     def check(
         self,
         *,
         customer_id: str,
         feature_code: str,
-        quantity: int,
-    ) -> ApiResponse[UsageCheckResult]:
+        quantity: int | None = None,
+        idempotency_key: str | None = None,
+    ) -> UsageCheck:
+        """Check if a customer can consume a feature before actual consumption. Returns availability and cost estimates based on the plan's consumption model."""
         body = build_body(customer_id=customer_id, feature_code=feature_code, quantity=quantity)
-        return _parse(self._http.post("/usage/check", body), UsageCheckResult)
+        return _parse_union_data(
+            self._http.post("/usage/check", body, idempotency_key=idempotency_key), "UsageCheck"
+        )
+
+    def track(
+        self,
+        *,
+        feature_code: str,
+        customer_id: str,
+        event_id: str | None = None,
+        timestamp: str | None = None,
+        properties: builtins.list[TrackUsageParamsPropertiesItem] | None = None,
+        model: str | None = None,
+        input_tokens: int | None = None,
+        output_tokens: int | None = None,
+        value: float | None = None,
+        cache_read_tokens: int | None = None,
+        cache_write_tokens: int | None = None,
+        idempotency_key: str | None = None,
+    ) -> UsageEvent:
+        """Track a usage event for a metered feature. Deducts from balance/credits if applicable."""
+        body = build_body(
+            feature_code=feature_code,
+            customer_id=customer_id,
+            event_id=event_id,
+            timestamp=timestamp,
+            properties=properties,
+            model=model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            value=value,
+            cache_read_tokens=cache_read_tokens,
+            cache_write_tokens=cache_write_tokens,
+        )
+        return _parse_data(
+            self._http.post("/usage/events", body, idempotency_key=idempotency_key), UsageEvent
+        )
 
     def set(
         self,
         *,
         customer_id: str,
-        feature: str,
+        feature_code: str,
         value: int,
-        idempotency_key: str | None = None,
         reason: str | None = None,
-    ) -> ApiResponse[UsageAdjustment]:
+        idempotency_key: str | None = None,
+    ) -> UsageAdjustment:
+        """Set a metered feature's usage to an exact value for the current period. Use the Idempotency-Key header to make retries safe."""
         body = build_body(
-            customer_id=customer_id,
-            feature=feature,
-            value=value,
-            idempotency_key=idempotency_key,
-            reason=reason,
+            customer_id=customer_id, feature_code=feature_code, value=value, reason=reason
         )
-        return _parse(
-            self._http.put("/usage", body, idempotency_key=idempotency_key),
-            UsageAdjustment,
+        return _parse_data(
+            self._http.put("/usage", body, idempotency_key=idempotency_key), UsageAdjustment
         )

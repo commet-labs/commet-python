@@ -11,8 +11,8 @@ from commet.async_client import AsyncCommet
 from commet.types import (
     ActiveAddon,
     Addon,
-    BulkSeatUpdate,
     CreditPack,
+    CreditPackListItem,
     FeatureType,
     SeatBalance,
     SeatEvent,
@@ -48,15 +48,15 @@ class TestSeats:
         with Commet(api_key="ck_test_123") as client:
             result = client.seats.add(customer_id="cus_1", feature_code="seats", count=3)
 
-        assert isinstance(result.data, SeatEvent)
-        assert result.data.previous_balance == 2
-        assert result.data.new_balance == 5
+        assert isinstance(result, SeatEvent)
+        assert result.previous_balance == 2
+        assert result.new_balance == 5
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"customerId": "cus_1", "featureCode": "seats", "count": 3}
 
-    def test_remove_uses_delete_with_body(self, mock_api: respx.MockRouter) -> None:
-        route = mock_api.delete("/seats").mock(
+    def test_remove_uses_explicit_action_endpoint(self, mock_api: respx.MockRouter) -> None:
+        route = mock_api.post("/seats/remove").mock(
             return_value=Response(
                 200,
                 json={
@@ -76,8 +76,8 @@ class TestSeats:
         with Commet(api_key="ck_test_123") as client:
             result = client.seats.remove(customer_id="cus_1", feature_code="seats", count=1)
 
-        assert isinstance(result.data, SeatEvent)
-        assert result.data.new_balance == 4
+        assert isinstance(result, SeatEvent)
+        assert result.new_balance == 4
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"customerId": "cus_1", "featureCode": "seats", "count": 1}
 
@@ -86,7 +86,7 @@ class TestSeats:
             return_value=Response(
                 200,
                 json={
-                    "success": True,
+                    "object": "list",
                     "data": [
                         {
                             "id": "se_a",
@@ -111,8 +111,7 @@ class TestSeats:
         with Commet(api_key="ck_test_123") as client:
             result = client.seats.set_all(customer_id="cus_1", seats={"editor": 3, "viewer": 10})
 
-        assert isinstance(result.data, list)
-        assert all(isinstance(item, BulkSeatUpdate) for item in result.data)
+        assert all(isinstance(item, SeatEvent) for item in result.data)
         assert result.data[0].feature_code == "editor"
         assert result.data[1].new_balance == 10
 
@@ -135,9 +134,9 @@ class TestSeats:
         with Commet(api_key="ck_test_123") as client:
             result = client.seats.get_balance(customer_id="cus_1", feature_code="editor")
 
-        assert isinstance(result.data, SeatBalance)
-        assert result.data.current == 7
-        assert result.data.as_of == "2026-06-01T00:00:00Z"
+        assert isinstance(result, SeatBalance)
+        assert result.current == 7
+        assert result.as_of == "2026-06-01T00:00:00Z"
         params = route.calls.last.request.url.params
         assert params["customerId"] == "cus_1"
         assert params["featureCode"] == "editor"
@@ -179,9 +178,9 @@ class TestAddons:
                 overage_rate=5,
             )
 
-        assert isinstance(result.data, Addon)
-        assert result.data.consumption_model == "metered"
-        assert result.data.included_units == 100
+        assert isinstance(result, Addon)
+        assert result.consumption_model == "metered"
+        assert result.included_units == 100
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {
@@ -198,7 +197,7 @@ class TestAddons:
             return_value=Response(
                 200,
                 json={
-                    "success": True,
+                    "object": "list",
                     "data": [
                         {
                             "slug": "extra-storage",
@@ -225,7 +224,7 @@ class TestAddons:
 
 class TestCreditPacks:
     def test_create_sends_body_and_parses(self, mock_api: respx.MockRouter) -> None:
-        route = mock_api.post("/credit-packs/manage").mock(
+        route = mock_api.post("/credit-packs").mock(
             return_value=Response(
                 200,
                 json={
@@ -245,9 +244,9 @@ class TestCreditPacks:
         with Commet(api_key="ck_test_123") as client:
             result = client.credit_packs.create(name="1000 Credits", credits=1000, price=5000)
 
-        assert isinstance(result.data, CreditPack)
-        assert result.data.credits == 1000
-        assert result.data.is_active is True
+        assert isinstance(result, CreditPack)
+        assert result.credits == 1000
+        assert result.is_active is True
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"name": "1000 Credits", "credits": 1000, "price": 5000}
@@ -257,7 +256,7 @@ class TestCreditPacks:
             return_value=Response(
                 200,
                 json={
-                    "success": True,
+                    "object": "list",
                     "data": [
                         {"id": "cp_1", "name": "Small", "credits": 100, "price": 500},
                         {"id": "cp_2", "name": "Large", "credits": 1000, "price": 4500},
@@ -268,7 +267,7 @@ class TestCreditPacks:
         with Commet(api_key="ck_test_123") as client:
             result = client.credit_packs.list()
 
-        assert all(isinstance(p, CreditPack) for p in result.data)
+        assert all(isinstance(p, CreditPackListItem) for p in result.data)
         assert result.data[1].credits == 1000
 
 
@@ -295,8 +294,8 @@ class TestAsyncSeatsAndAddons:
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.seats.add(customer_id="cus_1", feature_code="seats", count=2)
 
-        assert isinstance(result.data, SeatEvent)
-        assert result.data.new_balance == 2
+        assert isinstance(result, SeatEvent)
+        assert result.new_balance == 2
 
     async def test_async_addon_create_camel_case(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/addons").mock(
@@ -324,7 +323,7 @@ class TestAsyncSeatsAndAddons:
                 consumption_model="boolean",
             )
 
-        assert isinstance(result.data, Addon)
+        assert isinstance(result, Addon)
         sent = json.loads(route.calls.last.request.content)
         assert sent == {
             "name": "Async Addon",

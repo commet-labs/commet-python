@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from .._http import ApiResponse, CommetHTTPClient
+from .._http import CommetHTTPClient
 from .._shared import build_body
 from ..types import (
     FeatureAccess,
-    FeatureLookup,
-    _parse,
-    _parse_list,
+    FeatureAccessListResult,
+    _parse_data,
+    _parse_union_data,
 )
 
 
@@ -16,19 +16,12 @@ class FeatureAccessResource:
     def __init__(self, http: CommetHTTPClient) -> None:
         self._http = http
 
-    def list(self, *, customer_id: str) -> ApiResponse[list[FeatureAccess]]:
-        """List all features for a customer's active subscription, scoped by the customerId query parameter."""
+    def get(self, code: str, *, customer_id: str) -> FeatureAccess:
+        """Get one feature's access and current usage for a customer. To evaluate a prospective consumption, use POST /usage/check."""
         query = build_body(customer_id=customer_id)
-        return _parse_list(self._http.get("/feature-access", query), FeatureAccess)
+        return _parse_union_data(self._http.get(f"/feature-access/{code}", query), "FeatureAccess")
 
-    def get(
-        self, code: str, *, customer_id: str, action: str | None = None
-    ) -> ApiResponse[FeatureLookup]:
-        """Get feature access details for a customer. Use action=canUse to check if the customer can consume one more unit."""
-        query = build_body(customer_id=customer_id, action=action)
-        return _parse(self._http.get(f"/feature-access/{code}", query), FeatureLookup)
-
-    def can_use(self, code: str, *, customer_id: str) -> ApiResponse[FeatureLookup]:
-        """Get feature access details for a customer. Use action=canUse to check if the customer can consume one more unit."""
-        query = build_body(action="canUse", customer_id=customer_id)
-        return _parse(self._http.get(f"/feature-access/{code}", query), FeatureLookup)
+    def list(self, *, customer_id: str) -> FeatureAccessListResult:
+        """List a customer's feature access and current usage."""
+        query = build_body(customer_id=customer_id)
+        return _parse_data(self._http.get("/feature-access", query), FeatureAccessListResult)

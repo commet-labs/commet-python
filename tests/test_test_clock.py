@@ -39,10 +39,10 @@ class TestGet:
         with Commet(api_key="ck_test_123") as client:
             result = client.test_clock.get()
 
-        assert isinstance(result.data, TestClockModel)
-        assert result.data.simulated_time is None
-        assert result.data.is_active is False
-        assert result.data.now == "2026-06-01T00:00:00Z"
+        assert isinstance(result, TestClockModel)
+        assert result.simulated_time is None
+        assert result.is_active is False
+        assert result.now == "2026-06-01T00:00:00Z"
 
 
 class TestAdvance:
@@ -63,8 +63,8 @@ class TestAdvance:
         with Commet(api_key="ck_test_123") as client:
             result = client.test_clock.advance(advance_days=14)
 
-        assert isinstance(result.data, TestClockModel)
-        assert result.data.is_active is True
+        assert isinstance(result, TestClockModel)
+        assert result.is_active is True
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"advanceDays": 14}
@@ -111,10 +111,10 @@ class TestProcessBilling:
         with Commet(api_key="ck_test_123") as client:
             result = client.test_clock.process_billing()
 
-        assert isinstance(result.data, TestClockBillingModel)
-        assert result.data.customers_found == 3
-        assert result.data.enqueued == 3
-        assert result.data.failed == 0
+        assert isinstance(result, TestClockBillingModel)
+        assert result.customers_found == 3
+        assert result.enqueued == 3
+        assert result.failed == 0
 
         # A no-param POST must not serialize an empty/literal-null JSON body.
         assert route.calls.last.request.content in (b"", b"null")
@@ -139,8 +139,8 @@ class TestAsyncTestClock:
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.test_clock.advance(advance_days=30)
 
-        assert isinstance(result.data, TestClockModel)
-        assert result.data.is_active is True
+        assert isinstance(result, TestClockModel)
+        assert result.is_active is True
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"advanceDays": 30}
 
@@ -157,6 +157,6 @@ class TestAsyncTestClock:
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.test_clock.process_billing()
 
-        assert isinstance(result.data, TestClockBillingModel)
-        assert result.data.customers_found == 1
-        assert result.data.failed == 1
+        assert isinstance(result, TestClockBillingModel)
+        assert result.customers_found == 1
+        assert result.failed == 1

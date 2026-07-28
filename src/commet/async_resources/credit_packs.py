@@ -3,42 +3,18 @@
 from __future__ import annotations
 
 from .._async_http import AsyncCommetHTTPClient
-from .._http import ApiResponse
 from .._shared import build_body
 from ..types import (
     CreditPack,
+    CreditPacksListResult,
     DeletedObject,
-    _parse,
-    _parse_list,
+    _parse_data,
 )
 
 
 class AsyncCreditPacksResource:
     def __init__(self, http: AsyncCommetHTTPClient) -> None:
         self._http = http
-
-    async def list(self) -> ApiResponse[list[CreditPack]]:
-        """List all active credit packs."""
-        return _parse_list(await self._http.get("/credit-packs"), CreditPack)
-
-    async def create(
-        self,
-        *,
-        name: str,
-        credits: int,
-        price: int,
-        description: str | None = None,
-        is_active: bool | None = None,
-        idempotency_key: str | None = None,
-    ) -> ApiResponse[CreditPack]:
-        """Create a new credit pack."""
-        body = build_body(
-            name=name, description=description, credits=credits, price=price, is_active=is_active
-        )
-        return _parse(
-            await self._http.post("/credit-packs/manage", body, idempotency_key=idempotency_key),
-            CreditPack,
-        )
 
     async def update(
         self,
@@ -50,16 +26,39 @@ class AsyncCreditPacksResource:
         price: int | None = None,
         is_active: bool | None = None,
         idempotency_key: str | None = None,
-    ) -> ApiResponse[CreditPack]:
+    ) -> CreditPack:
         """Update a credit pack's name, description, credits, price, or active status."""
         body = build_body(
             name=name, description=description, credits=credits, price=price, is_active=is_active
         )
-        return _parse(
-            await self._http.put(f"/credit-packs/{id}", body, idempotency_key=idempotency_key),
+        return _parse_data(
+            await self._http.patch(f"/credit-packs/{id}", body, idempotency_key=idempotency_key),
             CreditPack,
         )
 
-    async def delete(self, id: str) -> ApiResponse[DeletedObject]:
+    async def delete(self, id: str) -> DeletedObject:
         """Soft-delete a credit pack."""
-        return _parse(await self._http.delete(f"/credit-packs/{id}"), DeletedObject)
+        return _parse_data(await self._http.delete(f"/credit-packs/{id}"), DeletedObject)
+
+    async def list(self) -> CreditPacksListResult:
+        """List all active credit packs."""
+        return _parse_data(await self._http.get("/credit-packs"), CreditPacksListResult)
+
+    async def create(
+        self,
+        *,
+        name: str,
+        credits: int,
+        price: int,
+        description: str | None = None,
+        is_active: bool | None = None,
+        idempotency_key: str | None = None,
+    ) -> CreditPack:
+        """Create a new credit pack."""
+        body = build_body(
+            name=name, description=description, credits=credits, price=price, is_active=is_active
+        )
+        return _parse_data(
+            await self._http.post("/credit-packs", body, idempotency_key=idempotency_key),
+            CreditPack,
+        )

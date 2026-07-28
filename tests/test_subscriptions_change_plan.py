@@ -8,7 +8,7 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import PlanChange
+from commet.types import PlanChangeVariant1
 
 _SUCCESS_URL = "https://app.example.com/billing/success"
 
@@ -17,14 +17,9 @@ def _change_plan_response() -> Response:
     return Response(
         200,
         json={
-            "success": True,
-            "data": {
-                "id": "chp_1",
-                "scheduled": False,
-                "customerId": "cus_1",
-                "requiresCheckout": True,
-                "checkoutUrl": "https://checkout.example.com/abc",
-            },
+            "outcome": "requires_checkout",
+            "requiresCheckout": True,
+            "checkoutUrl": "https://checkout.example.com/abc",
         },
     )
 
@@ -44,8 +39,7 @@ class TestChangePlan:
             result = client.subscriptions.change_plan(
                 "sub_1", new_plan_id="plan_2", success_url=_SUCCESS_URL
             )
-            assert result.success is True
-            assert isinstance(result.data, PlanChange)
+            assert isinstance(result, PlanChangeVariant1)
 
         sent = json.loads(route.calls.last.request.content)
         assert sent["successUrl"] == _SUCCESS_URL
@@ -66,8 +60,7 @@ class TestAsyncChangePlan:
             result = await client.subscriptions.change_plan(
                 "sub_1", new_plan_id="plan_2", success_url=_SUCCESS_URL
             )
-            assert result.success is True
-            assert isinstance(result.data, PlanChange)
+            assert isinstance(result, PlanChangeVariant1)
 
         sent = json.loads(route.calls.last.request.content)
         assert sent["successUrl"] == _SUCCESS_URL

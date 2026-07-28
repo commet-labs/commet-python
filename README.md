@@ -16,35 +16,26 @@ from commet import Commet
 commet = Commet(api_key="ck_xxx")
 
 # Create a customer
-commet.customers.create(email="user@example.com")
+customer = commet.customers.create(email="user@example.com")
 
 # Create a subscription
-commet.subscriptions.create(customer_id="cus_123", plan_code="pro")
+commet.subscriptions.create(customer_id=customer.id, plan_code="pro")
 
 # Track usage
-commet.usage.track(feature="api_calls", customer_id="cus_123")
+commet.usage.track(
+    feature_code="api_calls",
+    customer_id=customer.id,
+    value=1,
+)
 
 # Track AI token usage
 commet.usage.track(
-    feature="ai_generation",
-    customer_id="cus_123",
+    feature_code="ai_generation",
+    customer_id=customer.id,
     model="claude-sonnet-4-20250514",
     input_tokens=1000,
     output_tokens=500,
 )
-```
-
-## Customer context
-
-Scope all operations to a customer to avoid repeating `customer_id`:
-
-```python
-customer = commet.customer("user_123")
-
-customer.usage.track("api_calls")
-customer.features.check("custom_branding")
-customer.seats.add(feature_code="editor", count=3)
-customer.portal.get_url()
 ```
 
 ## Quota
@@ -91,7 +82,11 @@ if payload["event"] == "subscription.activated":
 
 ```python
 with Commet(api_key="ck_xxx") as commet:
-    commet.usage.track(feature="api_calls", customer_id="cus_123")
+    commet.usage.track(
+        feature_code="api_calls",
+        customer_id="cus_123",
+        value=1,
+    )
 # connection pool is automatically closed
 ```
 

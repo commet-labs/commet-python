@@ -5,7 +5,6 @@ import logging
 from ._async_http import AsyncCommetHTTPClient
 from ._generated_async_resources import GeneratedAsyncResources
 from ._shared import API_VERSION
-from .async_resources.usage import AsyncUsageResource
 from .async_resources.webhooks import AsyncWebhooks
 
 logger = logging.getLogger("commet")
@@ -33,7 +32,6 @@ class AsyncCommet(GeneratedAsyncResources):
 
         self._init_resources(self._http)
 
-        self.usage = AsyncUsageResource(self._http)
         self.webhooks = AsyncWebhooks(self._http)
 
         logger.debug("AsyncCommet client initialized")
