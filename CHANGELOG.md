@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.0.1
+
+- Document Offers, reusable pricing Market Groups, and selectable price variants.
+- Clarify plan-change preview behavior for plan sort order and billing intervals.
+
 ## 8.0.0
 
 - Add pricing markets and selectable price variants, including market groups and explicit price selection.

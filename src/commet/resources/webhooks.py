@@ -35,7 +35,8 @@ def verify_and_parse_payload(
 
 class Webhooks(GeneratedWebhooksResource):
     def __init__(self, http: CommetHTTPClient | None = None) -> None:
-        self._http = http
+        if http is not None:
+            super().__init__(http)
 
     def verify(self, *, payload: str, signature: str | None, secret: str) -> bool:
         return verify_signature(payload=payload, signature=signature, secret=secret)

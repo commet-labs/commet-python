@@ -38,6 +38,26 @@ commet.usage.track(
 )
 ```
 
+## Offers and pricing Markets
+
+SDK v8 exposes reusable Offers, country Market Groups, and selectable `price_id` variants:
+
+```python
+market = commet.pricing.create_market_group(
+    name="Argentina",
+    country_codes=["AR"],
+)
+
+offer = commet.offers.create(
+    name="First three months at 25% off",
+    purpose="promotional",
+    plan_price_ids=["pp_monthly"],
+    phases=[{"type": "percentage", "percentage": 2500, "duration_cycles": 3}],
+)
+```
+
+Promo Codes reference Promotional Offers. Omitting `price_id` during subscription creation keeps normal default-price resolution.
+
 ## Quota
 
 ```python
