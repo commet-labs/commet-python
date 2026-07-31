@@ -1,5 +1,12 @@
 # Changelog
 
+## 9.0.0
+
+- Pin requests to API `2026-07-31`.
+- Replace pricing Market Groups with the top-level Markets resource.
+- Make Offers independent from purposes and plan-price associations.
+- Expose target-aware Offer Applications on subscriptions.
+
 ## 8.0.1
 
 - Document Offers, reusable pricing Market Groups, and selectable price variants.

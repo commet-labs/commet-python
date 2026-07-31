@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import builtins
-from typing import Any, Literal
+from typing import Any
 
 from .._http import CommetHTTPClient
 from .._shared import build_body
@@ -22,7 +22,7 @@ class OffersResource:
         self._http = http
 
     def get(self, id: str) -> Offer:
-        """Retrieve a canonical offer by its public ID."""
+        """Retrieve reusable offer terms by public ID."""
         return _parse_data(self._http.get(f"/offers/{id}"), Offer)
 
     def update(
@@ -30,8 +30,6 @@ class OffersResource:
         id: str,
         *,
         name: str,
-        purpose: Literal["introductory", "promotional"],
-        plan_price_ids: builtins.list[str],
         phases: builtins.list[UpdateOfferParamsPhasesItem],
         metadata: dict[str, Any] | None = None,
         starts_at: str | None = None,
@@ -39,11 +37,9 @@ class OffersResource:
         active: bool | None = None,
         idempotency_key: str | None = None,
     ) -> Offer:
-        """Replace an offer's catalog definition. Existing offer applications keep their immutable accepted terms."""
+        """Replace reusable offer terms. Existing applications keep their immutable accepted terms."""
         body = build_body(
             name=name,
-            purpose=purpose,
-            plan_price_ids=plan_price_ids,
             phases=phases,
             metadata=metadata,
             starts_at=starts_at,
@@ -55,30 +51,20 @@ class OffersResource:
         )
 
     def delete(self, id: str) -> DeletedOffer:
-        """Soft-delete an offer. Existing applications and their accepted terms remain available for billing and audit."""
+        """Soft-delete an Offer. Existing applications and their accepted terms remain available for billing and audit."""
         return _parse_data(self._http.delete(f"/offers/{id}"), DeletedOffer)
 
     def list(
-        self,
-        *,
-        cursor: str | None = None,
-        limit: int | None = None,
-        plan_price_id: str | None = None,
-        purpose: Literal["introductory", "promotional"] | None = None,
-        active: bool | None = None,
+        self, *, cursor: str | None = None, limit: int | None = None, active: bool | None = None
     ) -> OffersListResult:
-        """List the organization's canonical introductory and promotional offers."""
-        query = build_body(
-            cursor=cursor, limit=limit, plan_price_id=plan_price_id, purpose=purpose, active=active
-        )
+        """List reusable offer terms. Offers are independent from plans, prices, eligibility, and distribution channels."""
+        query = build_body(cursor=cursor, limit=limit, active=active)
         return _parse_data(self._http.get("/offers", query), OffersListResult)
 
     def create(
         self,
         *,
         name: str,
-        purpose: Literal["introductory", "promotional"],
-        plan_price_ids: builtins.list[str],
         phases: builtins.list[CreateOfferParamsPhasesItem],
         metadata: dict[str, Any] | None = None,
         starts_at: str | None = None,
@@ -86,11 +72,9 @@ class OffersResource:
         active: bool | None = None,
         idempotency_key: str | None = None,
     ) -> Offer:
-        """Create a canonical offer scoped to one or more plan prices. Currency-specific phases require an explicit USD value and never fall back across currencies."""
+        """Create reusable offer terms without assigning a plan, price, eligibility rule, or distribution channel."""
         body = build_body(
             name=name,
-            purpose=purpose,
-            plan_price_ids=plan_price_ids,
             phases=phases,
             metadata=metadata,
             starts_at=starts_at,

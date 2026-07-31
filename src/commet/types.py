@@ -481,7 +481,6 @@ class CreatedSubscription:
     cancellation: CreatedSubscriptionCancellation | None = None
     cancel_at_period_end: bool = False
     scheduled_plan_change: CreatedSubscriptionScheduledPlanChange | None = None
-    discount: CreatedSubscriptionDiscount | None = None
     start_date: str = ""
     end_date: str | None = None
     billing_day_of_month: int | None = None
@@ -489,6 +488,7 @@ class CreatedSubscription:
     checkout_url: str | None = None
     created_at: str = ""
     updated_at: str = ""
+    offer_applications: list[SubscriptionOfferApplication] = field(default_factory=list)
     checkout_provider: PaymentProvider | None = None
     price_id: str | None = None
     object: Literal["subscription"] | None = None
@@ -507,14 +507,6 @@ class CreatedSubscriptionCurrentPeriod:
     start: str = ""
     end: str = ""
     days_remaining: float = 0.0
-
-
-@dataclass
-class CreatedSubscriptionDiscount:
-    type: Literal["percentage", "amount"] | None = None
-    value: float = 0.0
-    name: str | None = None
-    ends_at: str | None = None
 
 
 @dataclass
@@ -555,14 +547,14 @@ class CreateOfferParamsPhasesItemVariant1:
 @dataclass
 class CreateOfferParamsPhasesItemVariant2:
     type: Literal["percentage"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     percentage: int = 0
 
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     amounts: list[CreateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
 
 
@@ -575,7 +567,7 @@ class CreateOfferParamsPhasesItemVariant3AmountsItem:
 @dataclass
 class CreateOfferParamsPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     prices: list[CreateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
 
 
@@ -1044,23 +1036,29 @@ class InvoicesListResult:
 
 
 @dataclass
-class MarketGroup:
+class Market:
     id: str = ""
     name: str = ""
     country_codes: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     created_at: str = ""
     updated_at: str = ""
-    object: Literal["market_group"] | None = None
+    object: Literal["market"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class MarketsListResult:
+    object: Literal["list"] | None = None
+    data: list[Market] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
 
 
 @dataclass
 class Offer:
     id: str = ""
     name: str = ""
-    purpose: Literal["introductory", "promotional"] | None = None
-    plan_price_ids: list[str] = field(default_factory=list)
     phases: list[OfferPhasesItem] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     starts_at: str | None = None
@@ -1081,14 +1079,14 @@ class OfferPhasesItemVariant1:
 @dataclass
 class OfferPhasesItemVariant2:
     type: Literal["percentage"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     percentage: int = 0
 
 
 @dataclass
 class OfferPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     amounts: list[OfferPhasesItemVariant3AmountsItem] = field(default_factory=list)
 
 
@@ -1101,7 +1099,7 @@ class OfferPhasesItemVariant3AmountsItem:
 @dataclass
 class OfferPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     prices: list[OfferPhasesItemVariant4PricesItem] = field(default_factory=list)
 
 
@@ -1255,30 +1253,57 @@ class PlanChangeVariant1OfferApplication:
     discount_amount: int = 0
     total: int = 0
     phases: list[PlanChangeVariant1OfferApplicationPhasesItem] = field(default_factory=list)
+    applies_to: PlanChangeVariant1OfferApplicationAppliesTo | None = None
+
+
+@dataclass
+class PlanChangeVariant1OfferApplicationAppliesToVariant1:
+    type: Literal["plan_price"] | None = None
+    id: str = ""
+
+
+@dataclass
+class PlanChangeVariant1OfferApplicationAppliesToVariant2:
+    type: Literal["addon"] | None = None
+    id: str = ""
+
+
+@dataclass
+class PlanChangeVariant1OfferApplicationAppliesToVariant3:
+    type: Literal["credit_pack"] | None = None
+    id: str = ""
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationPhasesItemVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class PlanChangeVariant1OfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
 
 
 @dataclass
-class PlanChangeVariant1OfferApplicationPhasesItemVariant2:
+class PlanChangeVariant1OfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
 
 
 @dataclass
-class PlanChangeVariant1OfferApplicationPhasesItemVariant3:
+class PlanChangeVariant1OfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
@@ -1359,30 +1384,57 @@ class PlanChangeVariant3OfferApplication:
     discount_amount: int = 0
     total: int = 0
     phases: list[PlanChangeVariant3OfferApplicationPhasesItem] = field(default_factory=list)
+    applies_to: PlanChangeVariant3OfferApplicationAppliesTo | None = None
+
+
+@dataclass
+class PlanChangeVariant3OfferApplicationAppliesToVariant1:
+    type: Literal["plan_price"] | None = None
+    id: str = ""
+
+
+@dataclass
+class PlanChangeVariant3OfferApplicationAppliesToVariant2:
+    type: Literal["addon"] | None = None
+    id: str = ""
+
+
+@dataclass
+class PlanChangeVariant3OfferApplicationAppliesToVariant3:
+    type: Literal["credit_pack"] | None = None
+    id: str = ""
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationPhasesItemVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class PlanChangeVariant3OfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
 
 
 @dataclass
-class PlanChangeVariant3OfferApplicationPhasesItemVariant2:
+class PlanChangeVariant3OfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
 
 
 @dataclass
-class PlanChangeVariant3OfferApplicationPhasesItemVariant3:
+class PlanChangeVariant3OfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
@@ -1612,41 +1664,60 @@ class PreviewChangeOfferApplication:
     discount_amount: int = 0
     total: int = 0
     phases: list[PreviewChangeOfferApplicationPhasesItem] = field(default_factory=list)
+    applies_to: PreviewChangeOfferApplicationAppliesTo | None = None
+
+
+@dataclass
+class PreviewChangeOfferApplicationAppliesToVariant1:
+    type: Literal["plan_price"] | None = None
+    id: str = ""
+
+
+@dataclass
+class PreviewChangeOfferApplicationAppliesToVariant2:
+    type: Literal["addon"] | None = None
+    id: str = ""
+
+
+@dataclass
+class PreviewChangeOfferApplicationAppliesToVariant3:
+    type: Literal["credit_pack"] | None = None
+    id: str = ""
 
 
 @dataclass
 class PreviewChangeOfferApplicationPhasesItemVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class PreviewChangeOfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
 
 
 @dataclass
-class PreviewChangeOfferApplicationPhasesItemVariant2:
+class PreviewChangeOfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
 
 
 @dataclass
-class PreviewChangeOfferApplicationPhasesItemVariant3:
+class PreviewChangeOfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
-
-
-@dataclass
-class PricingListMarketGroupsResult:
-    object: Literal["list"] | None = None
-    data: list[MarketGroup] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
 
 
 @dataclass
@@ -1701,30 +1772,57 @@ class ReactivatedSubscriptionOfferApplication:
     discount_amount: int = 0
     total: int = 0
     phases: list[ReactivatedSubscriptionOfferApplicationPhasesItem] = field(default_factory=list)
+    applies_to: ReactivatedSubscriptionOfferApplicationAppliesTo | None = None
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplicationAppliesToVariant1:
+    type: Literal["plan_price"] | None = None
+    id: str = ""
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplicationAppliesToVariant2:
+    type: Literal["addon"] | None = None
+    id: str = ""
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplicationAppliesToVariant3:
+    type: Literal["credit_pack"] | None = None
+    id: str = ""
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class ReactivatedSubscriptionOfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
 
 
 @dataclass
-class ReactivatedSubscriptionOfferApplicationPhasesItemVariant2:
+class ReactivatedSubscriptionOfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
 
 
 @dataclass
-class ReactivatedSubscriptionOfferApplicationPhasesItemVariant3:
+class ReactivatedSubscriptionOfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
@@ -1851,7 +1949,6 @@ class Subscription:
     cancellation: SubscriptionCancellation | None = None
     cancel_at_period_end: bool = False
     scheduled_plan_change: SubscriptionScheduledPlanChange | None = None
-    discount: SubscriptionDiscount | None = None
     start_date: str = ""
     end_date: str | None = None
     billing_day_of_month: int | None = None
@@ -1859,6 +1956,7 @@ class Subscription:
     checkout_url: str | None = None
     created_at: str = ""
     updated_at: str = ""
+    offer_applications: list[SubscriptionOfferApplication] = field(default_factory=list)
     consumption_model: ConsumptionModel | None = None
     features: list[SubscriptionFeaturesItem] = field(default_factory=list)
     credits: SubscriptionCredits | None = None
@@ -1903,14 +2001,6 @@ class SubscriptionCurrentPeriod:
     start: str = ""
     end: str = ""
     days_remaining: float = 0.0
-
-
-@dataclass
-class SubscriptionDiscount:
-    type: Literal["percentage", "amount"] | None = None
-    value: float = 0.0
-    name: str | None = None
-    ends_at: str | None = None
 
 
 @dataclass
@@ -1961,6 +2051,76 @@ class SubscriptionFeaturesItemVariant4:
 
 
 @dataclass
+class SubscriptionOfferApplication:
+    id: str = ""
+    name: str = ""
+    applies_to: SubscriptionOfferApplicationAppliesTo | None = None
+    offer_id: str | None = None
+    source: Literal["direct", "introductory", "promo_code", "custom"] | None = None
+    status: Literal["quoted", "applied", "failed", "expired"] | None = None
+    currency: str | None = None
+    subtotal: int | None = None
+    discount_amount: int | None = None
+    total: int | None = None
+    phases: list[SubscriptionOfferApplicationPhase] = field(default_factory=list)
+    quoted_at: str = ""
+    applied_at: str | None = None
+
+
+@dataclass
+class SubscriptionOfferApplicationAppliesToVariant1:
+    type: Literal["plan_price"] | None = None
+    id: str = ""
+
+
+@dataclass
+class SubscriptionOfferApplicationAppliesToVariant2:
+    type: Literal["addon"] | None = None
+    id: str = ""
+
+
+@dataclass
+class SubscriptionOfferApplicationAppliesToVariant3:
+    type: Literal["credit_pack"] | None = None
+    id: str = ""
+
+
+@dataclass
+class SubscriptionOfferApplicationPhaseVariant1:
+    type: Literal["free_trial"] | None = None
+    duration_days: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class SubscriptionOfferApplicationPhaseVariant2:
+    type: Literal["percentage"] | None = None
+    duration_cycles: int | None = None
+    percentage: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class SubscriptionOfferApplicationPhaseVariant3:
+    type: Literal["amount_off"] | None = None
+    duration_cycles: int | None = None
+    amount: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
+class SubscriptionOfferApplicationPhaseVariant4:
+    type: Literal["fixed_price"] | None = None
+    duration_cycles: int | None = None
+    price: int = 0
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+@dataclass
 class SubscriptionPlan:
     id: str = ""
     name: str = ""
@@ -1998,7 +2158,6 @@ class SubscriptionSummary:
     cancellation: SubscriptionSummaryCancellation | None = None
     cancel_at_period_end: bool = False
     scheduled_plan_change: SubscriptionSummaryScheduledPlanChange | None = None
-    discount: SubscriptionSummaryDiscount | None = None
     start_date: str = ""
     end_date: str | None = None
     billing_day_of_month: int | None = None
@@ -2006,6 +2165,7 @@ class SubscriptionSummary:
     checkout_url: str | None = None
     created_at: str = ""
     updated_at: str = ""
+    offer_applications: list[SubscriptionOfferApplication] = field(default_factory=list)
     price_id: str | None = None
     object: Literal["subscription"] | None = None
     livemode: bool = False
@@ -2023,14 +2183,6 @@ class SubscriptionSummaryCurrentPeriod:
     start: str = ""
     end: str = ""
     days_remaining: float = 0.0
-
-
-@dataclass
-class SubscriptionSummaryDiscount:
-    type: Literal["percentage", "amount"] | None = None
-    value: float = 0.0
-    name: str | None = None
-    ends_at: str | None = None
 
 
 @dataclass
@@ -2152,14 +2304,14 @@ class UpdateOfferParamsPhasesItemVariant1:
 @dataclass
 class UpdateOfferParamsPhasesItemVariant2:
     type: Literal["percentage"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     percentage: int = 0
 
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     amounts: list[UpdateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
 
 
@@ -2172,7 +2324,7 @@ class UpdateOfferParamsPhasesItemVariant3AmountsItem:
 @dataclass
 class UpdateOfferParamsPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
-    duration_cycles: int = 0
+    duration_cycles: int | None = None
     prices: list[UpdateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
 
 
@@ -2433,6 +2585,14 @@ ReactivatedSubscriptionOfferApplicationPhasesItem = Union[
     ReactivatedSubscriptionOfferApplicationPhasesItemVariant1,
     ReactivatedSubscriptionOfferApplicationPhasesItemVariant2,
     ReactivatedSubscriptionOfferApplicationPhasesItemVariant3,
+    ReactivatedSubscriptionOfferApplicationPhasesItemVariant4,
+]
+
+
+ReactivatedSubscriptionOfferApplicationAppliesTo = Union[
+    ReactivatedSubscriptionOfferApplicationAppliesToVariant1,
+    ReactivatedSubscriptionOfferApplicationAppliesToVariant2,
+    ReactivatedSubscriptionOfferApplicationAppliesToVariant3,
 ]
 
 
@@ -2440,6 +2600,7 @@ PlanChangeVariant1OfferApplicationPhasesItem = Union[
     PlanChangeVariant1OfferApplicationPhasesItemVariant1,
     PlanChangeVariant1OfferApplicationPhasesItemVariant2,
     PlanChangeVariant1OfferApplicationPhasesItemVariant3,
+    PlanChangeVariant1OfferApplicationPhasesItemVariant4,
 ]
 
 
@@ -2447,6 +2608,21 @@ PlanChangeVariant3OfferApplicationPhasesItem = Union[
     PlanChangeVariant3OfferApplicationPhasesItemVariant1,
     PlanChangeVariant3OfferApplicationPhasesItemVariant2,
     PlanChangeVariant3OfferApplicationPhasesItemVariant3,
+    PlanChangeVariant3OfferApplicationPhasesItemVariant4,
+]
+
+
+PlanChangeVariant1OfferApplicationAppliesTo = Union[
+    PlanChangeVariant1OfferApplicationAppliesToVariant1,
+    PlanChangeVariant1OfferApplicationAppliesToVariant2,
+    PlanChangeVariant1OfferApplicationAppliesToVariant3,
+]
+
+
+PlanChangeVariant3OfferApplicationAppliesTo = Union[
+    PlanChangeVariant3OfferApplicationAppliesToVariant1,
+    PlanChangeVariant3OfferApplicationAppliesToVariant2,
+    PlanChangeVariant3OfferApplicationAppliesToVariant3,
 ]
 
 
@@ -2454,6 +2630,29 @@ PreviewChangeOfferApplicationPhasesItem = Union[
     PreviewChangeOfferApplicationPhasesItemVariant1,
     PreviewChangeOfferApplicationPhasesItemVariant2,
     PreviewChangeOfferApplicationPhasesItemVariant3,
+    PreviewChangeOfferApplicationPhasesItemVariant4,
+]
+
+
+PreviewChangeOfferApplicationAppliesTo = Union[
+    PreviewChangeOfferApplicationAppliesToVariant1,
+    PreviewChangeOfferApplicationAppliesToVariant2,
+    PreviewChangeOfferApplicationAppliesToVariant3,
+]
+
+
+SubscriptionOfferApplicationAppliesTo = Union[
+    SubscriptionOfferApplicationAppliesToVariant1,
+    SubscriptionOfferApplicationAppliesToVariant2,
+    SubscriptionOfferApplicationAppliesToVariant3,
+]
+
+
+SubscriptionOfferApplicationPhase = Union[
+    SubscriptionOfferApplicationPhaseVariant1,
+    SubscriptionOfferApplicationPhaseVariant2,
+    SubscriptionOfferApplicationPhaseVariant3,
+    SubscriptionOfferApplicationPhaseVariant4,
 ]
 
 
@@ -2550,7 +2749,6 @@ _DATACLASS_TYPES.update(
         "CreatedSubscription": CreatedSubscription,
         "CreatedSubscriptionCancellation": CreatedSubscriptionCancellation,
         "CreatedSubscriptionCurrentPeriod": CreatedSubscriptionCurrentPeriod,
-        "CreatedSubscriptionDiscount": CreatedSubscriptionDiscount,
         "CreatedSubscriptionPlan": CreatedSubscriptionPlan,
         "CreatedSubscriptionScheduledPlanChange": CreatedSubscriptionScheduledPlanChange,
         "CreatedWebhook": CreatedWebhook,
@@ -2605,7 +2803,8 @@ _DATACLASS_TYPES.update(
         "InvoiceLineItemsItem": InvoiceLineItemsItem,
         "InvoiceListItem": InvoiceListItem,
         "InvoicesListResult": InvoicesListResult,
-        "MarketGroup": MarketGroup,
+        "Market": Market,
+        "MarketsListResult": MarketsListResult,
         "Offer": Offer,
         "OfferPhasesItemVariant1": OfferPhasesItemVariant1,
         "OfferPhasesItemVariant2": OfferPhasesItemVariant2,
@@ -2624,18 +2823,26 @@ _DATACLASS_TYPES.update(
         "Plan": Plan,
         "PlanChangeVariant1": PlanChangeVariant1,
         "PlanChangeVariant1OfferApplication": PlanChangeVariant1OfferApplication,
+        "PlanChangeVariant1OfferApplicationAppliesToVariant1": PlanChangeVariant1OfferApplicationAppliesToVariant1,
+        "PlanChangeVariant1OfferApplicationAppliesToVariant2": PlanChangeVariant1OfferApplicationAppliesToVariant2,
+        "PlanChangeVariant1OfferApplicationAppliesToVariant3": PlanChangeVariant1OfferApplicationAppliesToVariant3,
         "PlanChangeVariant1OfferApplicationPhasesItemVariant1": PlanChangeVariant1OfferApplicationPhasesItemVariant1,
         "PlanChangeVariant1OfferApplicationPhasesItemVariant2": PlanChangeVariant1OfferApplicationPhasesItemVariant2,
         "PlanChangeVariant1OfferApplicationPhasesItemVariant3": PlanChangeVariant1OfferApplicationPhasesItemVariant3,
+        "PlanChangeVariant1OfferApplicationPhasesItemVariant4": PlanChangeVariant1OfferApplicationPhasesItemVariant4,
         "PlanChangeVariant2": PlanChangeVariant2,
         "PlanChangeVariant2SeatLimitWarning": PlanChangeVariant2SeatLimitWarning,
         "PlanChangeVariant3": PlanChangeVariant3,
         "PlanChangeVariant3Billing": PlanChangeVariant3Billing,
         "PlanChangeVariant3CurrentPlan": PlanChangeVariant3CurrentPlan,
         "PlanChangeVariant3OfferApplication": PlanChangeVariant3OfferApplication,
+        "PlanChangeVariant3OfferApplicationAppliesToVariant1": PlanChangeVariant3OfferApplicationAppliesToVariant1,
+        "PlanChangeVariant3OfferApplicationAppliesToVariant2": PlanChangeVariant3OfferApplicationAppliesToVariant2,
+        "PlanChangeVariant3OfferApplicationAppliesToVariant3": PlanChangeVariant3OfferApplicationAppliesToVariant3,
         "PlanChangeVariant3OfferApplicationPhasesItemVariant1": PlanChangeVariant3OfferApplicationPhasesItemVariant1,
         "PlanChangeVariant3OfferApplicationPhasesItemVariant2": PlanChangeVariant3OfferApplicationPhasesItemVariant2,
         "PlanChangeVariant3OfferApplicationPhasesItemVariant3": PlanChangeVariant3OfferApplicationPhasesItemVariant3,
+        "PlanChangeVariant3OfferApplicationPhasesItemVariant4": PlanChangeVariant3OfferApplicationPhasesItemVariant4,
         "PlanChangeVariant3PreviousPlan": PlanChangeVariant3PreviousPlan,
         "PlanExchangeRatesItem": PlanExchangeRatesItem,
         "PlanFeature": PlanFeature,
@@ -2659,18 +2866,25 @@ _DATACLASS_TYPES.update(
         "PortalAccess": PortalAccess,
         "PreviewChange": PreviewChange,
         "PreviewChangeOfferApplication": PreviewChangeOfferApplication,
+        "PreviewChangeOfferApplicationAppliesToVariant1": PreviewChangeOfferApplicationAppliesToVariant1,
+        "PreviewChangeOfferApplicationAppliesToVariant2": PreviewChangeOfferApplicationAppliesToVariant2,
+        "PreviewChangeOfferApplicationAppliesToVariant3": PreviewChangeOfferApplicationAppliesToVariant3,
         "PreviewChangeOfferApplicationPhasesItemVariant1": PreviewChangeOfferApplicationPhasesItemVariant1,
         "PreviewChangeOfferApplicationPhasesItemVariant2": PreviewChangeOfferApplicationPhasesItemVariant2,
         "PreviewChangeOfferApplicationPhasesItemVariant3": PreviewChangeOfferApplicationPhasesItemVariant3,
-        "PricingListMarketGroupsResult": PricingListMarketGroupsResult,
+        "PreviewChangeOfferApplicationPhasesItemVariant4": PreviewChangeOfferApplicationPhasesItemVariant4,
         "PromoCode": PromoCode,
         "PromoCodesListResult": PromoCodesListResult,
         "QuotaGetAllResult": QuotaGetAllResult,
         "ReactivatedSubscription": ReactivatedSubscription,
         "ReactivatedSubscriptionOfferApplication": ReactivatedSubscriptionOfferApplication,
+        "ReactivatedSubscriptionOfferApplicationAppliesToVariant1": ReactivatedSubscriptionOfferApplicationAppliesToVariant1,
+        "ReactivatedSubscriptionOfferApplicationAppliesToVariant2": ReactivatedSubscriptionOfferApplicationAppliesToVariant2,
+        "ReactivatedSubscriptionOfferApplicationAppliesToVariant3": ReactivatedSubscriptionOfferApplicationAppliesToVariant3,
         "ReactivatedSubscriptionOfferApplicationPhasesItemVariant1": ReactivatedSubscriptionOfferApplicationPhasesItemVariant1,
         "ReactivatedSubscriptionOfferApplicationPhasesItemVariant2": ReactivatedSubscriptionOfferApplicationPhasesItemVariant2,
         "ReactivatedSubscriptionOfferApplicationPhasesItemVariant3": ReactivatedSubscriptionOfferApplicationPhasesItemVariant3,
+        "ReactivatedSubscriptionOfferApplicationPhasesItemVariant4": ReactivatedSubscriptionOfferApplicationPhasesItemVariant4,
         "RecoveryLink": RecoveryLink,
         "Refund": Refund,
         "RemovedPlanFeature": RemovedPlanFeature,
@@ -2690,20 +2904,26 @@ _DATACLASS_TYPES.update(
         "SubscriptionCancellation": SubscriptionCancellation,
         "SubscriptionCredits": SubscriptionCredits,
         "SubscriptionCurrentPeriod": SubscriptionCurrentPeriod,
-        "SubscriptionDiscount": SubscriptionDiscount,
         "SubscriptionFeaturesItemVariant1": SubscriptionFeaturesItemVariant1,
         "SubscriptionFeaturesItemVariant2": SubscriptionFeaturesItemVariant2,
         "SubscriptionFeaturesItemVariant2Usage": SubscriptionFeaturesItemVariant2Usage,
         "SubscriptionFeaturesItemVariant3": SubscriptionFeaturesItemVariant3,
         "SubscriptionFeaturesItemVariant3Usage": SubscriptionFeaturesItemVariant3Usage,
         "SubscriptionFeaturesItemVariant4": SubscriptionFeaturesItemVariant4,
+        "SubscriptionOfferApplication": SubscriptionOfferApplication,
+        "SubscriptionOfferApplicationAppliesToVariant1": SubscriptionOfferApplicationAppliesToVariant1,
+        "SubscriptionOfferApplicationAppliesToVariant2": SubscriptionOfferApplicationAppliesToVariant2,
+        "SubscriptionOfferApplicationAppliesToVariant3": SubscriptionOfferApplicationAppliesToVariant3,
+        "SubscriptionOfferApplicationPhaseVariant1": SubscriptionOfferApplicationPhaseVariant1,
+        "SubscriptionOfferApplicationPhaseVariant2": SubscriptionOfferApplicationPhaseVariant2,
+        "SubscriptionOfferApplicationPhaseVariant3": SubscriptionOfferApplicationPhaseVariant3,
+        "SubscriptionOfferApplicationPhaseVariant4": SubscriptionOfferApplicationPhaseVariant4,
         "SubscriptionPlan": SubscriptionPlan,
         "SubscriptionScheduledPlanChange": SubscriptionScheduledPlanChange,
         "SubscriptionsListResult": SubscriptionsListResult,
         "SubscriptionSummary": SubscriptionSummary,
         "SubscriptionSummaryCancellation": SubscriptionSummaryCancellation,
         "SubscriptionSummaryCurrentPeriod": SubscriptionSummaryCurrentPeriod,
-        "SubscriptionSummaryDiscount": SubscriptionSummaryDiscount,
         "SubscriptionSummaryPlan": SubscriptionSummaryPlan,
         "SubscriptionSummaryScheduledPlanChange": SubscriptionSummaryScheduledPlanChange,
         "TestClock": TestClock,
@@ -2750,36 +2970,95 @@ _UNION_TYPES.update(
         "ReactivatedSubscriptionOfferApplicationPhasesItem": (
             "type",
             {
-                "percentage": ReactivatedSubscriptionOfferApplicationPhasesItemVariant1,
-                "amount_off": ReactivatedSubscriptionOfferApplicationPhasesItemVariant2,
-                "fixed_price": ReactivatedSubscriptionOfferApplicationPhasesItemVariant3,
+                "free_trial": ReactivatedSubscriptionOfferApplicationPhasesItemVariant1,
+                "percentage": ReactivatedSubscriptionOfferApplicationPhasesItemVariant2,
+                "amount_off": ReactivatedSubscriptionOfferApplicationPhasesItemVariant3,
+                "fixed_price": ReactivatedSubscriptionOfferApplicationPhasesItemVariant4,
+            },
+            [],
+        ),
+        "ReactivatedSubscriptionOfferApplicationAppliesTo": (
+            "type",
+            {
+                "plan_price": ReactivatedSubscriptionOfferApplicationAppliesToVariant1,
+                "addon": ReactivatedSubscriptionOfferApplicationAppliesToVariant2,
+                "credit_pack": ReactivatedSubscriptionOfferApplicationAppliesToVariant3,
             },
             [],
         ),
         "PlanChangeVariant1OfferApplicationPhasesItem": (
             "type",
             {
-                "percentage": PlanChangeVariant1OfferApplicationPhasesItemVariant1,
-                "amount_off": PlanChangeVariant1OfferApplicationPhasesItemVariant2,
-                "fixed_price": PlanChangeVariant1OfferApplicationPhasesItemVariant3,
+                "free_trial": PlanChangeVariant1OfferApplicationPhasesItemVariant1,
+                "percentage": PlanChangeVariant1OfferApplicationPhasesItemVariant2,
+                "amount_off": PlanChangeVariant1OfferApplicationPhasesItemVariant3,
+                "fixed_price": PlanChangeVariant1OfferApplicationPhasesItemVariant4,
             },
             [],
         ),
         "PlanChangeVariant3OfferApplicationPhasesItem": (
             "type",
             {
-                "percentage": PlanChangeVariant3OfferApplicationPhasesItemVariant1,
-                "amount_off": PlanChangeVariant3OfferApplicationPhasesItemVariant2,
-                "fixed_price": PlanChangeVariant3OfferApplicationPhasesItemVariant3,
+                "free_trial": PlanChangeVariant3OfferApplicationPhasesItemVariant1,
+                "percentage": PlanChangeVariant3OfferApplicationPhasesItemVariant2,
+                "amount_off": PlanChangeVariant3OfferApplicationPhasesItemVariant3,
+                "fixed_price": PlanChangeVariant3OfferApplicationPhasesItemVariant4,
+            },
+            [],
+        ),
+        "PlanChangeVariant1OfferApplicationAppliesTo": (
+            "type",
+            {
+                "plan_price": PlanChangeVariant1OfferApplicationAppliesToVariant1,
+                "addon": PlanChangeVariant1OfferApplicationAppliesToVariant2,
+                "credit_pack": PlanChangeVariant1OfferApplicationAppliesToVariant3,
+            },
+            [],
+        ),
+        "PlanChangeVariant3OfferApplicationAppliesTo": (
+            "type",
+            {
+                "plan_price": PlanChangeVariant3OfferApplicationAppliesToVariant1,
+                "addon": PlanChangeVariant3OfferApplicationAppliesToVariant2,
+                "credit_pack": PlanChangeVariant3OfferApplicationAppliesToVariant3,
             },
             [],
         ),
         "PreviewChangeOfferApplicationPhasesItem": (
             "type",
             {
-                "percentage": PreviewChangeOfferApplicationPhasesItemVariant1,
-                "amount_off": PreviewChangeOfferApplicationPhasesItemVariant2,
-                "fixed_price": PreviewChangeOfferApplicationPhasesItemVariant3,
+                "free_trial": PreviewChangeOfferApplicationPhasesItemVariant1,
+                "percentage": PreviewChangeOfferApplicationPhasesItemVariant2,
+                "amount_off": PreviewChangeOfferApplicationPhasesItemVariant3,
+                "fixed_price": PreviewChangeOfferApplicationPhasesItemVariant4,
+            },
+            [],
+        ),
+        "PreviewChangeOfferApplicationAppliesTo": (
+            "type",
+            {
+                "plan_price": PreviewChangeOfferApplicationAppliesToVariant1,
+                "addon": PreviewChangeOfferApplicationAppliesToVariant2,
+                "credit_pack": PreviewChangeOfferApplicationAppliesToVariant3,
+            },
+            [],
+        ),
+        "SubscriptionOfferApplicationAppliesTo": (
+            "type",
+            {
+                "plan_price": SubscriptionOfferApplicationAppliesToVariant1,
+                "addon": SubscriptionOfferApplicationAppliesToVariant2,
+                "credit_pack": SubscriptionOfferApplicationAppliesToVariant3,
+            },
+            [],
+        ),
+        "SubscriptionOfferApplicationPhase": (
+            "type",
+            {
+                "free_trial": SubscriptionOfferApplicationPhaseVariant1,
+                "percentage": SubscriptionOfferApplicationPhaseVariant2,
+                "amount_off": SubscriptionOfferApplicationPhaseVariant3,
+                "fixed_price": SubscriptionOfferApplicationPhaseVariant4,
             },
             [],
         ),

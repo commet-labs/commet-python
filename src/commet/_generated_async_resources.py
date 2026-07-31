@@ -10,13 +10,13 @@ from .async_resources.customers import AsyncCustomersResource
 from .async_resources.feature_access import AsyncFeatureAccessResource
 from .async_resources.features import AsyncFeaturesResource
 from .async_resources.invoices import AsyncInvoicesResource
+from .async_resources.markets import AsyncMarketsResource
 from .async_resources.offers import AsyncOffersResource
 from .async_resources.payments import AsyncPaymentsResource
 from .async_resources.payouts import AsyncPayoutsResource
 from .async_resources.plan_groups import AsyncPlanGroupsResource
 from .async_resources.plans import AsyncPlansResource
 from .async_resources.portal import AsyncPortalResource
-from .async_resources.pricing import AsyncPricingResource
 from .async_resources.promo_codes import AsyncPromoCodesResource
 from .async_resources.provisioning import AsyncProvisioningResource
 from .async_resources.quota import AsyncQuotaResource
@@ -36,13 +36,13 @@ class GeneratedAsyncResources:
         self.feature_access = AsyncFeatureAccessResource(http)
         self.features = AsyncFeaturesResource(http)
         self.invoices = AsyncInvoicesResource(http)
+        self.markets = AsyncMarketsResource(http)
         self.offers = AsyncOffersResource(http)
         self.payments = AsyncPaymentsResource(http)
         self.payouts = AsyncPayoutsResource(http)
         self.plan_groups = AsyncPlanGroupsResource(http)
         self.plans = AsyncPlansResource(http)
         self.portal = AsyncPortalResource(http)
-        self.pricing = AsyncPricingResource(http)
         self.promo_codes = AsyncPromoCodesResource(http)
         self.provisioning = AsyncProvisioningResource(http)
         self.quota = AsyncQuotaResource(http)

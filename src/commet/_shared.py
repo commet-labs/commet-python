@@ -41,7 +41,7 @@ def retry_delay_seconds(
 
 _BASE_URL = "https://commet.co"
 
-API_VERSION = "2026-07-24"
+API_VERSION = "2026-07-31"
 
 
 def to_snake(name: str) -> str:

@@ -66,7 +66,7 @@ class AsyncPromoCodesResource:
         plan_ids: builtins.list[str] | None = None,
         idempotency_key: str | None = None,
     ) -> PromoCode:
-        """Create a distribution code for an existing promotional offer. Offer economics remain owned by the referenced Offer."""
+        """Create a distribution code for an existing Offer. The referenced Offer owns the benefit and duration; the promo code owns redemption restrictions."""
         body = build_body(
             code=code,
             offer_id=offer_id,

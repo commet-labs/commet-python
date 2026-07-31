@@ -10,13 +10,13 @@ from .resources.customers import CustomersResource
 from .resources.feature_access import FeatureAccessResource
 from .resources.features import FeaturesResource
 from .resources.invoices import InvoicesResource
+from .resources.markets import MarketsResource
 from .resources.offers import OffersResource
 from .resources.payments import PaymentsResource
 from .resources.payouts import PayoutsResource
 from .resources.plan_groups import PlanGroupsResource
 from .resources.plans import PlansResource
 from .resources.portal import PortalResource
-from .resources.pricing import PricingResource
 from .resources.promo_codes import PromoCodesResource
 from .resources.provisioning import ProvisioningResource
 from .resources.quota import QuotaResource
@@ -36,13 +36,13 @@ class GeneratedSyncResources:
         self.feature_access = FeatureAccessResource(http)
         self.features = FeaturesResource(http)
         self.invoices = InvoicesResource(http)
+        self.markets = MarketsResource(http)
         self.offers = OffersResource(http)
         self.payments = PaymentsResource(http)
         self.payouts = PayoutsResource(http)
         self.plan_groups = PlanGroupsResource(http)
         self.plans = PlansResource(http)
         self.portal = PortalResource(http)
-        self.pricing = PricingResource(http)
         self.promo_codes = PromoCodesResource(http)
         self.provisioning = ProvisioningResource(http)
         self.quota = QuotaResource(http)
