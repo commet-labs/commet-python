@@ -126,8 +126,7 @@ class TestProcessBilling:
 
         assert result is None
 
-        # A no-param POST must not serialize an empty/literal-null JSON body.
-        assert route.calls.last.request.content in (b"", b"null")
+        assert route.calls.last.request.content == b""
 
 
 @pytest.mark.asyncio
