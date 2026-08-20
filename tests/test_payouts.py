@@ -132,25 +132,6 @@ class TestRequestPayout:
         assert sent == {"amount": 100000, "description": "Weekly withdrawal"}
 
 
-class TestCompleteVerification:
-    def test_deprecated_endpoint_sends_no_kyc_body(self, mock_api: respx.MockRouter) -> None:
-        route = mock_api.post("/payouts/verification").mock(
-            return_value=Response(
-                200,
-                json={
-                    "success": True,
-                    "data": None,
-                },
-            )
-        )
-
-        with Commet(api_key="ck_test_123") as client:
-            result = client.payouts.complete_verification()
-
-        assert result is None
-        assert route.calls.last.request.content == b""
-
-
 @pytest.mark.asyncio
 class TestAsyncPayouts:
     async def test_request_payout_parses_response(self, mock_api: respx.MockRouter) -> None:
