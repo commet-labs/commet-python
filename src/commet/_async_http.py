@@ -168,8 +168,6 @@ class AsyncCommetHTTPClient:
         json_body = convert_keys(body, to_camel) if body else None
 
         logger.debug("%s %s", method, endpoint)
-        if json_body:
-            logger.debug("Body: %s", json_body)
 
         return await self._execute(
             method, endpoint, json_body=json_body, params=params, headers=headers, timeout=timeout
@@ -241,7 +239,6 @@ class AsyncCommetHTTPClient:
             )
 
         if resp.is_error:
-            logger.debug("Error response: %s", data)
             handle_error(resp.status_code, data, resp.headers.get("x-request-id"))
 
         if self._telemetry_enabled:
