@@ -27,20 +27,20 @@ npx skills add commet-labs/skills --skill commet
    package billing
 
    import (
-   	commet "github.com/commet-labs/commet-go/v9"
+       commet "github.com/commet-labs/commet-go/v9"
    )
 
    var secrets struct {
-   	CommetAPIKey       string
-   	CommetWebhookSecret string
+       CommetAPIKey       string
+       CommetWebhookSecret string
    }
 
    var client *commet.Client
 
    func initClient() error {
-   	var err error
-   	client, err = commet.New(secrets.CommetAPIKey)
-   	return err
+       var err error
+       client, err = commet.New(secrets.CommetAPIKey)
+       return err
    }
    ```
    There is no environment option on the client: sandbox vs live is decided by the organization the API key belongs to.
@@ -50,96 +50,96 @@ npx skills add commet-labs/skills --skill commet
    import "context"
 
    type SubscribeParams struct {
-   	Email      string `json:"email"`
-   	CustomerID string `json:"customer_id"`
+       Email      string `json:"email"`
+       CustomerID string `json:"customer_id"`
    }
 
    type SubscribeResponse struct {
-   	CheckoutURL string `json:"checkout_url"`
+       CheckoutURL string `json:"checkout_url"`
    }
 
    //encore:api public method=POST path=/billing/subscribe
    func Subscribe(ctx context.Context, req *SubscribeParams) (*SubscribeResponse, error) {
-   	if err := initClient(); err != nil {
-   		return nil, err
-   	}
+       if err := initClient(); err != nil {
+           return nil, err
+       }
 
-   	_, err := client.Customers.Create(ctx, &commet.CreateCustomerParams{
-   		Email: req.Email,
-   		ID:    &req.CustomerID,
-   	})
-   	if err != nil {
-   		return nil, err
-   	}
+       _, err := client.Customers.Create(ctx, &commet.CreateCustomerParams{
+           Email: req.Email,
+           ID:    &req.CustomerID,
+       })
+       if err != nil {
+           return nil, err
+       }
 
-   	planCode := "pro"
-   	subscription, err := client.Subscriptions.Create(ctx, &commet.CreateSubscriptionParams{
-   		CustomerID: req.CustomerID,
-   		PlanCode:   &planCode,
-   	})
-   	if err != nil {
-   		return nil, err
-   	}
+       planCode := "pro"
+       subscription, err := client.Subscriptions.Create(ctx, &commet.CreateSubscriptionParams{
+           CustomerID: req.CustomerID,
+           PlanCode:   &planCode,
+       })
+       if err != nil {
+           return nil, err
+       }
 
-   	checkoutURL := ""
-   	if subscription.CheckoutURL != nil {
-   		checkoutURL = *subscription.CheckoutURL
-   	}
+       checkoutURL := ""
+       if subscription.CheckoutURL != nil {
+           checkoutURL = *subscription.CheckoutURL
+       }
 
-   	return &SubscribeResponse{
-   		CheckoutURL: checkoutURL,
-   	}, nil
+       return &SubscribeResponse{
+           CheckoutURL: checkoutURL,
+       }, nil
    }
    ```
 
 4. ## Check Access
    ```go title="billing/billing.go"
    type SubscriptionResponse struct {
-   	Status string `json:"status"`
+       Status string `json:"status"`
    }
 
    //encore:api public method=GET path=/billing/subscription/:customerID
    func GetSubscription(ctx context.Context, customerID string) (*SubscriptionResponse, error) {
-   	if err := initClient(); err != nil {
-   		return nil, err
-   	}
+       if err := initClient(); err != nil {
+           return nil, err
+       }
 
-   	sub, err := client.Subscriptions.GetActive(ctx, &commet.GetActiveSubscriptionParams{
-   		CustomerID: customerID,
-   	})
-   	if err != nil {
-   		return nil, err
-   	}
+       sub, err := client.Subscriptions.GetActive(ctx, &commet.GetActiveSubscriptionParams{
+           CustomerID: customerID,
+       })
+       if err != nil {
+           return nil, err
+       }
 
-   	if sub == nil {
-   		return &SubscriptionResponse{Status: "none"}, nil
-   	}
+       if sub == nil {
+           return &SubscriptionResponse{Status: "none"}, nil
+       }
 
-   	return &SubscriptionResponse{
-   		Status: string(sub.Status),
-   	}, nil
+       return &SubscriptionResponse{
+           Status: string(sub.Status),
+       }, nil
    }
 
    type FeatureResponse struct {
-   	Allowed bool `json:"allowed"`
+       Allowed bool `json:"allowed"`
    }
 
    //encore:api public method=GET path=/billing/features/:feature/:customerID
    func CheckFeature(ctx context.Context, feature string, customerID string) (*FeatureResponse, error) {
-   	if err := initClient(); err != nil {
-   		return nil, err
-   	}
+       if err := initClient(); err != nil {
+           return nil, err
+       }
 
-   	result, err := client.FeatureAccess.Get(ctx, feature, &commet.GetFeatureAccessParams{
-   		CustomerID: customerID,
-   	})
-   	if err != nil {
-   		return nil, err
-   	}
+       result, err := client.FeatureAccess.Get(ctx, feature, &commet.GetFeatureAccessParams{
+           CustomerID: customerID,
+       })
+       if err != nil {
+           return nil, err
+       }
 
-   	return &FeatureResponse{
-   		Allowed: result.Allowed,
-   	}, nil
+       return &FeatureResponse{
+           Allowed: result.Allowed,
+       }, nil
    }
    ```
 
@@ -148,29 +148,29 @@ npx skills add commet-labs/skills --skill commet
    func float64Ptr(value float64) *float64 { return &value }
 
    type UsageParams struct {
-   	CustomerID string `json:"customer_id"`
+       CustomerID string `json:"customer_id"`
    }
 
    type UsageResponse struct {
-   	Tracked bool `json:"tracked"`
+       Tracked bool `json:"tracked"`
    }
 
    //encore:api public method=POST path=/billing/usage
    func TrackUsage(ctx context.Context, req *UsageParams) (*UsageResponse, error) {
-   	if err := initClient(); err != nil {
-   		return nil, err
-   	}
+       if err := initClient(); err != nil {
+           return nil, err
+       }
 
-   	_, err := client.Usage.Track(ctx, &commet.TrackUsageParams{
-   		CustomerID: req.CustomerID,
-   		FeatureCode: "api_calls",
-   		Value:       float64Ptr(1),
-   	})
-   	if err != nil {
-   		return nil, err
-   	}
+       _, err := client.Usage.Track(ctx, &commet.TrackUsageParams{
+           CustomerID: req.CustomerID,
+           FeatureCode: "api_calls",
+           Value:       float64Ptr(1),
+       })
+       if err != nil {
+           return nil, err
+       }
 
-   	return &UsageResponse{Tracked: true}, nil
+       return &UsageResponse{Tracked: true}, nil
    }
    ```
    Usage is aggregated and billed at end of period.
@@ -181,38 +181,38 @@ npx skills add commet-labs/skills --skill commet
 
    import (
 
-   	"io"
-   	"net/http"
+       "io"
+       "net/http"
 
-   	commet "github.com/commet-labs/commet-go/v9"
+       commet "github.com/commet-labs/commet-go/v9"
    )
 
    //encore:api public raw method=POST path=/webhooks/commet
    func HandleWebhook(w http.ResponseWriter, r *http.Request) {
-   	rawBody, err := io.ReadAll(r.Body)
-   	if err != nil {
-   		http.Error(w, "Failed to read body", http.StatusBadRequest)
-   		return
-   	}
+       rawBody, err := io.ReadAll(r.Body)
+       if err != nil {
+           http.Error(w, "Failed to read body", http.StatusBadRequest)
+           return
+       }
 
-   	webhooks := &commet.WebhooksResource{}
-   	payload, err := webhooks.VerifyAndParse(
-   		string(rawBody),
-   		r.Header.Get("x-commet-signature"),
-   		secrets.CommetWebhookSecret,
-   	)
-   	if err != nil {
-   		http.Error(w, "Invalid signature", http.StatusUnauthorized)
-   		return
-   	}
+       webhooks := &commet.WebhooksResource{}
+       payload, err := webhooks.VerifyAndParse(
+           string(rawBody),
+           r.Header.Get("x-commet-signature"),
+           secrets.CommetWebhookSecret,
+       )
+       if err != nil {
+           http.Error(w, "Invalid signature", http.StatusUnauthorized)
+           return
+       }
 
-   	switch payload["event"] {
-   	case "subscription.activated":
-   		// handle activation
-   	}
+       switch payload["event"] {
+       case "subscription.activated":
+           // handle activation
+       }
 
-   	w.Header().Set("Content-Type", "application/json")
-   	w.Write([]byte(`{"ok":true}`))
+       w.Header().Set("Content-Type", "application/json")
+       w.Write([]byte(`{"ok":true}`))
    }
    ```
 

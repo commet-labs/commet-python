@@ -52,15 +52,15 @@ feature_access = commet.feature_access.get(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 featureAccess, err := client.FeatureAccess.Get(ctx, "api_calls", &commet.GetFeatureAccessParams{
-	CustomerID: "user_123",
+    CustomerID: "user_123",
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -120,15 +120,15 @@ feature_access_list_result = commet.feature_access.list(customer_id="user_123")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 featureAccessListResult, err := client.FeatureAccess.List(ctx, &commet.ListFeatureAccessParams{
-	CustomerID: "user_123",
+    CustomerID: "user_123",
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -192,16 +192,16 @@ usage_check = commet.usage.check(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 usageCheck, err := client.Usage.Check(ctx, &commet.CheckUsageAvailabilityParams{
-	CustomerID: "user_123",
-	FeatureCode: "api_calls",
+    CustomerID: "user_123",
+    FeatureCode: "api_calls",
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -280,19 +280,19 @@ usage_event = commet.usage.track(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 usageEvent, err := client.Usage.Track(ctx, &commet.TrackUsageParams{
-	FeatureCode: "api_calls",
-	CustomerID: "user_123",
-	Model: func(value string) *string { return &value }("example"),
-	InputTokens: func(value int) *int { return &value }(1),
-	OutputTokens: func(value int) *int { return &value }(1),
+    FeatureCode: "api_calls",
+    CustomerID: "user_123",
+    Model: func(value string) *string { return &value }("example"),
+    InputTokens: func(value int) *int { return &value }(1),
+    OutputTokens: func(value int) *int { return &value }(1),
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 

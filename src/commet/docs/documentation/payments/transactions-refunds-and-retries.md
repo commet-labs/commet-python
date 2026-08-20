@@ -35,13 +35,13 @@ transactions_list_result = commet.transactions.list()
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 transactionsListResult, err := client.Transactions.List(ctx, nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -95,13 +95,13 @@ refund = commet.transactions.refund("transaction_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 refund, err := client.Transactions.Refund(ctx, "transaction_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -158,13 +158,13 @@ transaction_retry = commet.transactions.retry("transaction_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 transactionRetry, err := client.Transactions.Retry(ctx, "transaction_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 

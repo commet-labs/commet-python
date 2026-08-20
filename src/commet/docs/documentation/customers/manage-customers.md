@@ -43,15 +43,15 @@ customer = commet.customers.create(email="user@example.com")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 customer, err := client.Customers.Create(ctx, &commet.CreateCustomerParams{
-	Email: "user@example.com",
+    Email: "user@example.com",
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -114,17 +114,17 @@ customer_batch = commet.customers.create_batch(customers=[{"email": "user@exampl
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 customerBatch, err := client.Customers.CreateBatch(ctx, &commet.BatchCreateCustomersParams{
-	Customers: []commet.BatchCreateCustomersParamsCustomersItem{{
-		Email: "user@example.com",
-	}},
+    Customers: []commet.BatchCreateCustomersParamsCustomersItem{{
+        Email: "user@example.com",
+    }},
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -184,13 +184,13 @@ customer = commet.customers.get("cus_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 customer, err := client.Customers.Get(ctx, "cus_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -241,13 +241,13 @@ customer = commet.customers.update("cus_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 customer, err := client.Customers.Update(ctx, "cus_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -304,13 +304,13 @@ customers_list_result = commet.customers.list()
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 customersListResult, err := client.Customers.List(ctx, nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 

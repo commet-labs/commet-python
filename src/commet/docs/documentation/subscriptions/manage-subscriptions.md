@@ -60,16 +60,16 @@ created_subscription = commet.subscriptions.create(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 createdSubscription, err := client.Subscriptions.Create(ctx, &commet.CreateSubscriptionParams{
-	CustomerID: "user_123",
-	PlanID: func(value string) *string { return &value }("pln_xxx"),
+    CustomerID: "user_123",
+    PlanID: func(value string) *string { return &value }("pln_xxx"),
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -143,15 +143,15 @@ subscription = commet.subscriptions.get_active(customer_id="user_123")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 subscription, err := client.Subscriptions.GetActive(ctx, &commet.GetActiveSubscriptionParams{
-	CustomerID: "user_123",
+    CustomerID: "user_123",
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -205,13 +205,13 @@ subscription = commet.subscriptions.get("sub_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 subscription, err := client.Subscriptions.Get(ctx, "sub_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -264,13 +264,13 @@ subscription = commet.subscriptions.cancel("sub_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 subscription, err := client.Subscriptions.Cancel(ctx, "sub_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -327,13 +327,13 @@ subscription = commet.subscriptions.uncancel("sub_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 subscription, err := client.Subscriptions.Uncancel(ctx, "sub_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -392,13 +392,13 @@ reactivated_subscription = commet.subscriptions.reactivate("sub_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 reactivatedSubscription, err := client.Subscriptions.Reactivate(ctx, "sub_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -453,13 +453,13 @@ recovery_link = commet.subscriptions.create_recovery_link("sub_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 recoveryLink, err := client.Subscriptions.CreateRecoveryLink(ctx, "sub_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 

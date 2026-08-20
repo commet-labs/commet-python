@@ -33,13 +33,13 @@ invoices_list_result = commet.invoices.list()
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 invoicesListResult, err := client.Invoices.List(ctx, nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -101,17 +101,17 @@ invoice = commet.invoices.create_adjustment(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 invoice, err := client.Invoices.CreateAdjustment(ctx, &commet.CreateAdjustmentInvoiceParams{
-	CustomerID: "user_123",
-	Amount: 5000,
-	Description: "Customer requested",
+    CustomerID: "user_123",
+    Amount: 5000,
+    Description: "Customer requested",
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -177,15 +177,15 @@ invoice = commet.invoices.update_status(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 invoice, err := client.Invoices.UpdateStatus(ctx, "inv_xxx", &commet.UpdateInvoiceStatusParams{
-	Status: "paid",
+    Status: "paid",
 })
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -245,13 +245,13 @@ sent_invoice = commet.invoices.send("inv_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 sentInvoice, err := client.Invoices.Send(ctx, "inv_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
@@ -301,13 +301,13 @@ invoice_download = commet.invoices.get_download_url("inv_xxx")
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ctx := context.Background()
 
 invoiceDownload, err := client.Invoices.GetDownloadURL(ctx, "inv_xxx", nil)
 if err != nil {
-	log.Fatal(err)
+    log.Fatal(err)
 }
 ```
 
