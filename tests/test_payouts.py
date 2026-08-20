@@ -148,7 +148,7 @@ class TestCompleteVerification:
             result = client.payouts.complete_verification()
 
         assert result is None
-        assert route.calls.last.request.content in (b"", b"null")
+        assert route.calls.last.request.content == b""
 
 
 @pytest.mark.asyncio

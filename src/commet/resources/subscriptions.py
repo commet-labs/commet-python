@@ -225,7 +225,7 @@ class SubscriptionsResource:
         | None = None,
         price_id: str | None = None,
         initial_seats: dict[str, int] | None = None,
-        provider: str | None = None,
+        provider: Literal["stripe"] | Literal["commet"] | Literal["dlocal"] | str | None = None,
         name: str | None = None,
         start_date: str | None = None,
         success_url: str | None = None,
