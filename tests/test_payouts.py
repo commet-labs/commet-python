@@ -8,7 +8,7 @@ from httpx import Response
 
 from commet import Commet
 from commet.async_client import AsyncCommet
-from commet.types import Payout, PayoutBankAccount, PayoutVerificationVariant2
+from commet.types import Payout, PayoutBankAccount
 
 
 @pytest.fixture
@@ -133,78 +133,22 @@ class TestRequestPayout:
 
 
 class TestCompleteVerification:
-    def test_sends_deeply_nested_kyc_body_as_camel_case(self, mock_api: respx.MockRouter) -> None:
+    def test_deprecated_endpoint_sends_no_kyc_body(self, mock_api: respx.MockRouter) -> None:
         route = mock_api.post("/payouts/verification").mock(
             return_value=Response(
                 200,
                 json={
                     "success": True,
-                    "data": {
-                        "providerAccountId": "acct_1",
-                        "status": "pending_verification",
-                        "transfersEnabled": False,
-                        "outcome": "created",
-                        "businessType": "individual",
-                        "country": "US",
-                        "object": "payout_account",
-                    },
+                    "data": None,
                 },
             )
         )
 
-        bank = {
-            "account_number": "000123456789",
-            "account_holder_name": "Jane Doe",
-            "routing_number": "110000000",
-            "account_type": "checking",
-        }
-        individual = {
-            "first_name": "Jane",
-            "last_name": "Doe",
-            "phone": "+15555550123",
-            "date_of_birth": "1990-01-01",
-            "ssn_last4": "4321",
-            "address": {
-                "line1": "1 Main St",
-                "city": "NYC",
-                "state": "NY",
-                "postal_code": "10001",
-                "country": "US",
-            },
-        }
-
         with Commet(api_key="ck_test_123") as client:
-            result = client.payouts.complete_verification(
-                email="jane@example.com",
-                business_type="individual",
-                business_url="https://acme.test",
-                document_url="https://files.test/id.png",
-                bank=bank,
-                individual=individual,
-            )
+            result = client.payouts.complete_verification()
 
-        assert isinstance(result, PayoutVerificationVariant2)
-        assert result.status == "pending_verification"
-        assert result.transfers_enabled is False
-        assert result.business_type == "individual"
-
-        sent = json.loads(route.calls.last.request.content)
-        assert sent["email"] == "jane@example.com"
-        assert sent["businessType"] == "individual"
-        assert sent["businessUrl"] == "https://acme.test"
-        assert sent["documentUrl"] == "https://files.test/id.png"
-        assert sent["bank"] == {
-            "accountNumber": "000123456789",
-            "accountHolderName": "Jane Doe",
-            "routingNumber": "110000000",
-            "accountType": "checking",
-        }
-        # Deep recursion through convert_keys: nested address keys are camelCased too.
-        assert sent["individual"]["dateOfBirth"] == "1990-01-01"
-        assert sent["individual"]["ssnLast4"] == "4321"
-        assert sent["individual"]["address"]["postalCode"] == "10001"
-        # Omitted optional top-level object must not be sent.
-        assert "company" not in sent
+        assert result is None
+        assert route.calls.last.request.content in (b"", b"null")
 
 
 @pytest.mark.asyncio

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import builtins
-from typing import Any
+from typing import Any, Literal
 
 from .._http import CommetHTTPClient
 from .._shared import build_body
@@ -12,7 +12,12 @@ from ..types import (
     CreateCustomerParamsAddress,
     Customer,
     CustomerBatch,
+    CustomerCredit,
+    CustomerCreditRevocation,
+    CustomersListCreditsResult,
+    CustomersListPlanGrantsResult,
     CustomersListResult,
+    PlanGrant,
     Timezone,
     UpdateCustomerParamsAddress,
     _parse_data,
@@ -22,6 +27,127 @@ from ..types import (
 class CustomersResource:
     def __init__(self, http: CommetHTTPClient) -> None:
         self._http = http
+
+    def revoke_credit(
+        self, id: str, credit_id: str, *, idempotency_key: str | None = None
+    ) -> CustomerCreditRevocation:
+        """Revoke the unallocated remainder of a customer credit grant. Applied invoice history is unchanged."""
+        return _parse_data(
+            self._http.post(
+                f"/customers/{id}/credits/{credit_id}/revoke", idempotency_key=idempotency_key
+            ),
+            CustomerCreditRevocation,
+        )
+
+    def list_credits(self, id: str) -> CustomersListCreditsResult:
+        """List currency-specific invoice credit grants and their remaining balances for a customer."""
+        return _parse_data(self._http.get(f"/customers/{id}/credits"), CustomersListCreditsResult)
+
+    def create_credit(
+        self,
+        id: str,
+        *,
+        amount: int,
+        currency: Literal[
+            "usd",
+            "ars",
+            "brl",
+            "clp",
+            "cop",
+            "pen",
+            "uyu",
+            "pyg",
+            "bob",
+            "mxn",
+            "cad",
+            "eur",
+            "jpy",
+            "cny",
+            "krw",
+            "hkd",
+            "sgd",
+            "twd",
+            "inr",
+            "thb",
+        ],
+        reason: str,
+        expires_at: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> CustomerCredit:
+        """Grant monetary credit in one currency. Credit is applied FIFO before tax to eligible recurring invoices."""
+        body = build_body(amount=amount, currency=currency, reason=reason, expires_at=expires_at)
+        return _parse_data(
+            self._http.post(f"/customers/{id}/credits", body, idempotency_key=idempotency_key),
+            CustomerCredit,
+        )
+
+    def revoke_plan_grant(
+        self, id: str, grant_id: str, *, reason: str, idempotency_key: str | None = None
+    ) -> PlanGrant:
+        """End expanded access immediately and restore the base plan's limits. The subscription, billing cycle, invoices, and payment state remain unchanged."""
+        body = build_body(reason=reason)
+        return _parse_data(
+            self._http.post(
+                f"/customers/{id}/plan-grants/{grant_id}/revoke",
+                body,
+                idempotency_key=idempotency_key,
+            ),
+            PlanGrant,
+        )
+
+    def update_plan_grant(
+        self,
+        id: str,
+        grant_id: str,
+        *,
+        reason: str,
+        duration: Literal["cycles", "until_date", "until_revoked"],
+        duration_cycles: int | None = None,
+        expires_at: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> PlanGrant:
+        """Keep the overlay for a number of the subscription's existing billing cycles, set an exact deadline, or leave it active until revoked. The billing anchor is never reset."""
+        body = build_body(
+            reason=reason, duration=duration, duration_cycles=duration_cycles, expires_at=expires_at
+        )
+        return _parse_data(
+            self._http.patch(
+                f"/customers/{id}/plan-grants/{grant_id}", body, idempotency_key=idempotency_key
+            ),
+            PlanGrant,
+        )
+
+    def list_plan_grants(self, id: str) -> CustomersListPlanGrantsResult:
+        """List the independent audit timeline for paid-plan access granted without checkout or payment credentials."""
+        return _parse_data(
+            self._http.get(f"/customers/{id}/plan-grants"), CustomersListPlanGrantsResult
+        )
+
+    def create_plan_grant(
+        self,
+        id: str,
+        *,
+        subscription_id: str,
+        plan_id: str,
+        reason: str,
+        duration: Literal["cycles", "until_date", "until_revoked"],
+        duration_cycles: int | None = None,
+        expires_at: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> PlanGrant:
+        """Temporarily expand an active subscription's feature access using a higher plan in the same plan group. Billing, prices, periods, invoices, and the base subscription remain unchanged."""
+        body = build_body(
+            subscription_id=subscription_id,
+            plan_id=plan_id,
+            reason=reason,
+            duration=duration,
+            duration_cycles=duration_cycles,
+            expires_at=expires_at,
+        )
+        return _parse_data(
+            self._http.post(f"/customers/{id}/plan-grants", body, idempotency_key=idempotency_key),
+            PlanGrant,
+        )
 
     def get(self, id: str) -> Customer:
         """Retrieve a customer by their public ID, including subscription status and metadata."""

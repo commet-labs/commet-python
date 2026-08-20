@@ -7,14 +7,10 @@ from typing import Literal
 from .._http import CommetHTTPClient
 from .._shared import build_body
 from ..types import (
-    CompletePayoutVerificationParamsBank,
-    CompletePayoutVerificationParamsCompany,
-    CompletePayoutVerificationParamsIndividual,
     Payout,
     PayoutBankAccount,
-    PayoutVerification,
+    _data,
     _parse_data,
-    _parse_union_data,
 )
 
 
@@ -54,29 +50,9 @@ class PayoutsResource:
             self._http.post("/payouts", body, idempotency_key=idempotency_key), Payout
         )
 
-    def complete_verification(
-        self,
-        *,
-        email: str,
-        business_url: str,
-        document_url: str,
-        bank: CompletePayoutVerificationParamsBank,
-        business_type: Literal["individual", "company"],
-        individual: CompletePayoutVerificationParamsIndividual | None = None,
-        company: CompletePayoutVerificationParamsCompany | None = None,
-        idempotency_key: str | None = None,
-    ) -> PayoutVerification:
-        """Provision the organization's payout account in a single call with the full KYC + bank payload. Uploads the identity document, persists the destination bank, and creates the connected account through the org's payout provider. The account starts `pending_verification` and flips to `verified` via the provider's webhook. Idempotent: returns the existing account if the org already has one."""
-        body = build_body(
-            email=email,
-            business_url=business_url,
-            document_url=document_url,
-            bank=bank,
-            business_type=business_type,
-            individual=individual,
-            company=company,
-        )
-        return _parse_union_data(
-            self._http.post("/payouts/verification", body, idempotency_key=idempotency_key),
-            "PayoutVerification",
-        )
+    def complete_verification(self, *, idempotency_key: str | None = None) -> None:
+        """
+        Deprecated. Complete business and identity verification in the Commet dashboard. This endpoint no longer accepts or processes KYC data.
+        Deprecated.
+        """
+        return _data(self._http.post("/payouts/verification", idempotency_key=idempotency_key))

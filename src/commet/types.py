@@ -390,61 +390,6 @@ class ClaimLink:
 
 
 @dataclass
-class CompletePayoutVerificationParamsBank:
-    account_number: str = ""
-    account_holder_name: str = ""
-    routing_number: str | None = None
-    account_type: Literal["checking", "savings"] | None = None
-
-
-@dataclass
-class CompletePayoutVerificationParamsCompany:
-    name: str = ""
-    tax_id: str = ""
-    address: CompletePayoutVerificationParamsCompanyAddress | None = None
-    representative: CompletePayoutVerificationParamsCompanyRepresentative | None = None
-
-
-@dataclass
-class CompletePayoutVerificationParamsCompanyAddress:
-    line1: str = ""
-    line2: str | None = None
-    city: str = ""
-    state: str | None = None
-    postal_code: str = ""
-    country: str = ""
-
-
-@dataclass
-class CompletePayoutVerificationParamsCompanyRepresentative:
-    first_name: str = ""
-    last_name: str = ""
-    phone: str | None = None
-    email: str | None = None
-
-
-@dataclass
-class CompletePayoutVerificationParamsIndividual:
-    first_name: str = ""
-    last_name: str = ""
-    phone: str = ""
-    date_of_birth: str = ""
-    ssn_last4: str | None = None
-    id_number: str | None = None
-    address: CompletePayoutVerificationParamsIndividualAddress | None = None
-
-
-@dataclass
-class CompletePayoutVerificationParamsIndividualAddress:
-    line1: str = ""
-    line2: str | None = None
-    city: str = ""
-    state: str | None = None
-    postal_code: str = ""
-    country: str = ""
-
-
-@dataclass
 class CreateCustomerParamsAddress:
     line1: str = ""
     line2: str | None = None
@@ -548,6 +493,7 @@ class CreateOfferParamsPhasesItemVariant1:
 class CreateOfferParamsPhasesItemVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     percentage: int = 0
 
 
@@ -555,6 +501,7 @@ class CreateOfferParamsPhasesItemVariant2:
 class CreateOfferParamsPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     amounts: list[CreateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
 
 
@@ -568,6 +515,7 @@ class CreateOfferParamsPhasesItemVariant3AmountsItem:
 class CreateOfferParamsPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     prices: list[CreateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
 
 
@@ -680,6 +628,49 @@ class CustomerBatchSuccessfulItem:
 
 
 @dataclass
+class CustomerCredit:
+    id: str = ""
+    amount: int = 0
+    applied_amount: int = 0
+    reversed_amount: int = 0
+    revoked_amount: int = 0
+    remaining_amount: int = 0
+    currency: str = ""
+    reason: str = ""
+    source: Literal["dashboard", "api", "plan_change", "migration"] | None = None
+    expires_at: str | None = None
+    created_at: str = ""
+    object: Literal["customer_credit"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CustomerCreditRevocation:
+    id: str = ""
+    remaining_amount: int = 0
+    revoked_amount: int = 0
+    currency: str = ""
+    object: Literal["customer_credit"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class CustomersListCreditsResult:
+    object: Literal["list"] | None = None
+    data: list[CustomerCredit] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
+class CustomersListPlanGrantsResult:
+    object: Literal["list"] | None = None
+    data: list[PlanGrant] = field(default_factory=list)
+    has_more: bool = False
+    next_cursor: str | None = None
+
+
+@dataclass
 class CustomersListResult:
     object: Literal["list"] | None = None
     data: list[Customer] = field(default_factory=list)
@@ -748,8 +739,14 @@ class FeatureAccessVariant1:
     allowed: bool = False
     type: Literal["boolean"] | None = None
     enabled: bool = False
+    base_access: FeatureAccessVariant1BaseAccess | None = None
     object: Literal["feature_access"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class FeatureAccessVariant1BaseAccess:
+    enabled: bool = False
 
 
 @dataclass
@@ -760,8 +757,15 @@ class FeatureAccessVariant2:
     allowed: bool = False
     type: Literal["usage"] | None = None
     consumption: FeatureAccessVariant2Consumption | None = None
+    base_access: FeatureAccessVariant2BaseAccess | None = None
     object: Literal["feature_access"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class FeatureAccessVariant2BaseAccess:
+    included_units: float = 0.0
+    unlimited: bool = False
 
 
 @dataclass
@@ -848,8 +852,15 @@ class FeatureAccessVariant3:
     allowed: bool = False
     type: Literal["seats"] | None = None
     usage: FeatureAccessVariant3Usage | None = None
+    base_access: FeatureAccessVariant3BaseAccess | None = None
     object: Literal["feature_access"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class FeatureAccessVariant3BaseAccess:
+    included_units: float = 0.0
+    unlimited: bool = False
 
 
 @dataclass
@@ -890,8 +901,15 @@ class FeatureAccessVariant4:
     allowed: bool = False
     type: Literal["quota"] | None = None
     usage: FeatureAccessVariant4Usage | None = None
+    base_access: FeatureAccessVariant4BaseAccess | None = None
     object: Literal["feature_access"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class FeatureAccessVariant4BaseAccess:
+    included_units: float = 0.0
+    unlimited: bool = False
 
 
 @dataclass
@@ -1080,6 +1098,7 @@ class OfferPhasesItemVariant1:
 class OfferPhasesItemVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     percentage: int = 0
 
 
@@ -1087,6 +1106,7 @@ class OfferPhasesItemVariant2:
 class OfferPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     amounts: list[OfferPhasesItemVariant3AmountsItem] = field(default_factory=list)
 
 
@@ -1100,6 +1120,7 @@ class OfferPhasesItemVariant3AmountsItem:
 class OfferPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     prices: list[OfferPhasesItemVariant4PricesItem] = field(default_factory=list)
 
 
@@ -1189,28 +1210,6 @@ class PayoutBankAccount:
 
 
 @dataclass
-class PayoutVerificationVariant1:
-    provider_account_id: str = ""
-    status: Literal["pending_verification", "verified", "restricted", "disabled"] | None = None
-    transfers_enabled: bool = False
-    outcome: Literal["existing"] | None = None
-    object: Literal["payout_account"] | None = None
-    livemode: bool = False
-
-
-@dataclass
-class PayoutVerificationVariant2:
-    provider_account_id: str = ""
-    status: Literal["pending_verification", "verified", "restricted", "disabled"] | None = None
-    transfers_enabled: bool = False
-    outcome: Literal["created"] | None = None
-    business_type: Literal["individual", "company"] | None = None
-    country: str = ""
-    object: Literal["payout_account"] | None = None
-    livemode: bool = False
-
-
-@dataclass
 class Plan:
     id: str = ""
     name: str = ""
@@ -1286,6 +1285,7 @@ class PlanChangeVariant1OfferApplicationPhasesItemVariant1:
 class PlanChangeVariant1OfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
@@ -1295,6 +1295,7 @@ class PlanChangeVariant1OfferApplicationPhasesItemVariant2:
 class PlanChangeVariant1OfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
@@ -1304,6 +1305,7 @@ class PlanChangeVariant1OfferApplicationPhasesItemVariant3:
 class PlanChangeVariant1OfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
@@ -1417,6 +1419,7 @@ class PlanChangeVariant3OfferApplicationPhasesItemVariant1:
 class PlanChangeVariant3OfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
@@ -1426,6 +1429,7 @@ class PlanChangeVariant3OfferApplicationPhasesItemVariant2:
 class PlanChangeVariant3OfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
@@ -1435,6 +1439,7 @@ class PlanChangeVariant3OfferApplicationPhasesItemVariant3:
 class PlanChangeVariant3OfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
@@ -1498,6 +1503,43 @@ class PlanFeaturesItemRegionalPricesItem:
     currency: str = ""
     overage_unit_price: int | None = None
     auto_synced: bool = False
+
+
+@dataclass
+class PlanGrant:
+    id: str = ""
+    customer_id: str = ""
+    subscription_id: str = ""
+    base_plan_id: str = ""
+    plan_id: str = ""
+    plan_release_id: str = ""
+    status: Literal["active", "expired", "revoked"] | None = None
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
+    duration_cycles: int | None = None
+    starts_at: str = ""
+    expires_at: str | None = None
+    reason: str = ""
+    source: Literal["dashboard", "api"] | None = None
+    revoked_at: str | None = None
+    created_at: str = ""
+    updated_at: str = ""
+    events: list[PlanGrantEventsItem] = field(default_factory=list)
+    object: Literal["plan_grant"] | None = None
+    livemode: bool = False
+
+
+@dataclass
+class PlanGrantEventsItem:
+    id: str = ""
+    type: Literal["created", "updated", "expired", "revoked"] | None = None
+    reason: str = ""
+    source: Literal["dashboard", "api", "system"] | None = None
+    previous_expires_at: str | None = None
+    expires_at: str | None = None
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
+    duration_cycles: int | None = None
+    requested_expires_at: str | None = None
+    created_at: str = ""
 
 
 @dataclass
@@ -1697,6 +1739,7 @@ class PreviewChangeOfferApplicationPhasesItemVariant1:
 class PreviewChangeOfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
@@ -1706,6 +1749,7 @@ class PreviewChangeOfferApplicationPhasesItemVariant2:
 class PreviewChangeOfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
@@ -1715,6 +1759,7 @@ class PreviewChangeOfferApplicationPhasesItemVariant3:
 class PreviewChangeOfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
@@ -1805,6 +1850,7 @@ class ReactivatedSubscriptionOfferApplicationPhasesItemVariant1:
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     percentage: int = 0
@@ -1814,6 +1860,7 @@ class ReactivatedSubscriptionOfferApplicationPhasesItemVariant2:
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     amount: int = 0
@@ -1823,6 +1870,7 @@ class ReactivatedSubscriptionOfferApplicationPhasesItemVariant3:
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
     price: int = 0
@@ -1957,6 +2005,7 @@ class Subscription:
     created_at: str = ""
     updated_at: str = ""
     offer_applications: list[SubscriptionOfferApplication] = field(default_factory=list)
+    plan_grant: SubscriptionPlanGrant | None = None
     consumption_model: ConsumptionModel | None = None
     features: list[SubscriptionFeaturesItem] = field(default_factory=list)
     credits: SubscriptionCredits | None = None
@@ -2009,6 +2058,12 @@ class SubscriptionFeaturesItemVariant1:
     name: str = ""
     type: Literal["boolean"] | None = None
     enabled: bool = False
+    base_access: SubscriptionFeaturesItemVariant1BaseAccess | None = None
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant1BaseAccess:
+    enabled: bool = False
 
 
 @dataclass
@@ -2017,6 +2072,13 @@ class SubscriptionFeaturesItemVariant2:
     name: str = ""
     type: Literal["usage"] | None = None
     usage: SubscriptionFeaturesItemVariant2Usage | None = None
+    base_access: SubscriptionFeaturesItemVariant2BaseAccess | None = None
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant2BaseAccess:
+    included: float = 0.0
+    unlimited: bool = False
 
 
 @dataclass
@@ -2025,6 +2087,7 @@ class SubscriptionFeaturesItemVariant2Usage:
     included: float = 0.0
     overage_quantity: float = 0.0
     overage_unit_price: float | None = None
+    unlimited: bool | None = None
 
 
 @dataclass
@@ -2033,6 +2096,13 @@ class SubscriptionFeaturesItemVariant3:
     name: str = ""
     type: Literal["seats"] | None = None
     usage: SubscriptionFeaturesItemVariant3Usage | None = None
+    base_access: SubscriptionFeaturesItemVariant3BaseAccess | None = None
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant3BaseAccess:
+    included: float = 0.0
+    unlimited: bool = False
 
 
 @dataclass
@@ -2041,6 +2111,7 @@ class SubscriptionFeaturesItemVariant3Usage:
     included: float = 0.0
     overage_quantity: float = 0.0
     overage_unit_price: float | None = None
+    unlimited: bool | None = None
 
 
 @dataclass
@@ -2048,6 +2119,23 @@ class SubscriptionFeaturesItemVariant4:
     code: str = ""
     name: str = ""
     type: Literal["quota"] | None = None
+    usage: SubscriptionFeaturesItemVariant4Usage | None = None
+    base_access: SubscriptionFeaturesItemVariant4BaseAccess | None = None
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant4BaseAccess:
+    included: float = 0.0
+    unlimited: bool = False
+
+
+@dataclass
+class SubscriptionFeaturesItemVariant4Usage:
+    current: float = 0.0
+    included: float = 0.0
+    overage_quantity: float = 0.0
+    overage_unit_price: float | None = None
+    unlimited: bool | None = None
 
 
 @dataclass
@@ -2056,7 +2144,9 @@ class SubscriptionOfferApplication:
     name: str = ""
     applies_to: SubscriptionOfferApplicationAppliesTo | None = None
     offer_id: str | None = None
-    source: Literal["direct", "introductory", "promo_code", "custom"] | None = None
+    source: Literal["direct", "introductory", "promo_code", "card_promotion", "custom"] | None = (
+        None
+    )
     status: Literal["quoted", "applied", "failed", "expired"] | None = None
     currency: str | None = None
     subtotal: int | None = None
@@ -2064,6 +2154,7 @@ class SubscriptionOfferApplication:
     total: int | None = None
     phases: list[SubscriptionOfferApplicationPhase] = field(default_factory=list)
     quoted_at: str = ""
+    expires_at: str | None = None
     applied_at: str | None = None
 
 
@@ -2089,6 +2180,7 @@ class SubscriptionOfferApplicationAppliesToVariant3:
 class SubscriptionOfferApplicationPhaseVariant1:
     type: Literal["free_trial"] | None = None
     duration_days: int = 0
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     starts_at: str | None = None
     ends_at: str | None = None
 
@@ -2097,6 +2189,7 @@ class SubscriptionOfferApplicationPhaseVariant1:
 class SubscriptionOfferApplicationPhaseVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     percentage: int = 0
     starts_at: str | None = None
     ends_at: str | None = None
@@ -2106,6 +2199,7 @@ class SubscriptionOfferApplicationPhaseVariant2:
 class SubscriptionOfferApplicationPhaseVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     amount: int = 0
     starts_at: str | None = None
     ends_at: str | None = None
@@ -2115,6 +2209,7 @@ class SubscriptionOfferApplicationPhaseVariant3:
 class SubscriptionOfferApplicationPhaseVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     price: int = 0
     starts_at: str | None = None
     ends_at: str | None = None
@@ -2125,6 +2220,19 @@ class SubscriptionPlan:
     id: str = ""
     name: str = ""
     base_price: float = 0.0
+
+
+@dataclass
+class SubscriptionPlanGrant:
+    id: str = ""
+    plan: SubscriptionPlanGrantPlan | None = None
+    expires_at: str | None = None
+
+
+@dataclass
+class SubscriptionPlanGrantPlan:
+    id: str = ""
+    name: str = ""
 
 
 @dataclass
@@ -2205,19 +2313,65 @@ class TestClock:
     simulated_time: str | None = None
     is_active: bool = False
     now: str = ""
+    latest_run: TestClockLatestRun | None = None
     object: Literal["test_clock"] | None = None
     livemode: bool = False
 
 
 @dataclass
-class TestClockBilling:
-    customers_found: int = 0
-    enqueued: int = 0
-    failed: int = 0
-    dunning_retried: int = 0
-    dunning_failed: int = 0
+class TestClockLatestRun:
+    id: str = ""
+    status: Literal["pending", "running", "completed", "failed"] | None = None
+    started_at_time: str = ""
+    target_time: str = ""
+    estimated_deadline_count: int = 0
+    completed_deadline_count: int = 0
+    failed_deadline_count: int = 0
+    error: str | None = None
+    items: list[TestClockLatestRunItemsItem] = field(default_factory=list)
+
+
+@dataclass
+class TestClockLatestRunItemsItem:
+    kind: Literal["billing_cycle", "dunning_retry"] | None = None
+    status: Literal["pending", "processing", "completed", "failed"] | None = None
+    due_at: str = ""
+    subscription_id: str = ""
+    customer_name: str | None = None
+    invoice_number: str | None = None
+    invoice_id: str | None = None
+    outcome: str | None = None
+    detail: str | None = None
+    error: str | None = None
+
+
+@dataclass
+class TestClockRun:
+    id: str = ""
+    status: Literal["pending", "running", "completed", "failed"] | None = None
+    started_at_time: str = ""
+    target_time: str = ""
+    estimated_deadline_count: int = 0
+    completed_deadline_count: int = 0
+    failed_deadline_count: int = 0
+    error: str | None = None
+    items: list[TestClockRunItemsItem] = field(default_factory=list)
     object: Literal["test_clock_run"] | None = None
     livemode: bool = False
+
+
+@dataclass
+class TestClockRunItemsItem:
+    kind: Literal["billing_cycle", "dunning_retry"] | None = None
+    status: Literal["pending", "processing", "completed", "failed"] | None = None
+    due_at: str = ""
+    subscription_id: str = ""
+    customer_name: str | None = None
+    invoice_number: str | None = None
+    invoice_id: str | None = None
+    outcome: str | None = None
+    detail: str | None = None
+    error: str | None = None
 
 
 @dataclass
@@ -2305,6 +2459,7 @@ class UpdateOfferParamsPhasesItemVariant1:
 class UpdateOfferParamsPhasesItemVariant2:
     type: Literal["percentage"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     percentage: int = 0
 
 
@@ -2312,6 +2467,7 @@ class UpdateOfferParamsPhasesItemVariant2:
 class UpdateOfferParamsPhasesItemVariant3:
     type: Literal["amount_off"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     amounts: list[UpdateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
 
 
@@ -2325,6 +2481,7 @@ class UpdateOfferParamsPhasesItemVariant3AmountsItem:
 class UpdateOfferParamsPhasesItemVariant4:
     type: Literal["fixed_price"] | None = None
     duration_cycles: int | None = None
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
     prices: list[UpdateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
 
 
@@ -2550,6 +2707,20 @@ class WebhookCreditsBalance:
 
 
 @dataclass
+class WebhookPlanGrantTimelineEvent:
+    id: str = ""
+    type: Literal["created", "updated", "expired", "revoked"] | None = None
+    reason: str = ""
+    source: Literal["dashboard", "api", "system"] | None = None
+    previous_expires_at: str | None = None
+    expires_at: str | None = None
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
+    duration_cycles: int | None = None
+    requested_expires_at: str | None = None
+    created_at: str = ""
+
+
+@dataclass
 class WebhookPlanRef:
     id: str = ""
     name: str = ""
@@ -2687,9 +2858,6 @@ SubscriptionFeaturesItem = Union[
 ]
 
 
-PayoutVerification = Union[PayoutVerificationVariant1, PayoutVerificationVariant2]
-
-
 OfferPhasesItem = Union[
     OfferPhasesItemVariant1,
     OfferPhasesItemVariant2,
@@ -2738,12 +2906,6 @@ _DATACLASS_TYPES.update(
         "BatchCreateCustomersParamsCustomersItem": BatchCreateCustomersParamsCustomersItem,
         "BatchCreateCustomersParamsCustomersItemAddress": BatchCreateCustomersParamsCustomersItemAddress,
         "ClaimLink": ClaimLink,
-        "CompletePayoutVerificationParamsBank": CompletePayoutVerificationParamsBank,
-        "CompletePayoutVerificationParamsCompany": CompletePayoutVerificationParamsCompany,
-        "CompletePayoutVerificationParamsCompanyAddress": CompletePayoutVerificationParamsCompanyAddress,
-        "CompletePayoutVerificationParamsCompanyRepresentative": CompletePayoutVerificationParamsCompanyRepresentative,
-        "CompletePayoutVerificationParamsIndividual": CompletePayoutVerificationParamsIndividual,
-        "CompletePayoutVerificationParamsIndividualAddress": CompletePayoutVerificationParamsIndividualAddress,
         "CreateCustomerParamsAddress": CreateCustomerParamsAddress,
         "CreatedApiKey": CreatedApiKey,
         "CreatedSubscription": CreatedSubscription,
@@ -2768,6 +2930,10 @@ _DATACLASS_TYPES.update(
         "CustomerBatchFailedItemData": CustomerBatchFailedItemData,
         "CustomerBatchFailedItemDataAddress": CustomerBatchFailedItemDataAddress,
         "CustomerBatchSuccessfulItem": CustomerBatchSuccessfulItem,
+        "CustomerCredit": CustomerCredit,
+        "CustomerCreditRevocation": CustomerCreditRevocation,
+        "CustomersListCreditsResult": CustomersListCreditsResult,
+        "CustomersListPlanGrantsResult": CustomersListPlanGrantsResult,
         "CustomersListResult": CustomersListResult,
         "DeletedObject": DeletedObject,
         "DeletedOffer": DeletedOffer,
@@ -2776,7 +2942,9 @@ _DATACLASS_TYPES.update(
         "Feature": Feature,
         "FeatureAccessListResult": FeatureAccessListResult,
         "FeatureAccessVariant1": FeatureAccessVariant1,
+        "FeatureAccessVariant1BaseAccess": FeatureAccessVariant1BaseAccess,
         "FeatureAccessVariant2": FeatureAccessVariant2,
+        "FeatureAccessVariant2BaseAccess": FeatureAccessVariant2BaseAccess,
         "FeatureAccessVariant2ConsumptionVariant1": FeatureAccessVariant2ConsumptionVariant1,
         "FeatureAccessVariant2ConsumptionVariant1Overage": FeatureAccessVariant2ConsumptionVariant1Overage,
         "FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice": FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice,
@@ -2788,11 +2956,13 @@ _DATACLASS_TYPES.update(
         "FeatureAccessVariant2ConsumptionVariant3Spent": FeatureAccessVariant2ConsumptionVariant3Spent,
         "FeatureAccessVariant2ConsumptionVariant3UnitPrice": FeatureAccessVariant2ConsumptionVariant3UnitPrice,
         "FeatureAccessVariant3": FeatureAccessVariant3,
+        "FeatureAccessVariant3BaseAccess": FeatureAccessVariant3BaseAccess,
         "FeatureAccessVariant3Usage": FeatureAccessVariant3Usage,
         "FeatureAccessVariant3UsageOverage": FeatureAccessVariant3UsageOverage,
         "FeatureAccessVariant3UsageOverageUnitPrice": FeatureAccessVariant3UsageOverageUnitPrice,
         "FeatureAccessVariant3UsagePeriod": FeatureAccessVariant3UsagePeriod,
         "FeatureAccessVariant4": FeatureAccessVariant4,
+        "FeatureAccessVariant4BaseAccess": FeatureAccessVariant4BaseAccess,
         "FeatureAccessVariant4Usage": FeatureAccessVariant4Usage,
         "FeatureAccessVariant4UsageOverage": FeatureAccessVariant4UsageOverage,
         "FeatureAccessVariant4UsageOverageUnitPrice": FeatureAccessVariant4UsageOverageUnitPrice,
@@ -2818,8 +2988,6 @@ _DATACLASS_TYPES.update(
         "PaymentsListResult": PaymentsListResult,
         "Payout": Payout,
         "PayoutBankAccount": PayoutBankAccount,
-        "PayoutVerificationVariant1": PayoutVerificationVariant1,
-        "PayoutVerificationVariant2": PayoutVerificationVariant2,
         "Plan": Plan,
         "PlanChangeVariant1": PlanChangeVariant1,
         "PlanChangeVariant1OfferApplication": PlanChangeVariant1OfferApplication,
@@ -2850,6 +3018,8 @@ _DATACLASS_TYPES.update(
         "PlanFeaturesItem": PlanFeaturesItem,
         "PlanFeaturesItemOverage": PlanFeaturesItemOverage,
         "PlanFeaturesItemRegionalPricesItem": PlanFeaturesItemRegionalPricesItem,
+        "PlanGrant": PlanGrant,
+        "PlanGrantEventsItem": PlanGrantEventsItem,
         "PlanGroup": PlanGroup,
         "PlanGroupDetail": PlanGroupDetail,
         "PlanGroupDetailPlansItem": PlanGroupDetailPlansItem,
@@ -2905,11 +3075,16 @@ _DATACLASS_TYPES.update(
         "SubscriptionCredits": SubscriptionCredits,
         "SubscriptionCurrentPeriod": SubscriptionCurrentPeriod,
         "SubscriptionFeaturesItemVariant1": SubscriptionFeaturesItemVariant1,
+        "SubscriptionFeaturesItemVariant1BaseAccess": SubscriptionFeaturesItemVariant1BaseAccess,
         "SubscriptionFeaturesItemVariant2": SubscriptionFeaturesItemVariant2,
+        "SubscriptionFeaturesItemVariant2BaseAccess": SubscriptionFeaturesItemVariant2BaseAccess,
         "SubscriptionFeaturesItemVariant2Usage": SubscriptionFeaturesItemVariant2Usage,
         "SubscriptionFeaturesItemVariant3": SubscriptionFeaturesItemVariant3,
+        "SubscriptionFeaturesItemVariant3BaseAccess": SubscriptionFeaturesItemVariant3BaseAccess,
         "SubscriptionFeaturesItemVariant3Usage": SubscriptionFeaturesItemVariant3Usage,
         "SubscriptionFeaturesItemVariant4": SubscriptionFeaturesItemVariant4,
+        "SubscriptionFeaturesItemVariant4BaseAccess": SubscriptionFeaturesItemVariant4BaseAccess,
+        "SubscriptionFeaturesItemVariant4Usage": SubscriptionFeaturesItemVariant4Usage,
         "SubscriptionOfferApplication": SubscriptionOfferApplication,
         "SubscriptionOfferApplicationAppliesToVariant1": SubscriptionOfferApplicationAppliesToVariant1,
         "SubscriptionOfferApplicationAppliesToVariant2": SubscriptionOfferApplicationAppliesToVariant2,
@@ -2919,6 +3094,8 @@ _DATACLASS_TYPES.update(
         "SubscriptionOfferApplicationPhaseVariant3": SubscriptionOfferApplicationPhaseVariant3,
         "SubscriptionOfferApplicationPhaseVariant4": SubscriptionOfferApplicationPhaseVariant4,
         "SubscriptionPlan": SubscriptionPlan,
+        "SubscriptionPlanGrant": SubscriptionPlanGrant,
+        "SubscriptionPlanGrantPlan": SubscriptionPlanGrantPlan,
         "SubscriptionScheduledPlanChange": SubscriptionScheduledPlanChange,
         "SubscriptionsListResult": SubscriptionsListResult,
         "SubscriptionSummary": SubscriptionSummary,
@@ -2927,7 +3104,10 @@ _DATACLASS_TYPES.update(
         "SubscriptionSummaryPlan": SubscriptionSummaryPlan,
         "SubscriptionSummaryScheduledPlanChange": SubscriptionSummaryScheduledPlanChange,
         "TestClock": TestClock,
-        "TestClockBilling": TestClockBilling,
+        "TestClockLatestRun": TestClockLatestRun,
+        "TestClockLatestRunItemsItem": TestClockLatestRunItemsItem,
+        "TestClockRun": TestClockRun,
+        "TestClockRunItemsItem": TestClockRunItemsItem,
         "TrackUsageParamsPropertiesItem": TrackUsageParamsPropertiesItem,
         "Transaction": Transaction,
         "TransactionListItem": TransactionListItem,
@@ -2958,6 +3138,7 @@ _DATACLASS_TYPES.update(
         "WebhookBankRef": WebhookBankRef,
         "WebhookCardInfo": WebhookCardInfo,
         "WebhookCreditsBalance": WebhookCreditsBalance,
+        "WebhookPlanGrantTimelineEvent": WebhookPlanGrantTimelineEvent,
         "WebhookPlanRef": WebhookPlanRef,
         "WebhookSeatSummary": WebhookSeatSummary,
         "WebhooksListResult": WebhooksListResult,
@@ -3099,11 +3280,6 @@ _UNION_TYPES.update(
                 "seats": SubscriptionFeaturesItemVariant3,
                 "quota": SubscriptionFeaturesItemVariant4,
             },
-            [],
-        ),
-        "PayoutVerification": (
-            "outcome",
-            {"existing": PayoutVerificationVariant1, "created": PayoutVerificationVariant2},
             [],
         ),
         "OfferPhasesItem": (

@@ -9,7 +9,7 @@ from httpx import Response
 from commet import Commet
 from commet.async_client import AsyncCommet
 from commet.types import TestClock as TestClockModel
-from commet.types import TestClockBilling as TestClockBillingModel
+from commet.types import TestClockRun
 
 
 @pytest.fixture
@@ -31,7 +31,9 @@ class TestGet:
                         "simulatedTime": None,
                         "isActive": False,
                         "now": "2026-06-01T00:00:00Z",
+                        "latestRun": None,
                         "object": "test_clock",
+                        "livemode": False,
                     },
                 },
             )
@@ -53,9 +55,17 @@ class TestAdvance:
                 json={
                     "success": True,
                     "data": {
-                        "simulatedTime": "2026-06-15T00:00:00Z",
-                        "isActive": True,
-                        "now": "2026-06-15T00:00:00Z",
+                        "id": "tcr_1",
+                        "status": "pending",
+                        "startedAtTime": "2026-06-01T00:00:00Z",
+                        "targetTime": "2026-06-15T00:00:00Z",
+                        "estimatedDeadlineCount": 0,
+                        "completedDeadlineCount": 0,
+                        "failedDeadlineCount": 0,
+                        "error": None,
+                        "items": [],
+                        "object": "test_clock_run",
+                        "livemode": False,
                     },
                 },
             )
@@ -63,8 +73,8 @@ class TestAdvance:
         with Commet(api_key="ck_test_123") as client:
             result = client.test_clock.advance(advance_days=14)
 
-        assert isinstance(result, TestClockModel)
-        assert result.is_active is True
+        assert isinstance(result, TestClockRun)
+        assert result.status == "pending"
 
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"advanceDays": 14}
@@ -77,9 +87,17 @@ class TestAdvance:
                 json={
                     "success": True,
                     "data": {
-                        "simulatedTime": "2027-01-01T00:00:00Z",
-                        "isActive": True,
-                        "now": "2027-01-01T00:00:00Z",
+                        "id": "tcr_2",
+                        "status": "pending",
+                        "startedAtTime": "2026-06-01T00:00:00Z",
+                        "targetTime": "2027-01-01T00:00:00Z",
+                        "estimatedDeadlineCount": 0,
+                        "completedDeadlineCount": 0,
+                        "failedDeadlineCount": 0,
+                        "error": None,
+                        "items": [],
+                        "object": "test_clock_run",
+                        "livemode": False,
                     },
                 },
             )
@@ -99,22 +117,14 @@ class TestProcessBilling:
                 200,
                 json={
                     "success": True,
-                    "data": {
-                        "customersFound": 3,
-                        "enqueued": 3,
-                        "failed": 0,
-                        "object": "test_clock",
-                    },
+                    "data": None,
                 },
             )
         )
         with Commet(api_key="ck_test_123") as client:
             result = client.test_clock.process_billing()
 
-        assert isinstance(result, TestClockBillingModel)
-        assert result.customers_found == 3
-        assert result.enqueued == 3
-        assert result.failed == 0
+        assert result is None
 
         # A no-param POST must not serialize an empty/literal-null JSON body.
         assert route.calls.last.request.content in (b"", b"null")
@@ -129,9 +139,17 @@ class TestAsyncTestClock:
                 json={
                     "success": True,
                     "data": {
-                        "simulatedTime": "2026-07-01T00:00:00Z",
-                        "isActive": True,
-                        "now": "2026-07-01T00:00:00Z",
+                        "id": "tcr_3",
+                        "status": "pending",
+                        "startedAtTime": "2026-06-01T00:00:00Z",
+                        "targetTime": "2026-07-01T00:00:00Z",
+                        "estimatedDeadlineCount": 0,
+                        "completedDeadlineCount": 0,
+                        "failedDeadlineCount": 0,
+                        "error": None,
+                        "items": [],
+                        "object": "test_clock_run",
+                        "livemode": False,
                     },
                 },
             )
@@ -139,24 +157,22 @@ class TestAsyncTestClock:
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.test_clock.advance(advance_days=30)
 
-        assert isinstance(result, TestClockModel)
-        assert result.is_active is True
+        assert isinstance(result, TestClockRun)
+        assert result.status == "pending"
         sent = json.loads(route.calls.last.request.content)
         assert sent == {"advanceDays": 30}
 
-    async def test_process_billing_parses_counts(self, mock_api: respx.MockRouter) -> None:
+    async def test_process_billing_returns_no_result(self, mock_api: respx.MockRouter) -> None:
         mock_api.post("/test-clock/process-billing").mock(
             return_value=Response(
                 200,
                 json={
                     "success": True,
-                    "data": {"customersFound": 1, "enqueued": 0, "failed": 1},
+                    "data": None,
                 },
             )
         )
         async with AsyncCommet(api_key="ck_test_123") as client:
             result = await client.test_clock.process_billing()
 
-        assert isinstance(result, TestClockBillingModel)
-        assert result.customers_found == 1
-        assert result.failed == 1
+        assert result is None
