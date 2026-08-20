@@ -237,16 +237,19 @@ class AsyncCommetHTTPClient:
                 f"Invalid JSON response: {resp.status_code}",
                 status_code=resp.status_code,
                 code="INVALID_JSON",
+                request_id=resp.headers.get("x-request-id"),
             )
 
         if resp.is_error:
             logger.debug("Error response: %s", data)
-            handle_error(resp.status_code, data)
+            handle_error(resp.status_code, data, resp.headers.get("x-request-id"))
 
         if self._telemetry_enabled:
             duration_ms = int((time.monotonic() - request_start) * 1000)
-            request_id = resp.headers.get("x-request-id", f"req_{int(time.time())}")
-            self._last_request_metrics = {"request_id": request_id, "duration_ms": duration_ms}
+            request_id = resp.headers.get("x-request-id")
+            self._last_request_metrics = (
+                {"request_id": request_id, "duration_ms": duration_ms} if request_id else None
+            )
 
         converted = convert_keys(data, to_snake)
         is_envelope = (

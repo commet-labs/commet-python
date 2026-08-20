@@ -71,9 +71,13 @@ def query_value(value: Any) -> Any:
     return value
 
 
-def handle_error(status_code: int, data: Any) -> None:
+def handle_error(status_code: int, data: Any, request_id: str | None = None) -> None:
     if not isinstance(data, dict):
-        raise CommetAPIError(f"Request failed with status {status_code}", status_code=status_code)
+        raise CommetAPIError(
+            f"Request failed with status {status_code}",
+            status_code=status_code,
+            request_id=request_id,
+        )
 
     error_obj = data.get("error")
     if isinstance(error_obj, dict):
@@ -93,7 +97,16 @@ def handle_error(status_code: int, data: Any) -> None:
         for detail in error_details:
             field = detail.get("field", "unknown")
             errors.setdefault(field, []).append(detail.get("message", ""))
-        raise CommetValidationError(error_message, validation_errors=errors)
+        raise CommetValidationError(
+            error_message,
+            validation_errors=errors,
+            status_code=status_code,
+            details=error_details,
+            type=error_type,
+            param=error_param,
+            doc_url=error_doc_url,
+            request_id=request_id,
+        )
 
     raise CommetAPIError(
         error_message,
@@ -103,6 +116,7 @@ def handle_error(status_code: int, data: Any) -> None:
         type=error_type,
         param=error_param,
         doc_url=error_doc_url,
+        request_id=request_id,
     )
 
 

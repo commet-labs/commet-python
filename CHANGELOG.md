@@ -6,6 +6,8 @@
 - Add pending-checkout Offer application, card-promotion selection, exact payment-connection routing, and provider details on payment recovery webhooks.
 - Expose durable test-clock runs and latest-run state.
 - Align deprecated payout verification and manual test-clock billing methods with their current no-payload contracts.
+- Install version-matched API, webhook, error, and Platform documentation with the package.
+- Preserve exact server request IDs on API errors and never fabricate correlation IDs locally.
 
 ## 9.0.0
 
