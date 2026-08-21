@@ -13,6 +13,7 @@ from .types import (
     WebhookBankRef,
     WebhookCardInfo,
     WebhookCreditsBalance,
+    WebhookPlanGrantTimelineEvent,
     WebhookPlanRef,
     WebhookSeatSummary,
     _from_dict,
@@ -57,6 +58,10 @@ class WebhookEventType:
     CUSTOMER_CREATED = "customer.created"
     CUSTOMER_UPDATED = "customer.updated"
     CUSTOMER_STATE_CHANGED = "customer.state_changed"
+    PLAN_GRANT_CREATED = "plan_grant.created"
+    PLAN_GRANT_UPDATED = "plan_grant.updated"
+    PLAN_GRANT_EXPIRED = "plan_grant.expired"
+    PLAN_GRANT_REVOKED = "plan_grant.revoked"
     CREDITS_GRANTED = "credits.granted"
     CREDITS_PURCHASED = "credits.purchased"
     CREDITS_LOW = "credits.low"
@@ -320,6 +325,7 @@ class PaymentFailedData:
     invoiceNumber: str = ""
     customerId: str = ""
     subscriptionId: str | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     failureCode: str = ""
     failureMessage: str = ""
     recoveryUrl: str | None = None
@@ -334,6 +340,7 @@ class PaymentRecoveredData:
     invoiceTotal: float = 0.0
     customerId: str = ""
     subscriptionId: str | None = None
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
 
 
 @dataclass
@@ -344,6 +351,7 @@ class PaymentRetryFailedData:
     invoiceNumber: str = ""
     customerId: str = ""
     subscriptionId: str = ""
+    provider: Literal["stripe", "commet", "dlocal"] | None = None
     reason: str = ""
 
 
@@ -579,6 +587,98 @@ class CustomerStateChangedData:
     seats: list[WebhookSeatSummary] = field(default_factory=list)
     credits: WebhookCreditsBalance | None = None
     balance: WebhookBalance | None = None
+
+
+@dataclass
+class PlanGrantCreatedData:
+    """Fired after a plan grant is durably created. The payload is the grant snapshot at creation."""
+
+    id: str = ""
+    customerId: str = ""
+    subscriptionId: str = ""
+    basePlanId: str = ""
+    targetPlanId: str = ""
+    targetPlanReleaseId: str = ""
+    status: Literal["active", "expired", "revoked"] | None = None
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
+    durationCycles: int | None = None
+    startsAt: str = ""
+    expiresAt: str | None = None
+    reason: str = ""
+    source: Literal["dashboard", "api", "system"] | None = None
+    revokedAt: str | None = None
+    createdAt: str = ""
+    updatedAt: str = ""
+    events: list[WebhookPlanGrantTimelineEvent] = field(default_factory=list)
+
+
+@dataclass
+class PlanGrantUpdatedData:
+    """Fired after a plan grant duration or deadline is durably changed. The payload is the grant snapshot at that update."""
+
+    id: str = ""
+    customerId: str = ""
+    subscriptionId: str = ""
+    basePlanId: str = ""
+    targetPlanId: str = ""
+    targetPlanReleaseId: str = ""
+    status: Literal["active", "expired", "revoked"] | None = None
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
+    durationCycles: int | None = None
+    startsAt: str = ""
+    expiresAt: str | None = None
+    reason: str = ""
+    source: Literal["dashboard", "api", "system"] | None = None
+    revokedAt: str | None = None
+    createdAt: str = ""
+    updatedAt: str = ""
+    events: list[WebhookPlanGrantTimelineEvent] = field(default_factory=list)
+
+
+@dataclass
+class PlanGrantExpiredData:
+    """Fired after a plan grant is durably expired, whether discovered automatically or while replacing an expired grant."""
+
+    id: str = ""
+    customerId: str = ""
+    subscriptionId: str = ""
+    basePlanId: str = ""
+    targetPlanId: str = ""
+    targetPlanReleaseId: str = ""
+    status: Literal["active", "expired", "revoked"] | None = None
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
+    durationCycles: int | None = None
+    startsAt: str = ""
+    expiresAt: str | None = None
+    reason: str = ""
+    source: Literal["dashboard", "api", "system"] | None = None
+    revokedAt: str | None = None
+    createdAt: str = ""
+    updatedAt: str = ""
+    events: list[WebhookPlanGrantTimelineEvent] = field(default_factory=list)
+
+
+@dataclass
+class PlanGrantRevokedData:
+    """Fired after an active plan grant is durably revoked. The payload is the grant snapshot at revocation."""
+
+    id: str = ""
+    customerId: str = ""
+    subscriptionId: str = ""
+    basePlanId: str = ""
+    targetPlanId: str = ""
+    targetPlanReleaseId: str = ""
+    status: Literal["active", "expired", "revoked"] | None = None
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
+    durationCycles: int | None = None
+    startsAt: str = ""
+    expiresAt: str | None = None
+    reason: str = ""
+    source: Literal["dashboard", "api", "system"] | None = None
+    revokedAt: str | None = None
+    createdAt: str = ""
+    updatedAt: str = ""
+    events: list[WebhookPlanGrantTimelineEvent] = field(default_factory=list)
 
 
 @dataclass
@@ -918,6 +1018,18 @@ class WebhookEvent:
     def as_customer_state_changed(self) -> CustomerStateChangedData:
         return _from_dict(CustomerStateChangedData, self.data)
 
+    def as_plan_grant_created(self) -> PlanGrantCreatedData:
+        return _from_dict(PlanGrantCreatedData, self.data)
+
+    def as_plan_grant_updated(self) -> PlanGrantUpdatedData:
+        return _from_dict(PlanGrantUpdatedData, self.data)
+
+    def as_plan_grant_expired(self) -> PlanGrantExpiredData:
+        return _from_dict(PlanGrantExpiredData, self.data)
+
+    def as_plan_grant_revoked(self) -> PlanGrantRevokedData:
+        return _from_dict(PlanGrantRevokedData, self.data)
+
     def as_credits_granted(self) -> CreditsGrantedData:
         return _from_dict(CreditsGrantedData, self.data)
 
@@ -1015,6 +1127,10 @@ _DATACLASS_TYPES.update(
         "CustomerCreatedData": CustomerCreatedData,
         "CustomerUpdatedData": CustomerUpdatedData,
         "CustomerStateChangedData": CustomerStateChangedData,
+        "PlanGrantCreatedData": PlanGrantCreatedData,
+        "PlanGrantUpdatedData": PlanGrantUpdatedData,
+        "PlanGrantExpiredData": PlanGrantExpiredData,
+        "PlanGrantRevokedData": PlanGrantRevokedData,
         "CreditsGrantedData": CreditsGrantedData,
         "CreditsPurchasedData": CreditsPurchasedData,
         "CreditsLowData": CreditsLowData,

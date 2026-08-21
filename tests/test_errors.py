@@ -56,10 +56,21 @@ class TestAPIErrorParsing:
             }
         }
         with pytest.raises(CommetAPIError) as exc_info:
-            handle_error(400, data)
+            handle_error(400, data, "req_server_123")
         assert exc_info.value.param == "email"
         assert exc_info.value.doc_url == "https://docs.commet.co/errors/invalid_param"
         assert exc_info.value.type == "invalid_request_error"
+        assert exc_info.value.request_id == "req_server_123"
+        assert exc_info.value.to_dict() == {
+            "message": "Invalid parameter",
+            "code": "invalid_param",
+            "status_code": 400,
+            "details": None,
+            "request_id": "req_server_123",
+            "type": "invalid_request_error",
+            "param": "email",
+            "doc_url": "https://docs.commet.co/errors/invalid_param",
+        }
 
     def test_api_error_falls_back_to_top_level_keys(self) -> None:
         data = {

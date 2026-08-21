@@ -125,6 +125,25 @@ class SubscriptionsResource:
             CreditGrant,
         )
 
+    def apply_offer(
+        self,
+        id: str,
+        *,
+        offer_id: str,
+        expires_at: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> Subscription:
+        """Apply or replace a direct Offer on a subscription's pending payment checkout. The existing checkout URL remains unchanged. Offers whose first phase is a free trial cannot be applied after checkout creation."""
+        body = build_body(offer_id=offer_id, expires_at=expires_at)
+        return _parse_data(
+            self._http.put(f"/subscriptions/{id}/offer", body, idempotency_key=idempotency_key),
+            Subscription,
+        )
+
+    def remove_offer(self, id: str) -> Subscription:
+        """Remove the quoted direct Offer from a subscription's pending payment checkout. The existing checkout URL remains unchanged and returns to its undiscounted price."""
+        return _parse_data(self._http.delete(f"/subscriptions/{id}/offer"), Subscription)
+
     def update_payment_method(
         self, id: str, *, success_url: str | None = None, idempotency_key: str | None = None
     ) -> PaymentMethodUpdateCheckout:
@@ -147,7 +166,7 @@ class SubscriptionsResource:
         offer_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> PreviewChange:
-        """Preview proration details for an immediate plan change without applying it. Interval direction takes precedence: a longer interval is immediate and a shorter interval is scheduled. When the interval is unchanged, a higher-sort-order plan is immediate and a lower-sort-order plan is scheduled. A paid-to-free change is always scheduled. Returns credit, charge, and net amount. The target plan must belong to the same plan group as the current plan, otherwise a 400 with code `plans_not_in_same_group` is returned. A change between two free plans has nothing to prorate and returns a zero-amount estimate. Scheduled changes return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint. Pass offerId to quote the destination plan with an Offer."""
+        """Preview proration details for an immediate plan change without applying it. Free-to-paid changes are never scheduled and the change-plan endpoint always returns hosted checkout for them. For paid plans, interval direction takes precedence: a longer interval is immediate and a shorter interval is scheduled. When the interval is unchanged, a higher-sort-order plan is immediate and a lower-sort-order plan is scheduled. A paid-to-free change is always scheduled. Returns credit, charge, and net amount. The target plan must belong to the same plan group as the current plan, otherwise a 400 with code `plans_not_in_same_group` is returned. A change between two free plans has nothing to prorate and returns a zero-amount estimate. Scheduled changes return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint. Pass offerId to quote the destination plan with an Offer."""
         body = build_body(plan_id=plan_id, billing_interval=billing_interval, offer_id=offer_id)
         return _parse_data(
             self._http.post(
@@ -206,7 +225,7 @@ class SubscriptionsResource:
         | None = None,
         price_id: str | None = None,
         initial_seats: dict[str, int] | None = None,
-        provider: Literal["stripe", "commet", "dlocal"] | None = None,
+        provider: Literal["stripe"] | Literal["commet"] | Literal["dlocal"] | str | None = None,
         name: str | None = None,
         start_date: str | None = None,
         success_url: str | None = None,
@@ -216,9 +235,10 @@ class SubscriptionsResource:
         skip_trial: bool | None = None,
         plan_id: str | None = None,
         plan_code: str | None = None,
+        card_promotion_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> CreatedSubscription:
-        """Create a subscription for a customer. Commet selects the default price when priceId is omitted and resolves its market from the customer's billing country. Without an offer override, Commet applies the price's automatic introductory Offer. Pass offerId to apply any active compatible Offer directly; the Offer does not need a prior plan-price association."""
+        """Create a subscription for a customer. Commet selects the default price when priceId is omitted and resolves its market from the customer's billing country. Without an offer override, Commet applies the price's automatic introductory Offer. Pass offerId to apply an active compatible Offer directly, or cardPromotionId to preselect a card-eligible Promotional Offer for the initial checkout when card promotions are enabled for the organization. For the initial checkout, provider accepts either a processor name or an exact payment connection ID."""
         body = build_body(
             customer_id=customer_id,
             billing_interval=billing_interval,
@@ -234,6 +254,7 @@ class SubscriptionsResource:
             skip_trial=skip_trial,
             plan_id=plan_id,
             plan_code=plan_code,
+            card_promotion_id=card_promotion_id,
         )
         return _parse_data(
             self._http.post("/subscriptions", body, idempotency_key=idempotency_key),

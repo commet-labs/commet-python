@@ -1,5 +1,13 @@
 # Changelog
 
+## 9.2.0
+
+- Add customer credits and Plan Grant management, including effective versus base feature access and Plan Grant lifecycle webhooks.
+- Add pending-checkout Offer application, card-promotion selection, exact payment-connection routing, and provider details on payment recovery webhooks.
+- Expose durable test-clock runs and latest-run state.
+- Align deprecated payout verification and manual test-clock billing methods with their current no-payload contracts.
+- Preserve exact server request IDs on API errors and never fabricate correlation IDs locally.
+
 ## 9.0.0
 
 - Pin requests to API `2026-07-31`.
