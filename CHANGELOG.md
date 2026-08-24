@@ -2,6 +2,7 @@
 
 ## 9.3.0
 
+- Align currency inputs and active-subscription Offer behavior with the current API contract.
 - Install the complete version-matched Commet documentation with the SDK package.
 
 ## 9.2.0

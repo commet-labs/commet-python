@@ -61,6 +61,7 @@ class CustomersResource:
             "mxn",
             "cad",
             "eur",
+            "gbp",
             "jpy",
             "cny",
             "krw",

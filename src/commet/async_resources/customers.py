@@ -63,6 +63,7 @@ class AsyncCustomersResource:
             "mxn",
             "cad",
             "eur",
+            "gbp",
             "jpy",
             "cny",
             "krw",
