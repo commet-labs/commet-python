@@ -1,5 +1,9 @@
 # Changelog
 
+## 9.3.0
+
+- Install the complete version-matched Commet documentation with the SDK package.
+
 ## 9.2.0
 
 - Add customer credits and Plan Grant management, including effective versus base feature access and Plan Grant lifecycle webhooks.
