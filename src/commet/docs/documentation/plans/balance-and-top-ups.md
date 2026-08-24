@@ -47,15 +47,15 @@ balance_adjustment = commet.subscriptions.adjust_balance(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ctx := context.Background()
 
 balanceAdjustment, err := client.Subscriptions.AdjustBalance(ctx, "sub_xxx", &commet.AdjustBalanceParams{
-    Amount: 5000,
+	Amount: 5000,
 })
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ```
 
@@ -121,15 +121,15 @@ balance_topup = commet.subscriptions.topup_balance(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ctx := context.Background()
 
 balanceTopup, err := client.Subscriptions.TopupBalance(ctx, "sub_xxx", &commet.TopupBalanceParams{
-    Amount: 5000,
+	Amount: 5000,
 })
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ```
 

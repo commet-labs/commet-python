@@ -45,19 +45,19 @@ usage_event = commet.usage.track(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ctx := context.Background()
 
 usageEvent, err := client.Usage.Track(ctx, &commet.TrackUsageParams{
-    FeatureCode: "api_calls",
-    CustomerID: "user_123",
-    Model: func(value string) *string { return &value }("example"),
-    InputTokens: func(value int) *int { return &value }(1),
-    OutputTokens: func(value int) *int { return &value }(1),
+	FeatureCode: "api_calls",
+	CustomerID: "user_123",
+	Model: func(value string) *string { return &value }("example"),
+	InputTokens: func(value int) *int { return &value }(1),
+	OutputTokens: func(value int) *int { return &value }(1),
 })
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ```
 
@@ -158,17 +158,17 @@ usage_adjustment = commet.usage.set(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ctx := context.Background()
 
 usageAdjustment, err := client.Usage.Set(ctx, &commet.SetUsageParams{
-    CustomerID: "user_123",
-    FeatureCode: "api_calls",
-    Value: 1,
+	CustomerID: "user_123",
+	FeatureCode: "api_calls",
+	Value: 1,
 })
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ```
 
@@ -236,16 +236,16 @@ usage_check = commet.usage.check(
 ```go
 client, err := commet.New("ck_xxx")
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ctx := context.Background()
 
 usageCheck, err := client.Usage.Check(ctx, &commet.CheckUsageAvailabilityParams{
-    CustomerID: "user_123",
-    FeatureCode: "api_calls",
+	CustomerID: "user_123",
+	FeatureCode: "api_calls",
 })
 if err != nil {
-    log.Fatal(err)
+	log.Fatal(err)
 }
 ```
 
