@@ -1,6 +1,6 @@
 [project]
 name = "commet-sdk"
-version = "9.2.0"
+version = "9.3.0"
 description = "Commet SDK for Python - Billing and usage tracking for SaaS"
 readme = "README.md"
 license = "MIT"
@@ -40,6 +40,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+commet = ["docs/*.md", "docs/*.json", "docs/**/*.md", "docs/**/*.json"]
 
 [tool.ruff]
 line-length = 100

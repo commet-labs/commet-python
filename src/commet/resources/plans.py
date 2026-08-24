@@ -212,6 +212,7 @@ class PlansResource:
             "mxn",
             "cad",
             "eur",
+            "gbp",
             "jpy",
             "cny",
             "krw",
