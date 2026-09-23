@@ -55,7 +55,7 @@ def to_camel(name: str) -> str:
 
 def convert_keys(obj: Any, fn: Callable[[str], str]) -> Any:
     if isinstance(obj, dict):
-        return {fn(k): convert_keys(v, fn) for k, v in obj.items()}
+        return {fn(k): v if k == "permissions" else convert_keys(v, fn) for k, v in obj.items()}
     if isinstance(obj, list):
         return [convert_keys(i, fn) for i in obj]
     return obj
