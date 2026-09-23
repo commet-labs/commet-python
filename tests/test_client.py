@@ -10,6 +10,8 @@ class TestClientInitialization:
     def test_valid_key(self) -> None:
         with Commet(api_key="ck_test_123") as client:
             assert client is not None
+        with Commet(api_key="rk_sandbox_test_123") as client:
+            assert client is not None
 
     def test_rejects_invalid_api_keys(self) -> None:
         with pytest.raises(ValueError, match="API key is required"):
@@ -20,3 +22,5 @@ class TestClientInitialization:
     def test_async_client_initializes(self) -> None:
         client = AsyncCommet(api_key="ck_test_123")
         assert client is not None
+        restricted_client = AsyncCommet(api_key="rk_live_test_123")
+        assert restricted_client is not None

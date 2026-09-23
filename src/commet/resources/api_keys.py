@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import builtins
+from typing import Literal
+
 from .._http import CommetHTTPClient
 from .._shared import build_body
 from ..types import (
@@ -26,10 +29,15 @@ class ApiKeysResource:
         return _parse_data(self._http.get("/api-keys", query), ApiKeysListResult)
 
     def create(
-        self, *, name: str, expires_in_days: int | None = None, idempotency_key: str | None = None
+        self,
+        *,
+        name: str,
+        expires_in_days: int | None = None,
+        idempotency_key: str | None = None,
+        permissions: dict[str, builtins.list[Literal["read", "write"]]] | None = None,
     ) -> CreatedApiKey:
         """Create a new API key. The full key is only returned once in the response."""
-        body = build_body(name=name, expires_in_days=expires_in_days)
+        body = build_body(name=name, expires_in_days=expires_in_days, permissions=permissions)
         return _parse_data(
             self._http.post("/api-keys", body, idempotency_key=idempotency_key), CreatedApiKey
         )
