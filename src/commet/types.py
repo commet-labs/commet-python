@@ -188,6 +188,14 @@ class PaymentMethod(str, Enum):
     MERCADO_PAGO = "mercado_pago"
 
 
+class SubPaymentMethod(str, Enum):
+    CREDIT_CARD = "credit_card"
+    DEBIT_CARD = "debit_card"
+    PREPAID_CARD = "prepaid_card"
+    BANK_TRANSFER = "bank_transfer"
+    ACCOUNT_MONEY = "account_money"
+
+
 class PaymentProvider(str, Enum):
     STRIPE = "stripe"
     COMMET = "commet"
@@ -2398,6 +2406,7 @@ class Transaction:
     currency: str = ""
     provider: PaymentProvider | None = None
     payment_method: PaymentMethod | None = None
+    sub_payment_method: SubPaymentMethod | None = None
     status: TransactionStatus | None = None
     customer_email: str | None = None
     customer_name: str | None = None
@@ -2420,6 +2429,7 @@ class TransactionListItem:
     currency: str = ""
     provider: PaymentProvider | None = None
     payment_method: PaymentMethod | None = None
+    sub_payment_method: SubPaymentMethod | None = None
     status: TransactionStatus | None = None
     customer_email: str | None = None
     customer_name: str | None = None
@@ -2894,6 +2904,7 @@ _ENUM_TYPES.update(
         "FeatureType": FeatureType,
         "InvoiceType": InvoiceType,
         "PaymentMethod": PaymentMethod,
+        "SubPaymentMethod": SubPaymentMethod,
         "PaymentProvider": PaymentProvider,
         "SubscriptionStatus": SubscriptionStatus,
         "Timezone": Timezone,

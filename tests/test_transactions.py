@@ -9,6 +9,7 @@ from commet.async_client import AsyncCommet
 from commet.types import (
     PaymentMethod,
     Refund,
+    SubPaymentMethod,
     TransactionListItem,
     TransactionRetry,
     TransactionStatus,
@@ -34,6 +35,7 @@ def test_list_uses_explicit_list_envelope(mock_api: respx.MockRouter) -> None:
                         "currency": "usd",
                         "status": "succeeded",
                         "paymentMethod": "mercado_pago",
+                        "subPaymentMethod": "account_money",
                     }
                 ],
                 "hasMore": True,
@@ -52,6 +54,7 @@ def test_list_uses_explicit_list_envelope(mock_api: respx.MockRouter) -> None:
     assert isinstance(result.data[0], TransactionListItem)
     assert result.data[0].status is TransactionStatus.SUCCEEDED
     assert result.data[0].payment_method is PaymentMethod.MERCADO_PAGO
+    assert result.data[0].sub_payment_method is SubPaymentMethod.ACCOUNT_MONEY
     assert route.calls.last.request.url.params["status"] == "succeeded"
 
 
@@ -65,6 +68,7 @@ def test_get_returns_direct_transaction(mock_api: respx.MockRouter) -> None:
                 "currency": "usd",
                 "status": "disputed",
                 "paymentMethod": "oxxo",
+                "subPaymentMethod": None,
             },
         )
     )
@@ -73,6 +77,7 @@ def test_get_returns_direct_transaction(mock_api: respx.MockRouter) -> None:
 
     assert transaction.status is TransactionStatus.DISPUTED
     assert transaction.payment_method is PaymentMethod.OXXO
+    assert transaction.sub_payment_method is None
 
 
 def test_refund_returns_refund_resource(mock_api: respx.MockRouter) -> None:
