@@ -182,6 +182,12 @@ class InvoiceType(str, Enum):
     REACTIVATION = "reactivation"
 
 
+class PaymentMethod(str, Enum):
+    CARD = "card"
+    OXXO = "oxxo"
+    MERCADO_PAGO = "mercado_pago"
+
+
 class PaymentProvider(str, Enum):
     STRIPE = "stripe"
     COMMET = "commet"
@@ -2391,6 +2397,7 @@ class Transaction:
     presentment_amount: int | None = None
     currency: str = ""
     provider: PaymentProvider | None = None
+    payment_method: PaymentMethod | None = None
     status: TransactionStatus | None = None
     customer_email: str | None = None
     customer_name: str | None = None
@@ -2412,6 +2419,7 @@ class TransactionListItem:
     presentment_amount: int | None = None
     currency: str = ""
     provider: PaymentProvider | None = None
+    payment_method: PaymentMethod | None = None
     status: TransactionStatus | None = None
     customer_email: str | None = None
     customer_name: str | None = None
@@ -2885,6 +2893,7 @@ _ENUM_TYPES.update(
         "ConsumptionModel": ConsumptionModel,
         "FeatureType": FeatureType,
         "InvoiceType": InvoiceType,
+        "PaymentMethod": PaymentMethod,
         "PaymentProvider": PaymentProvider,
         "SubscriptionStatus": SubscriptionStatus,
         "Timezone": Timezone,
