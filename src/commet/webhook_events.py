@@ -9,6 +9,7 @@ from typing import Any, Literal
 from .types import (
     _DATACLASS_TYPES,
     PaymentMethod,
+    SubPaymentMethod,
     WebhookAddonRef,
     WebhookBalance,
     WebhookBankRef,
@@ -312,6 +313,7 @@ class PaymentReceivedData:
     paymentTransactionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
     paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
     grossAmount: float | None = None
     currency: str | None = None
     orgNetAmount: float | None = None
@@ -329,6 +331,7 @@ class PaymentFailedData:
     subscriptionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
     paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
     failureCode: str = ""
     failureMessage: str = ""
     recoveryUrl: str | None = None
@@ -345,6 +348,7 @@ class PaymentRecoveredData:
     subscriptionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
     paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
 
 
 @dataclass
@@ -433,6 +437,7 @@ class PaymentLinkCompletedData:
     invoiceNumber: str = ""
     paymentTransactionId: str | None = None
     paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
 
 
 @dataclass
@@ -448,6 +453,7 @@ class PaymentLinkFailedData:
     failureCode: str = ""
     failureMessage: str = ""
     paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
 
 
 @dataclass

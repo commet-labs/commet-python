@@ -213,6 +213,7 @@ Fired every time a payment settles successfully — the first payment and every 
 - `paymentTransactionId` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
 - `paymentMethod` (`PaymentMethod | None`) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
+- `subPaymentMethod` (`SubPaymentMethod | None`) — The source of funds for this charge, when reported by the provider. Null when unavailable or unknown.
 - `grossAmount` (`float`)
 - `currency` (`str`)
 - `orgNetAmount` (`float`)
@@ -229,6 +230,7 @@ Fired when a recurring charge fails. This event is for recurring charge failures
 - `subscriptionId` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
 - `paymentMethod` (`PaymentMethod | None`) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
+- `subPaymentMethod` (`SubPaymentMethod | None`) — The source of funds for this charge, when reported by the provider. Null when unavailable or unknown.
 - `failureCode` (`str`)
 - `failureMessage` (`str`)
 - `recoveryUrl` (`str`)
@@ -244,6 +246,7 @@ Fired when an outstanding invoice that previously failed is successfully paid �
 - `subscriptionId` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
 - `paymentMethod` (`PaymentMethod | None`) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
+- `subPaymentMethod` (`SubPaymentMethod | None`) — The source of funds for this charge, when reported by the provider. Null when unavailable or unknown.
 
 ## payment.retry_failed
 
@@ -326,6 +329,7 @@ Fired when a payment link is paid. The charge settled and a one-time invoice was
 - `invoiceNumber` (`str`)
 - `paymentTransactionId` (`str`)
 - `paymentMethod` (`PaymentMethod | None`) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
+- `subPaymentMethod` (`SubPaymentMethod | None`) — The source of funds for this charge, when reported by the provider. Null when unavailable or unknown.
 
 ## payment_link.failed
 
@@ -340,6 +344,7 @@ Fired when a payment link charge attempt is declined. The link stays open and ca
 - `failureCode` (`str`)
 - `failureMessage` (`str`)
 - `paymentMethod` (`PaymentMethod | None`) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
+- `subPaymentMethod` (`SubPaymentMethod | None`) — The source of funds for this charge, when reported by the provider. Null when unavailable or unknown.
 
 ## payment_link.canceled
 

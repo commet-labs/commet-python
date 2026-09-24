@@ -5,10 +5,18 @@ import hmac
 import json
 
 from commet.resources.webhooks import Webhooks
+from commet.types import SubPaymentMethod
+from commet.webhook_events import WebhookEvent
 
 
 def _sign(payload: str, secret: str) -> str:
     return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
+
+
+def test_payment_received_parses_sub_payment_method() -> None:
+    event = WebhookEvent(event="payment.received", data={"subPaymentMethod": "debit_card"})
+
+    assert event.as_payment_received().subPaymentMethod is SubPaymentMethod.DEBIT_CARD
 
 
 class TestWebhookVerification:
