@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from .types import (
     _DATACLASS_TYPES,
+    PaymentMethod,
     WebhookAddonRef,
     WebhookBalance,
     WebhookBankRef,
@@ -310,6 +311,7 @@ class PaymentReceivedData:
     subscriptionId: str | None = None
     paymentTransactionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
+    paymentMethod: PaymentMethod | None = None
     grossAmount: float | None = None
     currency: str | None = None
     orgNetAmount: float | None = None
@@ -326,6 +328,7 @@ class PaymentFailedData:
     customerId: str = ""
     subscriptionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
+    paymentMethod: PaymentMethod | None = None
     failureCode: str = ""
     failureMessage: str = ""
     recoveryUrl: str | None = None
@@ -341,6 +344,7 @@ class PaymentRecoveredData:
     customerId: str = ""
     subscriptionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
+    paymentMethod: PaymentMethod | None = None
 
 
 @dataclass
@@ -428,6 +432,7 @@ class PaymentLinkCompletedData:
     invoiceId: str = ""
     invoiceNumber: str = ""
     paymentTransactionId: str | None = None
+    paymentMethod: PaymentMethod | None = None
 
 
 @dataclass
@@ -442,6 +447,7 @@ class PaymentLinkFailedData:
     customerId: str | None = None
     failureCode: str = ""
     failureMessage: str = ""
+    paymentMethod: PaymentMethod | None = None
 
 
 @dataclass
@@ -530,6 +536,7 @@ class PaymentMethodAttachedData:
     subscriptionId: str = ""
     customerId: str = ""
     card: WebhookCardInfo | None = None
+    paymentMethod: PaymentMethod | None = None
 
 
 @dataclass
@@ -538,6 +545,7 @@ class PaymentMethodUpdatedData:
 
     customerId: str = ""
     card: WebhookCardInfo | None = None
+    paymentMethod: PaymentMethod | None = None
 
 
 @dataclass
