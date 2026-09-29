@@ -23,8 +23,8 @@ class AsyncCommet(GeneratedAsyncResources):
         if not api_key:
             raise ValueError("Commet SDK: API key is required")
 
-        if not api_key.startswith("ck_"):
-            raise ValueError("Commet SDK: Invalid API key format. Expected format: ck_xxx...")
+        if not api_key.startswith(("ck_", "rk_")):
+            raise ValueError("Commet SDK: Invalid API key format. Expected prefix ck_ or rk_")
 
         self._http = AsyncCommetHTTPClient(
             api_key, api_version=api_version, timeout=timeout, retries=retries, telemetry=telemetry

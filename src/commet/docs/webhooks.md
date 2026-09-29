@@ -1,6 +1,6 @@
 # Webhooks
 
-Generated from Commet API version `2026-07-31`.
+Generated from Commet API version `2026-08-27`.
 
 ## subscription.created
 
@@ -46,9 +46,70 @@ Fired when a canceled subscription is reactivated and its reactivation charge su
 - `invoiceCurrency` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
 
+## subscription.pause_scheduled
+
+Fired when a period-end pause is scheduled. Access and billing continue until effectiveAt.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `status` (`Literal["active", "trialing"]`)
+- `mode` (`Literal["period_end"]`)
+- `effectiveAt` (`str`)
+- `resumeAt` (`str`)
+
+## subscription.pause_updated
+
+Fired when the finite or indefinite pause duration changes.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `status` (`Literal["active", "trialing", "paused"]`)
+- `effectiveAt` (`str`)
+- `resumeAt` (`str`)
+
+## subscription.pause_revoked
+
+Fired when a scheduled pause is revoked before it becomes effective.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `status` (`Literal["active", "trialing"]`)
+
+## subscription.paused
+
+Fired when a pause becomes effective and access is revoked.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `status` (`Literal["paused"]`)
+- `mode` (`Literal["immediate", "period_end"]`)
+- `effectiveAt` (`str`)
+- `resumeAt` (`str`)
+
+## subscription.resumed
+
+Fired after a paused subscription restores access.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `status` (`Literal["active", "trialing"]`)
+- `mode` (`Literal["immediate", "period_end"]`)
+- `resumedAt` (`str`)
+- `invoiceId` (`str`)
+
+## subscription.resume_failed
+
+Fired when a period-end resume charge fails. The subscription remains paused.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `status` (`Literal["paused"]`)
+- `invoiceId` (`str`)
+- `failedAt` (`str`)
+
 ## subscription.canceled
 
-Fired when a subscription is actually terminated. A scheduled cancellation fires it at the end of the billing period; immediate cancellations, full refunds (cancelReason refund), and exhausted dunning retries (cancelReason dunning_exhausted) fire it right away. The status is now canceled and access should be revoked. This event is NOT fired when cancellation is scheduled — that triggers subscription.updated instead. See the cancellation lifecycle below.
+Fired when a subscription is actually terminated. A scheduled cancellation fires it at the end of the billing period; immediate cancellations and exhausted dunning retries (cancelReason dunning_exhausted) fire it right away. Refunds do not terminate subscriptions. The status is now canceled and access should be revoked. This event is NOT fired when cancellation is scheduled — that triggers subscription.updated instead. See the cancellation lifecycle below.
 
 - `subscriptionId` (`str`)
 - `customerId` (`str`)
@@ -205,6 +266,7 @@ Fired when a checkout link for a subscription's first invoice is ready to share 
 
 Fired every time a payment settles successfully — the first payment and every renewal alike. subscription.activated fires alongside it only on the first one.
 
+- `paymentContext` (`dict[str, Any]`)
 - `invoiceId` (`str`)
 - `invoiceNumber` (`str`)
 - `invoiceTotal` (`float`)
@@ -212,6 +274,8 @@ Fired every time a payment settles successfully — the first payment and every 
 - `subscriptionId` (`str`)
 - `paymentTransactionId` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
+- `paymentMethod` (`PaymentMethod`)
+- `subPaymentMethod` (`SubPaymentMethod`)
 - `grossAmount` (`float`)
 - `currency` (`str`)
 - `orgNetAmount` (`float`)
@@ -220,13 +284,16 @@ Fired every time a payment settles successfully — the first payment and every 
 
 ## payment.failed
 
-Fired when a recurring charge fails. This event is for recurring charge failures only — card declines during initial checkout do not trigger this event.
+Fired when an invoice-linked subscription charge fails.
 
+- `paymentContext` (`dict[str, Any]`)
 - `invoiceId` (`str`)
 - `invoiceNumber` (`str`)
 - `customerId` (`str`)
 - `subscriptionId` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
+- `paymentMethod` (`PaymentMethod`)
+- `subPaymentMethod` (`SubPaymentMethod`)
 - `failureCode` (`str`)
 - `failureMessage` (`str`)
 - `recoveryUrl` (`str`)
@@ -241,6 +308,8 @@ Fired when an outstanding invoice that previously failed is successfully paid �
 - `customerId` (`str`)
 - `subscriptionId` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
+- `paymentMethod` (`PaymentMethod`)
+- `subPaymentMethod` (`SubPaymentMethod`)
 
 ## payment.retry_failed
 
@@ -255,7 +324,7 @@ Fired when all dunning retries are exhausted and the subscription is canceled. T
 
 ## payment.refunded
 
-Fired when a payment is refunded, fully or partially. A full refund of a subscription invoice also cancels the subscription immediately (subscription.canceled fires with reason refund); partial refunds leave the subscription untouched.
+Fired when a payment is refunded, fully or partially. A refund does not change the subscription. Cancel it separately if it should end.
 
 - `paymentTransactionId` (`str`)
 - `provider` (`Literal["stripe", "commet", "dlocal"]`)
@@ -313,6 +382,7 @@ Fired when a payment link is created. The link is pending — the customer has n
 
 Fired when a payment link is paid. The charge settled and a one-time invoice was generated. Fulfill the purchase on this event.
 
+- `paymentContext` (`dict[str, Any]`)
 - `paymentId` (`str`)
 - `status` (`str`)
 - `amount` (`float`)
@@ -322,11 +392,14 @@ Fired when a payment link is paid. The charge settled and a one-time invoice was
 - `invoiceId` (`str`)
 - `invoiceNumber` (`str`)
 - `paymentTransactionId` (`str`)
+- `paymentMethod` (`PaymentMethod`)
+- `subPaymentMethod` (`SubPaymentMethod`)
 
 ## payment_link.failed
 
 Fired when a payment link charge attempt is declined. The link stays open and can be paid again — a failed link is retryable.
 
+- `paymentContext` (`dict[str, Any]`)
 - `paymentId` (`str`)
 - `status` (`str`)
 - `amount` (`float`)
@@ -335,6 +408,8 @@ Fired when a payment link charge attempt is declined. The link stays open and ca
 - `customerId` (`str`)
 - `failureCode` (`str`)
 - `failureMessage` (`str`)
+- `paymentMethod` (`PaymentMethod`)
+- `subPaymentMethod` (`SubPaymentMethod`)
 
 ## payment_link.canceled
 
@@ -416,6 +491,7 @@ Fired when Commet records a payment method for a subscription: after a paid chec
 
 - `subscriptionId` (`str`)
 - `customerId` (`str`)
+- `paymentMethod` (`PaymentMethod`)
 - `card` (`WebhookCardInfo`)
 
 ## payment_method.updated
@@ -423,6 +499,7 @@ Fired when Commet records a payment method for a subscription: after a paid chec
 Fired when a customer replaces their default payment method through the customer portal. The new method applies to all of the customer's subscriptions. A payment method update is also a strong recovery signal for past-due subscriptions.
 
 - `customerId` (`str`)
+- `paymentMethod` (`PaymentMethod`)
 - `card` (`WebhookCardInfo`)
 
 ## customer.created
@@ -457,7 +534,7 @@ Fired when a customer's details change (email, name, timezone, externalId, or me
 
 ## customer.state_changed
 
-Aggregate entitlement event answering one question: what can this customer access right now? Fired on every entitlement transition (subscription lifecycle, plan changes, trials, past due, scheduled cancellations) with the customer's CURRENT subscription, plan, features, seats, and credits or balance. Handle this single event to keep access in sync instead of wiring every lifecycle event.
+Aggregate entitlement event answering one question: what can this customer access right now? Fired on every entitlement transition (subscription lifecycle, pauses, plan changes, trials, past due, scheduled cancellations) with the customer's CURRENT subscription, plan, features, seats, and credits or balance. Handle this single event to keep access in sync instead of wiring every lifecycle event.
 
 - `customerId` (`str`)
 - `trigger` (`str`)

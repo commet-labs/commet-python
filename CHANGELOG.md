@@ -1,5 +1,12 @@
 # Changelog
 
+## 9.4.0
+
+- Add subscription pause, pause updates, pause revocation, resume, and their lifecycle webhooks, including indefinite pauses.
+- Support restricted API keys and permission-scoped key creation.
+- Expose payment context, payment methods, and subscription payment methods from API `2026-08-27`.
+- Refresh the installed API documentation to match the released contract.
+
 ## 9.3.0
 
 - Align currency inputs and active-subscription Offer behavior with the current API contract.

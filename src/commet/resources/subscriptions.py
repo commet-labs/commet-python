@@ -19,6 +19,7 @@ from ..types import (
     RecoveryLink,
     Subscription,
     SubscriptionAddon,
+    SubscriptionResume,
     SubscriptionsListResult,
     SubscriptionStatus,
     _parse_data,
@@ -144,6 +145,35 @@ class SubscriptionsResource:
         """Remove the quoted direct Offer from a subscription's pending payment checkout. The existing checkout URL remains unchanged and returns to its undiscounted price."""
         return _parse_data(self._http.delete(f"/subscriptions/{id}/offer"), Subscription)
 
+    def pause(
+        self,
+        id: str,
+        *,
+        mode: Literal["immediate", "period_end"],
+        duration_days: int | None,
+        idempotency_key: str | None = None,
+    ) -> Subscription:
+        """Pause immediately or schedule a pause for the end of the current billing or trial period. Set durationDays to null for an indefinite pause."""
+        body = {**build_body(mode=mode), "duration_days": duration_days}
+        return _parse_data(
+            self._http.post(f"/subscriptions/{id}/pause", body, idempotency_key=idempotency_key),
+            Subscription,
+        )
+
+    def update_pause(
+        self, id: str, *, duration_days: int | None, idempotency_key: str | None = None
+    ) -> Subscription:
+        """Change the duration of a scheduled or active pause. Set durationDays to null to make it indefinite."""
+        body = {**build_body(), "duration_days": duration_days}
+        return _parse_data(
+            self._http.patch(f"/subscriptions/{id}/pause", body, idempotency_key=idempotency_key),
+            Subscription,
+        )
+
+    def revoke_pause(self, id: str) -> Subscription:
+        """Revoke a pause before it becomes effective. Active pauses must be resumed instead."""
+        return _parse_data(self._http.delete(f"/subscriptions/{id}/pause"), Subscription)
+
     def update_payment_method(
         self, id: str, *, success_url: str | None = None, idempotency_key: str | None = None
     ) -> PaymentMethodUpdateCheckout:
@@ -192,6 +222,13 @@ class SubscriptionsResource:
         return _parse_data(
             self._http.post(f"/subscriptions/{id}/recovery-links", idempotency_key=idempotency_key),
             RecoveryLink,
+        )
+
+    def resume(self, id: str, *, idempotency_key: str | None = None) -> SubscriptionResume:
+        """Resume a paused subscription. Immediate pauses continue the preserved period without a charge. Period-end pauses charge a new period before access is restored."""
+        return _parse_data(
+            self._http.post(f"/subscriptions/{id}/resume", idempotency_key=idempotency_key),
+            SubscriptionResume,
         )
 
     def get(self, id: str) -> Subscription:

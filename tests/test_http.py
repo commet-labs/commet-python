@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from commet._shared import convert_keys, to_camel, to_snake
+from commet._shared import build_body, convert_keys, to_camel, to_snake
+from commet.types import (
+    CreateApiKeyParamsPermissions,
+    CreateCustomerParamsAddress,
+    CreateOfferParamsPhasesItemVariant2,
+)
 
 
 class TestToSnake:
@@ -38,6 +43,64 @@ class TestToCamel:
 
 
 class TestConvertKeys:
+    def test_permission_wire_names_and_omission(self) -> None:
+        permissions = CreateApiKeyParamsPermissions(
+            plan_group=["read"],
+            credit_pack=["write"],
+            promo_code=["read", "write"],
+            market_group=["read"],
+            test_clock=["write"],
+            api_key=["read"],
+        )
+        assert convert_keys(build_body(expires_in_days=30, permissions=permissions), to_camel) == {
+            "expiresInDays": 30,
+            "permissions": {
+                "plan_group": ["read"],
+                "credit_pack": ["write"],
+                "promo_code": ["read", "write"],
+                "market_group": ["read"],
+                "test_clock": ["write"],
+                "api_key": ["read"],
+            },
+        }
+        assert convert_keys(build_body(permissions=None), to_camel) == {}
+        assert convert_keys(build_body(permissions=CreateApiKeyParamsPermissions()), to_camel) == {
+            "permissions": {},
+        }
+
+    def test_nested_request_models_and_required_null(self) -> None:
+        body = {
+            "address": CreateCustomerParamsAddress(
+                line1="Main",
+                city="City",
+                postal_code="123",
+                country="US",
+            ),
+            "phases": [
+                CreateOfferParamsPhasesItemVariant2(
+                    type="percentage",
+                    duration_cycles=None,
+                    duration_interval="month",
+                    percentage=0,
+                )
+            ],
+            "duration_days": None,
+            "enabled": False,
+        }
+        assert convert_keys(body, to_camel) == {
+            "address": {"line1": "Main", "city": "City", "postalCode": "123", "country": "US"},
+            "phases": [
+                {
+                    "type": "percentage",
+                    "durationCycles": None,
+                    "durationInterval": "month",
+                    "percentage": 0,
+                }
+            ],
+            "durationDays": None,
+            "enabled": False,
+        }
+
     def test_dict_snake_to_camel(self) -> None:
         result = convert_keys({"customer_id": "123", "full_name": "John"}, to_camel)
         assert result == {"customerId": "123", "fullName": "John"}

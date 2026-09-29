@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from dataclasses import fields, is_dataclass
 from enum import Enum
 from typing import Any, Callable
 
@@ -41,7 +42,7 @@ def retry_delay_seconds(
 
 _BASE_URL = "https://commet.co"
 
-API_VERSION = "2026-07-31"
+API_VERSION = "2026-08-27"
 
 
 def to_snake(name: str) -> str:
@@ -54,6 +55,14 @@ def to_camel(name: str) -> str:
 
 
 def convert_keys(obj: Any, fn: Callable[[str], str]) -> Any:
+    if is_dataclass(obj) and not isinstance(obj, type):
+        return {
+            field.metadata["wire_name"]: convert_keys(getattr(obj, field.name), fn)
+            for field in fields(obj)
+            if field.metadata["required"] or getattr(obj, field.name) is not None
+        }
+    if isinstance(obj, Enum):
+        return obj.value
     if isinstance(obj, dict):
         return {fn(k): convert_keys(v, fn) for k, v in obj.items()}
     if isinstance(obj, list):

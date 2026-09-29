@@ -180,6 +180,13 @@ class InvoiceType(str, Enum):
     ADDON_ACTIVATION = "addon_activation"
     ONE_TIME_PAYMENT = "one_time_payment"
     REACTIVATION = "reactivation"
+    RESUME = "resume"
+
+
+class PaymentMethod(str, Enum):
+    CARD = "card"
+    OXXO = "oxxo"
+    MERCADO_PAGO = "mercado_pago"
 
 
 class PaymentProvider(str, Enum):
@@ -188,12 +195,21 @@ class PaymentProvider(str, Enum):
     DLOCAL = "dlocal"
 
 
+class SubPaymentMethod(str, Enum):
+    CREDIT_CARD = "credit_card"
+    DEBIT_CARD = "debit_card"
+    PREPAID_CARD = "prepaid_card"
+    BANK_TRANSFER = "bank_transfer"
+    ACCOUNT_MONEY = "account_money"
+
+
 class SubscriptionStatus(str, Enum):
     DRAFT = "draft"
     PENDING_PAYMENT = "pending_payment"
     TRIALING = "trialing"
     ACTIVE = "active"
     PAST_DUE = "past_due"
+    PAUSED = "paused"
     CANCELED = "canceled"
 
 
@@ -231,69 +247,105 @@ class TransactionStatus(str, Enum):
 
 @dataclass
 class ActiveAddon:
-    slug: str = ""
-    name: str = ""
-    base_price: int = 0
-    feature_code: str = ""
-    feature_name: str = ""
-    feature_type: FeatureType | None = None
-    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = None
-    activated_at: str = ""
-    object: Literal["subscription_addon"] | None = None
-    livemode: bool = False
+    slug: str = field(default="", metadata={"wire_name": "slug", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    base_price: int = field(default=0, metadata={"wire_name": "basePrice", "required": True})
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    feature_name: str = field(default="", metadata={"wire_name": "featureName", "required": True})
+    feature_type: FeatureType | None = field(
+        default=None, metadata={"wire_name": "featureType", "required": True}
+    )
+    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = field(
+        default=None, metadata={"wire_name": "consumptionModel", "required": True}
+    )
+    activated_at: str = field(default="", metadata={"wire_name": "activatedAt", "required": True})
+    object: Literal["subscription_addon"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class AddedPlanToGroup:
-    success: bool = False
-    object: Literal["plan_group_membership"] | None = None
-    livemode: bool = False
+    success: bool = field(default=False, metadata={"wire_name": "success", "required": True})
+    object: Literal["plan_group_membership"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class Addon:
-    id: str = ""
-    name: str = ""
-    slug: str = ""
-    description: str | None = None
-    base_price: int = 0
-    feature_code: str = ""
-    feature_name: str = ""
-    created_at: str = ""
-    updated_at: str = ""
-    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = None
-    included_units: int | None = None
-    overage_rate: int | None = None
-    credit_cost: int | None = None
-    object: Literal["addon"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    slug: str = field(default="", metadata={"wire_name": "slug", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    base_price: int = field(default=0, metadata={"wire_name": "basePrice", "required": True})
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    feature_name: str = field(default="", metadata={"wire_name": "featureName", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    consumption_model: Literal["boolean", "metered", "credits", "balance"] | None = field(
+        default=None, metadata={"wire_name": "consumptionModel", "required": True}
+    )
+    included_units: int | None = field(
+        default=None, metadata={"wire_name": "includedUnits", "required": True}
+    )
+    overage_rate: int | None = field(
+        default=None, metadata={"wire_name": "overageRate", "required": True}
+    )
+    credit_cost: int | None = field(
+        default=None, metadata={"wire_name": "creditCost", "required": True}
+    )
+    object: Literal["addon"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class AddonsListActiveResult:
-    object: Literal["list"] | None = None
-    data: list[ActiveAddon] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[ActiveAddon] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class AddonsListResult:
-    object: Literal["list"] | None = None
-    data: list[Addon] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Addon] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class AddPlanFeatureParamsOverage:
-    enabled: bool | None = None
-    unit_price: int | None = None
+    enabled: bool | None = field(default=None, metadata={"wire_name": "enabled", "required": False})
+    unit_price: int | None = field(
+        default=None, metadata={"wire_name": "unitPrice", "required": False}
+    )
 
 
 @dataclass
 class AddPlanPriceParamsMarketPricesItem:
-    market_group_id: str = ""
+    market_group_id: str = field(
+        default="", metadata={"wire_name": "marketGroupId", "required": True}
+    )
     currency: (
         Literal[
             "usd",
@@ -319,675 +371,1127 @@ class AddPlanPriceParamsMarketPricesItem:
             "thb",
         ]
         | None
-    ) = None
-    price: int = 0
+    ) = field(default=None, metadata={"wire_name": "currency", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class ApiKey:
-    id: str = ""
-    name: str = ""
-    prefix: str = ""
-    expires_at: str | None = None
-    last_used_at: str | None = None
-    created_at: str = ""
-    object: Literal["api_key"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    prefix: str = field(default="", metadata={"wire_name": "prefix", "required": True})
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    last_used_at: str | None = field(
+        default=None, metadata={"wire_name": "lastUsedAt", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["api_key"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class ApiKeysListResult:
-    object: Literal["list"] | None = None
-    data: list[ApiKey] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[ApiKey] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class BalanceAdjustment:
-    amount: int = 0
-    new_balance: int = 0
-    reason: str | None = None
-    object: Literal["balance_transaction"] | None = None
-    livemode: bool = False
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    new_balance: int = field(default=0, metadata={"wire_name": "newBalance", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": True})
+    object: Literal["balance_transaction"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class BalanceTopup:
-    amount: int = 0
-    object: Literal["balance_topup"] | None = None
-    livemode: bool = False
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    object: Literal["balance_topup"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class BatchCreateCustomersParamsCustomersItem:
-    email: str = ""
-    id: str | None = None
-    external_id: str | None = None
-    full_name: str | None = None
-    tax_document: str | None = None
-    timezone: Timezone | None = None
-    metadata: dict[str, Any] | None = None
-    address: BatchCreateCustomersParamsCustomersItemAddress | None = None
+    email: str = field(default="", metadata={"wire_name": "email", "required": True})
+    id: str | None = field(default=None, metadata={"wire_name": "id", "required": False})
+    external_id: str | None = field(
+        default=None, metadata={"wire_name": "externalId", "required": False}
+    )
+    full_name: str | None = field(
+        default=None, metadata={"wire_name": "fullName", "required": False}
+    )
+    tax_document: str | None = field(
+        default=None, metadata={"wire_name": "taxDocument", "required": False}
+    )
+    timezone: Timezone | None = field(
+        default=None, metadata={"wire_name": "timezone", "required": False}
+    )
+    metadata: dict[str, Any] | None = field(
+        default=None, metadata={"wire_name": "metadata", "required": False}
+    )
+    address: BatchCreateCustomersParamsCustomersItemAddress | None = field(
+        default=None, metadata={"wire_name": "address", "required": False}
+    )
 
 
 @dataclass
 class BatchCreateCustomersParamsCustomersItemAddress:
-    line1: str = ""
-    line2: str | None = None
-    city: str = ""
-    state: str | None = None
-    postal_code: str = ""
-    country: str = ""
-    region: str | None = None
+    line1: str = field(default="", metadata={"wire_name": "line1", "required": True})
+    line2: str | None = field(default=None, metadata={"wire_name": "line2", "required": False})
+    city: str = field(default="", metadata={"wire_name": "city", "required": True})
+    state: str | None = field(default=None, metadata={"wire_name": "state", "required": False})
+    postal_code: str = field(default="", metadata={"wire_name": "postalCode", "required": True})
+    country: str = field(default="", metadata={"wire_name": "country", "required": True})
+    region: str | None = field(default=None, metadata={"wire_name": "region", "required": False})
 
 
 @dataclass
 class ClaimLink:
-    url: str = ""
-    expires_at: str = ""
-    object: Literal["claim_link"] | None = None
-    livemode: bool = False
+    url: str = field(default="", metadata={"wire_name": "url", "required": True})
+    expires_at: str = field(default="", metadata={"wire_name": "expiresAt", "required": True})
+    object: Literal["claim_link"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class CreateApiKeyParamsPermissions:
+    customer: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "customer", "required": False}
+    )
+    subscription: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "subscription", "required": False}
+    )
+    invoice: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "invoice", "required": False}
+    )
+    usage: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "usage", "required": False}
+    )
+    seat: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "seat", "required": False}
+    )
+    plan: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "plan", "required": False}
+    )
+    plan_group: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "plan_group", "required": False}
+    )
+    feature: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "feature", "required": False}
+    )
+    addon: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "addon", "required": False}
+    )
+    credit_pack: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "credit_pack", "required": False}
+    )
+    offer: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "offer", "required": False}
+    )
+    promo_code: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "promo_code", "required": False}
+    )
+    market_group: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "market_group", "required": False}
+    )
+    payment: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "payment", "required": False}
+    )
+    transaction: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "transaction", "required": False}
+    )
+    payout: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "payout", "required": False}
+    )
+    test_clock: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "test_clock", "required": False}
+    )
+    organization: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "organization", "required": False}
+    )
+    api_key: list[Literal["read", "write"]] | None = field(
+        default=None, metadata={"wire_name": "api_key", "required": False}
+    )
 
 
 @dataclass
 class CreateCustomerParamsAddress:
-    line1: str = ""
-    line2: str | None = None
-    city: str = ""
-    state: str | None = None
-    postal_code: str = ""
-    country: str = ""
-    region: str | None = None
+    line1: str = field(default="", metadata={"wire_name": "line1", "required": True})
+    line2: str | None = field(default=None, metadata={"wire_name": "line2", "required": False})
+    city: str = field(default="", metadata={"wire_name": "city", "required": True})
+    state: str | None = field(default=None, metadata={"wire_name": "state", "required": False})
+    postal_code: str = field(default="", metadata={"wire_name": "postalCode", "required": True})
+    country: str = field(default="", metadata={"wire_name": "country", "required": True})
+    region: str | None = field(default=None, metadata={"wire_name": "region", "required": False})
 
 
 @dataclass
 class CreatedApiKey:
-    id: str = ""
-    name: str = ""
-    api_key: str = ""
-    prefix: str = ""
-    expires_at: str = ""
-    created_at: str = ""
-    object: Literal["api_key"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    api_key: str = field(default="", metadata={"wire_name": "apiKey", "required": True})
+    prefix: str = field(default="", metadata={"wire_name": "prefix", "required": True})
+    expires_at: str = field(default="", metadata={"wire_name": "expiresAt", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["api_key"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CreatedSubscription:
-    id: str = ""
-    customer_id: str = ""
-    plan: CreatedSubscriptionPlan | None = None
-    name: str = ""
-    description: str | None = None
-    status: SubscriptionStatus | None = None
-    billing_interval: BillingInterval | None = None
-    trial_ends_at: str | None = None
-    current_period: CreatedSubscriptionCurrentPeriod | None = None
-    cancellation: CreatedSubscriptionCancellation | None = None
-    cancel_at_period_end: bool = False
-    scheduled_plan_change: CreatedSubscriptionScheduledPlanChange | None = None
-    start_date: str = ""
-    end_date: str | None = None
-    billing_day_of_month: int | None = None
-    next_billing_date: str | None = None
-    checkout_url: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    offer_applications: list[SubscriptionOfferApplication] = field(default_factory=list)
-    checkout_provider: PaymentProvider | None = None
-    price_id: str | None = None
-    object: Literal["subscription"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    plan: CreatedSubscriptionPlan | None = field(
+        default=None, metadata={"wire_name": "plan", "required": True}
+    )
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    status: SubscriptionStatus | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    billing_interval: BillingInterval | None = field(
+        default=None, metadata={"wire_name": "billingInterval", "required": True}
+    )
+    trial_ends_at: str | None = field(
+        default=None, metadata={"wire_name": "trialEndsAt", "required": True}
+    )
+    current_period: CreatedSubscriptionCurrentPeriod | None = field(
+        default=None, metadata={"wire_name": "currentPeriod", "required": True}
+    )
+    cancellation: CreatedSubscriptionCancellation | None = field(
+        default=None, metadata={"wire_name": "cancellation", "required": True}
+    )
+    cancel_at_period_end: bool = field(
+        default=False, metadata={"wire_name": "cancelAtPeriodEnd", "required": True}
+    )
+    scheduled_plan_change: CreatedSubscriptionScheduledPlanChange | None = field(
+        default=None, metadata={"wire_name": "scheduledPlanChange", "required": True}
+    )
+    start_date: str = field(default="", metadata={"wire_name": "startDate", "required": True})
+    end_date: str | None = field(default=None, metadata={"wire_name": "endDate", "required": True})
+    billing_day_of_month: int | None = field(
+        default=None, metadata={"wire_name": "billingDayOfMonth", "required": True}
+    )
+    next_billing_date: str | None = field(
+        default=None, metadata={"wire_name": "nextBillingDate", "required": True}
+    )
+    checkout_url: str | None = field(
+        default=None, metadata={"wire_name": "checkoutUrl", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    offer_applications: list[SubscriptionOfferApplication] = field(
+        default_factory=list, metadata={"wire_name": "offerApplications", "required": True}
+    )
+    pause: CreatedSubscriptionPause | None = field(
+        default=None, metadata={"wire_name": "pause", "required": True}
+    )
+    checkout_provider: PaymentProvider | None = field(
+        default=None, metadata={"wire_name": "checkoutProvider", "required": True}
+    )
+    price_id: str | None = field(default=None, metadata={"wire_name": "priceId", "required": True})
+    object: Literal["subscription"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CreatedSubscriptionCancellation:
-    scheduled_at: str = ""
-    reason: str | None = None
-    effective_at: str = ""
+    scheduled_at: str = field(default="", metadata={"wire_name": "scheduledAt", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
 
 
 @dataclass
 class CreatedSubscriptionCurrentPeriod:
-    start: str = ""
-    end: str = ""
-    days_remaining: float = 0.0
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
+    days_remaining: float = field(
+        default=0.0, metadata={"wire_name": "daysRemaining", "required": True}
+    )
+
+
+@dataclass
+class CreatedSubscriptionPauseVariant1:
+    status: Literal["scheduled"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    mode: Literal["period_end"] | None = field(
+        default=None, metadata={"wire_name": "mode", "required": True}
+    )
+    requested_at: str = field(default="", metadata={"wire_name": "requestedAt", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
+    resume_at: str | None = field(
+        default=None, metadata={"wire_name": "resumeAt", "required": True}
+    )
+
+
+@dataclass
+class CreatedSubscriptionPauseVariant2:
+    status: Literal["active"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    mode: Literal["immediate", "period_end"] | None = field(
+        default=None, metadata={"wire_name": "mode", "required": True}
+    )
+    requested_at: str = field(default="", metadata={"wire_name": "requestedAt", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
+    resume_at: str | None = field(
+        default=None, metadata={"wire_name": "resumeAt", "required": True}
+    )
 
 
 @dataclass
 class CreatedSubscriptionPlan:
-    id: str = ""
-    name: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
 
 
 @dataclass
 class CreatedSubscriptionScheduledPlanChange:
-    change_type: Literal["plan_downgrade", "interval_change"] | None = None
-    new_plan_id: str | None = None
-    new_plan_name: str | None = None
-    new_billing_interval: str | None = None
-    scheduled_for: str = ""
+    change_type: Literal["plan_downgrade", "interval_change"] | None = field(
+        default=None, metadata={"wire_name": "changeType", "required": True}
+    )
+    new_plan_id: str | None = field(
+        default=None, metadata={"wire_name": "newPlanId", "required": True}
+    )
+    new_plan_name: str | None = field(
+        default=None, metadata={"wire_name": "newPlanName", "required": True}
+    )
+    new_billing_interval: str | None = field(
+        default=None, metadata={"wire_name": "newBillingInterval", "required": True}
+    )
+    scheduled_for: str = field(default="", metadata={"wire_name": "scheduledFor", "required": True})
 
 
 @dataclass
 class CreatedWebhook:
-    id: str = ""
-    url: str = ""
-    events: list[str] = field(default_factory=list)
-    description: str | None = None
-    is_active: bool = False
-    api_version: str | None = None
-    created_at: str = ""
-    secret_key: str = ""
-    object: Literal["webhook"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    url: str = field(default="", metadata={"wire_name": "url", "required": True})
+    events: list[str] = field(
+        default_factory=list, metadata={"wire_name": "events", "required": True}
+    )
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    is_active: bool = field(default=False, metadata={"wire_name": "isActive", "required": True})
+    api_version: str | None = field(
+        default=None, metadata={"wire_name": "apiVersion", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    secret_key: str = field(default="", metadata={"wire_name": "secretKey", "required": True})
+    object: Literal["webhook"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
 
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    percentage: int = 0
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    )
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    amounts: list[CreateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    )
+    amounts: list[CreateOfferParamsPhasesItemVariant3AmountsItem] = field(
+        default_factory=list, metadata={"wire_name": "amounts", "required": True}
+    )
 
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant3AmountsItem:
-    currency: str = ""
-    amount: int = 0
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    prices: list[CreateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    )
+    prices: list[CreateOfferParamsPhasesItemVariant4PricesItem] = field(
+        default_factory=list, metadata={"wire_name": "prices", "required": True}
+    )
 
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant4PricesItem:
-    currency: str = ""
-    amount: int = 0
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class CreditGrant:
-    credits: int = 0
-    object: Literal["credit_grant"] | None = None
-    livemode: bool = False
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    object: Literal["credit_grant"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CreditPack:
-    id: str = ""
-    name: str = ""
-    description: str | None = None
-    credits: int = 0
-    price: int = 0
-    is_active: bool = False
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["credit_pack"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    is_active: bool = field(default=False, metadata={"wire_name": "isActive", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["credit_pack"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CreditPackListItem:
-    id: str = ""
-    name: str = ""
-    description: str | None = None
-    credits: int = 0
-    price: int = 0
-    currency: str = ""
-    object: Literal["credit_pack"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    object: Literal["credit_pack"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CreditPacksListResult:
-    object: Literal["list"] | None = None
-    data: list[CreditPackListItem] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[CreditPackListItem] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class Customer:
-    id: str = ""
-    external_id: str | None = None
-    full_name: str | None = None
-    email: str = ""
-    tax_document: str | None = None
-    document_type: str | None = None
-    timezone: str | None = None
-    metadata: dict[str, Any] | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["customer"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    external_id: str | None = field(
+        default=None, metadata={"wire_name": "externalId", "required": True}
+    )
+    full_name: str | None = field(
+        default=None, metadata={"wire_name": "fullName", "required": True}
+    )
+    email: str = field(default="", metadata={"wire_name": "email", "required": True})
+    tax_document: str | None = field(
+        default=None, metadata={"wire_name": "taxDocument", "required": True}
+    )
+    document_type: str | None = field(
+        default=None, metadata={"wire_name": "documentType", "required": True}
+    )
+    timezone: str | None = field(default=None, metadata={"wire_name": "timezone", "required": True})
+    metadata: dict[str, Any] | None = field(
+        default=None, metadata={"wire_name": "metadata", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["customer"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CustomerBatch:
-    successful: list[CustomerBatchSuccessfulItem] = field(default_factory=list)
-    failed: list[CustomerBatchFailedItem] = field(default_factory=list)
-    object: Literal["customer_batch"] | None = None
-    livemode: bool = False
+    successful: list[CustomerBatchSuccessfulItem] = field(
+        default_factory=list, metadata={"wire_name": "successful", "required": True}
+    )
+    failed: list[CustomerBatchFailedItem] = field(
+        default_factory=list, metadata={"wire_name": "failed", "required": True}
+    )
+    object: Literal["customer_batch"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CustomerBatchFailedItem:
-    index: int = 0
-    error: str = ""
-    data: CustomerBatchFailedItemData | None = None
+    index: int = field(default=0, metadata={"wire_name": "index", "required": True})
+    error: str = field(default="", metadata={"wire_name": "error", "required": True})
+    data: CustomerBatchFailedItemData | None = field(
+        default=None, metadata={"wire_name": "data", "required": True}
+    )
 
 
 @dataclass
 class CustomerBatchFailedItemData:
-    id: str | None = None
-    external_id: str | None = None
-    email: str = ""
-    full_name: str | None = None
-    tax_document: str | None = None
-    timezone: str | None = None
-    metadata: dict[str, Any] | None = None
-    address: CustomerBatchFailedItemDataAddress | None = None
+    id: str | None = field(default=None, metadata={"wire_name": "id", "required": False})
+    external_id: str | None = field(
+        default=None, metadata={"wire_name": "externalId", "required": False}
+    )
+    email: str = field(default="", metadata={"wire_name": "email", "required": True})
+    full_name: str | None = field(
+        default=None, metadata={"wire_name": "fullName", "required": False}
+    )
+    tax_document: str | None = field(
+        default=None, metadata={"wire_name": "taxDocument", "required": False}
+    )
+    timezone: str | None = field(
+        default=None, metadata={"wire_name": "timezone", "required": False}
+    )
+    metadata: dict[str, Any] | None = field(
+        default=None, metadata={"wire_name": "metadata", "required": False}
+    )
+    address: CustomerBatchFailedItemDataAddress | None = field(
+        default=None, metadata={"wire_name": "address", "required": False}
+    )
 
 
 @dataclass
 class CustomerBatchFailedItemDataAddress:
-    line1: str = ""
-    line2: str | None = None
-    city: str = ""
-    state: str | None = None
-    postal_code: str = ""
-    country: str = ""
-    region: str | None = None
+    line1: str = field(default="", metadata={"wire_name": "line1", "required": True})
+    line2: str | None = field(default=None, metadata={"wire_name": "line2", "required": False})
+    city: str = field(default="", metadata={"wire_name": "city", "required": True})
+    state: str | None = field(default=None, metadata={"wire_name": "state", "required": False})
+    postal_code: str = field(default="", metadata={"wire_name": "postalCode", "required": True})
+    country: str = field(default="", metadata={"wire_name": "country", "required": True})
+    region: str | None = field(default=None, metadata={"wire_name": "region", "required": False})
 
 
 @dataclass
 class CustomerBatchSuccessfulItem:
-    id: str = ""
-    external_id: str | None = None
-    email: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    external_id: str | None = field(
+        default=None, metadata={"wire_name": "externalId", "required": True}
+    )
+    email: str = field(default="", metadata={"wire_name": "email", "required": True})
 
 
 @dataclass
 class CustomerCredit:
-    id: str = ""
-    amount: int = 0
-    applied_amount: int = 0
-    reversed_amount: int = 0
-    revoked_amount: int = 0
-    remaining_amount: int = 0
-    currency: str = ""
-    reason: str = ""
-    source: Literal["dashboard", "api", "plan_change", "migration"] | None = None
-    expires_at: str | None = None
-    created_at: str = ""
-    object: Literal["customer_credit"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    applied_amount: int = field(
+        default=0, metadata={"wire_name": "appliedAmount", "required": True}
+    )
+    reversed_amount: int = field(
+        default=0, metadata={"wire_name": "reversedAmount", "required": True}
+    )
+    revoked_amount: int = field(
+        default=0, metadata={"wire_name": "revokedAmount", "required": True}
+    )
+    remaining_amount: int = field(
+        default=0, metadata={"wire_name": "remainingAmount", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    reason: str = field(default="", metadata={"wire_name": "reason", "required": True})
+    source: Literal["dashboard", "api", "plan_change", "migration"] | None = field(
+        default=None, metadata={"wire_name": "source", "required": True}
+    )
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["customer_credit"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CustomerCreditRevocation:
-    id: str = ""
-    remaining_amount: int = 0
-    revoked_amount: int = 0
-    currency: str = ""
-    object: Literal["customer_credit"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    remaining_amount: int = field(
+        default=0, metadata={"wire_name": "remainingAmount", "required": True}
+    )
+    revoked_amount: int = field(
+        default=0, metadata={"wire_name": "revokedAmount", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    object: Literal["customer_credit"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class CustomersListCreditsResult:
-    object: Literal["list"] | None = None
-    data: list[CustomerCredit] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[CustomerCredit] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class CustomersListPlanGrantsResult:
-    object: Literal["list"] | None = None
-    data: list[PlanGrant] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[PlanGrant] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class CustomersListResult:
-    object: Literal["list"] | None = None
-    data: list[Customer] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Customer] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class DeletedObject:
-    id: str = ""
-    deleted: Literal[True] | None = None
-    object: str = ""
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    deleted: Literal[True] | None = field(
+        default=None, metadata={"wire_name": "deleted", "required": True}
+    )
+    object: str = field(default="", metadata={"wire_name": "object", "required": True})
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class DeletedOffer:
-    deleted: Literal[True] | None = None
-    object: Literal["offer"] | None = None
-    livemode: bool = False
+    deleted: Literal[True] | None = field(
+        default=None, metadata={"wire_name": "deleted", "required": True}
+    )
+    object: Literal["offer"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class DeletedPlanRegionalPricing:
-    deleted: Literal[True] | None = None
-    object: Literal["plan_regional_pricing"] | None = None
-    livemode: bool = False
+    deleted: Literal[True] | None = field(
+        default=None, metadata={"wire_name": "deleted", "required": True}
+    )
+    object: Literal["plan_regional_pricing"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class DeletedSubscriptionAddon:
-    id: str = ""
-    status: Literal["inactive"] | None = None
-    deactivated_at: str | None = None
-    object: Literal["subscription_addon"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    status: Literal["inactive"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    deactivated_at: str | None = field(
+        default=None, metadata={"wire_name": "deactivatedAt", "required": True}
+    )
+    object: Literal["subscription_addon"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class Feature:
-    id: str = ""
-    name: str = ""
-    code: str = ""
-    type: FeatureType | None = None
-    description: str | None = None
-    unit_name: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["feature"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    type: FeatureType | None = field(default=None, metadata={"wire_name": "type", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    unit_name: str | None = field(
+        default=None, metadata={"wire_name": "unitName", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["feature"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class FeatureAccessListResult:
-    object: Literal["list"] | None = None
-    data: list[FeatureAccess] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[FeatureAccess] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class FeatureAccessVariant1:
-    code: str = ""
-    name: str = ""
-    unit_name: str | None = None
-    allowed: bool = False
-    type: Literal["boolean"] | None = None
-    enabled: bool = False
-    base_access: FeatureAccessVariant1BaseAccess | None = None
-    object: Literal["feature_access"] | None = None
-    livemode: bool = False
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    unit_name: str | None = field(
+        default=None, metadata={"wire_name": "unitName", "required": True}
+    )
+    allowed: bool = field(default=False, metadata={"wire_name": "allowed", "required": True})
+    type: Literal["boolean"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    base_access: FeatureAccessVariant1BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
+    object: Literal["feature_access"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant1BaseAccess:
-    enabled: bool = False
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant2:
-    code: str = ""
-    name: str = ""
-    unit_name: str | None = None
-    allowed: bool = False
-    type: Literal["usage"] | None = None
-    consumption: FeatureAccessVariant2Consumption | None = None
-    base_access: FeatureAccessVariant2BaseAccess | None = None
-    object: Literal["feature_access"] | None = None
-    livemode: bool = False
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    unit_name: str | None = field(
+        default=None, metadata={"wire_name": "unitName", "required": True}
+    )
+    allowed: bool = field(default=False, metadata={"wire_name": "allowed", "required": True})
+    type: Literal["usage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    consumption: FeatureAccessVariant2Consumption | None = field(
+        default=None, metadata={"wire_name": "consumption", "required": True}
+    )
+    base_access: FeatureAccessVariant2BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
+    object: Literal["feature_access"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant2BaseAccess:
-    included_units: float = 0.0
-    unlimited: bool = False
+    included_units: float = field(
+        default=0.0, metadata={"wire_name": "includedUnits", "required": True}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant1:
-    model: Literal["metered"] | None = None
-    period: FeatureAccessVariant2ConsumptionVariant1Period | None = None
-    units_used: float = 0.0
-    included_units: float = 0.0
-    remaining_units: float | None = None
-    unlimited: bool = False
-    overage: FeatureAccessVariant2ConsumptionVariant1Overage | None = None
+    model: Literal["metered"] | None = field(
+        default=None, metadata={"wire_name": "model", "required": True}
+    )
+    period: FeatureAccessVariant2ConsumptionVariant1Period | None = field(
+        default=None, metadata={"wire_name": "period", "required": True}
+    )
+    units_used: float = field(default=0.0, metadata={"wire_name": "unitsUsed", "required": True})
+    included_units: float = field(
+        default=0.0, metadata={"wire_name": "includedUnits", "required": True}
+    )
+    remaining_units: float | None = field(
+        default=None, metadata={"wire_name": "remainingUnits", "required": False}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    overage: FeatureAccessVariant2ConsumptionVariant1Overage | None = field(
+        default=None, metadata={"wire_name": "overage", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant1Overage:
-    enabled: bool = False
-    units: float = 0.0
-    unit_price: FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice | None = None
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    units: float = field(default=0.0, metadata={"wire_name": "units", "required": True})
+    unit_price: FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice | None = field(
+        default=None, metadata={"wire_name": "unitPrice", "required": False}
+    )
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant1OverageUnitPrice:
-    amount: int = 0
-    currency: str = ""
-    scale: Literal[10000] | None = None
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    scale: Literal[10000] | None = field(
+        default=None, metadata={"wire_name": "scale", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant1Period:
-    start: str = ""
-    end: str = ""
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant2:
-    model: Literal["credits"] | None = None
-    period: FeatureAccessVariant2ConsumptionVariant2Period | None = None
-    units_used: float = 0.0
-    credits_per_unit: int = 0
-    credits_consumed: float = 0.0
-    available_units: int = 0
+    model: Literal["credits"] | None = field(
+        default=None, metadata={"wire_name": "model", "required": True}
+    )
+    period: FeatureAccessVariant2ConsumptionVariant2Period | None = field(
+        default=None, metadata={"wire_name": "period", "required": True}
+    )
+    units_used: float = field(default=0.0, metadata={"wire_name": "unitsUsed", "required": True})
+    credits_per_unit: int = field(
+        default=0, metadata={"wire_name": "creditsPerUnit", "required": True}
+    )
+    credits_consumed: float = field(
+        default=0.0, metadata={"wire_name": "creditsConsumed", "required": True}
+    )
+    available_units: int = field(
+        default=0, metadata={"wire_name": "availableUnits", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant2Period:
-    start: str = ""
-    end: str = ""
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant3:
-    model: Literal["balance"] | None = None
-    period: FeatureAccessVariant2ConsumptionVariant3Period | None = None
-    units_used: float = 0.0
-    spent: FeatureAccessVariant2ConsumptionVariant3Spent | None = None
-    available_units: int | None = None
-    unit_price: FeatureAccessVariant2ConsumptionVariant3UnitPrice | None = None
+    model: Literal["balance"] | None = field(
+        default=None, metadata={"wire_name": "model", "required": True}
+    )
+    period: FeatureAccessVariant2ConsumptionVariant3Period | None = field(
+        default=None, metadata={"wire_name": "period", "required": True}
+    )
+    units_used: float = field(default=0.0, metadata={"wire_name": "unitsUsed", "required": True})
+    spent: FeatureAccessVariant2ConsumptionVariant3Spent | None = field(
+        default=None, metadata={"wire_name": "spent", "required": True}
+    )
+    available_units: int | None = field(
+        default=None, metadata={"wire_name": "availableUnits", "required": False}
+    )
+    unit_price: FeatureAccessVariant2ConsumptionVariant3UnitPrice | None = field(
+        default=None, metadata={"wire_name": "unitPrice", "required": False}
+    )
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant3Period:
-    start: str = ""
-    end: str = ""
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant3Spent:
-    amount: int = 0
-    currency: str = ""
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant2ConsumptionVariant3UnitPrice:
-    amount: int = 0
-    currency: str = ""
-    scale: Literal[10000] | None = None
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    scale: Literal[10000] | None = field(
+        default=None, metadata={"wire_name": "scale", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant3:
-    code: str = ""
-    name: str = ""
-    unit_name: str | None = None
-    allowed: bool = False
-    type: Literal["seats"] | None = None
-    usage: FeatureAccessVariant3Usage | None = None
-    base_access: FeatureAccessVariant3BaseAccess | None = None
-    object: Literal["feature_access"] | None = None
-    livemode: bool = False
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    unit_name: str | None = field(
+        default=None, metadata={"wire_name": "unitName", "required": True}
+    )
+    allowed: bool = field(default=False, metadata={"wire_name": "allowed", "required": True})
+    type: Literal["seats"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    usage: FeatureAccessVariant3Usage | None = field(
+        default=None, metadata={"wire_name": "usage", "required": True}
+    )
+    base_access: FeatureAccessVariant3BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
+    object: Literal["feature_access"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant3BaseAccess:
-    included_units: float = 0.0
-    unlimited: bool = False
+    included_units: float = field(
+        default=0.0, metadata={"wire_name": "includedUnits", "required": True}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant3Usage:
-    period: FeatureAccessVariant3UsagePeriod | None = None
-    units_used: float = 0.0
-    included_units: float = 0.0
-    remaining_units: float | None = None
-    unlimited: bool = False
-    overage: FeatureAccessVariant3UsageOverage | None = None
+    period: FeatureAccessVariant3UsagePeriod | None = field(
+        default=None, metadata={"wire_name": "period", "required": True}
+    )
+    units_used: float = field(default=0.0, metadata={"wire_name": "unitsUsed", "required": True})
+    included_units: float = field(
+        default=0.0, metadata={"wire_name": "includedUnits", "required": True}
+    )
+    remaining_units: float | None = field(
+        default=None, metadata={"wire_name": "remainingUnits", "required": False}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    overage: FeatureAccessVariant3UsageOverage | None = field(
+        default=None, metadata={"wire_name": "overage", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant3UsageOverage:
-    enabled: bool = False
-    units: float = 0.0
-    unit_price: FeatureAccessVariant3UsageOverageUnitPrice | None = None
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    units: float = field(default=0.0, metadata={"wire_name": "units", "required": True})
+    unit_price: FeatureAccessVariant3UsageOverageUnitPrice | None = field(
+        default=None, metadata={"wire_name": "unitPrice", "required": False}
+    )
 
 
 @dataclass
 class FeatureAccessVariant3UsageOverageUnitPrice:
-    amount: int = 0
-    currency: str = ""
-    scale: Literal[10000] | None = None
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    scale: Literal[10000] | None = field(
+        default=None, metadata={"wire_name": "scale", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant3UsagePeriod:
-    start: str = ""
-    end: str = ""
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant4:
-    code: str = ""
-    name: str = ""
-    unit_name: str | None = None
-    allowed: bool = False
-    type: Literal["quota"] | None = None
-    usage: FeatureAccessVariant4Usage | None = None
-    base_access: FeatureAccessVariant4BaseAccess | None = None
-    object: Literal["feature_access"] | None = None
-    livemode: bool = False
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    unit_name: str | None = field(
+        default=None, metadata={"wire_name": "unitName", "required": True}
+    )
+    allowed: bool = field(default=False, metadata={"wire_name": "allowed", "required": True})
+    type: Literal["quota"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    usage: FeatureAccessVariant4Usage | None = field(
+        default=None, metadata={"wire_name": "usage", "required": True}
+    )
+    base_access: FeatureAccessVariant4BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
+    object: Literal["feature_access"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant4BaseAccess:
-    included_units: float = 0.0
-    unlimited: bool = False
+    included_units: float = field(
+        default=0.0, metadata={"wire_name": "includedUnits", "required": True}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
 
 
 @dataclass
 class FeatureAccessVariant4Usage:
-    period: FeatureAccessVariant4UsagePeriod | None = None
-    units_used: float = 0.0
-    included_units: float = 0.0
-    remaining_units: float | None = None
-    unlimited: bool = False
-    overage: FeatureAccessVariant4UsageOverage | None = None
-    billed_units: float = 0.0
+    period: FeatureAccessVariant4UsagePeriod | None = field(
+        default=None, metadata={"wire_name": "period", "required": True}
+    )
+    units_used: float = field(default=0.0, metadata={"wire_name": "unitsUsed", "required": True})
+    included_units: float = field(
+        default=0.0, metadata={"wire_name": "includedUnits", "required": True}
+    )
+    remaining_units: float | None = field(
+        default=None, metadata={"wire_name": "remainingUnits", "required": False}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    overage: FeatureAccessVariant4UsageOverage | None = field(
+        default=None, metadata={"wire_name": "overage", "required": True}
+    )
+    billed_units: float = field(
+        default=0.0, metadata={"wire_name": "billedUnits", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant4UsageOverage:
-    enabled: bool = False
-    units: float = 0.0
-    unit_price: FeatureAccessVariant4UsageOverageUnitPrice | None = None
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    units: float = field(default=0.0, metadata={"wire_name": "units", "required": True})
+    unit_price: FeatureAccessVariant4UsageOverageUnitPrice | None = field(
+        default=None, metadata={"wire_name": "unitPrice", "required": False}
+    )
 
 
 @dataclass
 class FeatureAccessVariant4UsageOverageUnitPrice:
-    amount: int = 0
-    currency: str = ""
-    scale: Literal[10000] | None = None
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    scale: Literal[10000] | None = field(
+        default=None, metadata={"wire_name": "scale", "required": True}
+    )
 
 
 @dataclass
 class FeatureAccessVariant4UsagePeriod:
-    start: str = ""
-    end: str = ""
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
 
 
 @dataclass
 class FeaturesListResult:
-    object: Literal["list"] | None = None
-    data: list[Feature] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Feature] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class Invoice:
-    id: str = ""
-    customer_id: str = ""
-    subscription_id: str | None = None
-    invoice_number: str = ""
-    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
-    invoice_type: InvoiceType | None = None
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    tax_amount: int = 0
-    total: int = 0
-    period_start: str = ""
-    period_end: str = ""
-    issue_date: str = ""
-    due_date: str = ""
-    memo: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
-    created_at: str = ""
-    updated_at: str = ""
-    credit_applied: int = 0
-    plan_name: str | None = None
-    po_number: str | None = None
-    reference: str | None = None
-    line_items: list[InvoiceLineItemsItem] = field(default_factory=list)
-    object: Literal["invoice"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    subscription_id: str | None = field(
+        default=None, metadata={"wire_name": "subscriptionId", "required": True}
+    )
+    invoice_number: str = field(
+        default="", metadata={"wire_name": "invoiceNumber", "required": True}
+    )
+    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    invoice_type: InvoiceType | None = field(
+        default=None, metadata={"wire_name": "invoiceType", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    subtotal: int = field(default=0, metadata={"wire_name": "subtotal", "required": True})
+    discount_amount: int = field(
+        default=0, metadata={"wire_name": "discountAmount", "required": True}
+    )
+    tax_amount: int = field(default=0, metadata={"wire_name": "taxAmount", "required": True})
+    total: int = field(default=0, metadata={"wire_name": "total", "required": True})
+    period_start: str = field(default="", metadata={"wire_name": "periodStart", "required": True})
+    period_end: str = field(default="", metadata={"wire_name": "periodEnd", "required": True})
+    issue_date: str = field(default="", metadata={"wire_name": "issueDate", "required": True})
+    due_date: str = field(default="", metadata={"wire_name": "dueDate", "required": True})
+    memo: str | None = field(default=None, metadata={"wire_name": "memo", "required": True})
+    metadata: dict[str, Any] = field(
+        default_factory=dict, metadata={"wire_name": "metadata", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    credit_applied: int = field(
+        default=0, metadata={"wire_name": "creditApplied", "required": True}
+    )
+    plan_name: str | None = field(
+        default=None, metadata={"wire_name": "planName", "required": True}
+    )
+    po_number: str | None = field(
+        default=None, metadata={"wire_name": "poNumber", "required": True}
+    )
+    reference: str | None = field(
+        default=None, metadata={"wire_name": "reference", "required": True}
+    )
+    line_items: list[InvoiceLineItemsItem] = field(
+        default_factory=list, metadata={"wire_name": "lineItems", "required": True}
+    )
+    object: Literal["invoice"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class InvoiceDownload:
-    url: str = ""
-    expires_at: str = ""
-    object: Literal["invoice_download_link"] | None = None
-    livemode: bool = False
+    url: str = field(default="", metadata={"wire_name": "url", "required": True})
+    expires_at: str = field(default="", metadata={"wire_name": "expiresAt", "required": True})
+    object: Literal["invoice_download_link"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
@@ -1006,1501 +1510,2615 @@ class InvoiceLineItemsItem:
             "one_time",
         ]
         | None
-    ) = None
-    feature_name: str | None = None
-    description: str = ""
-    quantity: int = 0
-    unit_amount: int = 0
-    amount: int = 0
-    included_amount: int | None = None
-    used_amount: int | None = None
-    overage_amount: int | None = None
-    discount_type: str | None = None
-    discount_value: int | None = None
-    discount_name: str | None = None
-    charge_type: Literal["standard", "advance", "true_up"] | None = None
+    ) = field(default=None, metadata={"wire_name": "lineType", "required": True})
+    feature_name: str | None = field(
+        default=None, metadata={"wire_name": "featureName", "required": True}
+    )
+    description: str = field(default="", metadata={"wire_name": "description", "required": True})
+    quantity: int = field(default=0, metadata={"wire_name": "quantity", "required": True})
+    unit_amount: int = field(default=0, metadata={"wire_name": "unitAmount", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    included_amount: int | None = field(
+        default=None, metadata={"wire_name": "includedAmount", "required": True}
+    )
+    used_amount: int | None = field(
+        default=None, metadata={"wire_name": "usedAmount", "required": True}
+    )
+    overage_amount: int | None = field(
+        default=None, metadata={"wire_name": "overageAmount", "required": True}
+    )
+    discount_type: str | None = field(
+        default=None, metadata={"wire_name": "discountType", "required": True}
+    )
+    discount_value: int | None = field(
+        default=None, metadata={"wire_name": "discountValue", "required": True}
+    )
+    discount_name: str | None = field(
+        default=None, metadata={"wire_name": "discountName", "required": True}
+    )
+    charge_type: Literal["standard", "advance", "true_up"] | None = field(
+        default=None, metadata={"wire_name": "chargeType", "required": True}
+    )
 
 
 @dataclass
 class InvoiceListItem:
-    id: str = ""
-    customer_id: str = ""
-    subscription_id: str | None = None
-    invoice_number: str = ""
-    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = None
-    invoice_type: InvoiceType | None = None
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    tax_amount: int = 0
-    total: int = 0
-    period_start: str = ""
-    period_end: str = ""
-    issue_date: str = ""
-    due_date: str = ""
-    memo: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["invoice"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    subscription_id: str | None = field(
+        default=None, metadata={"wire_name": "subscriptionId", "required": True}
+    )
+    invoice_number: str = field(
+        default="", metadata={"wire_name": "invoiceNumber", "required": True}
+    )
+    status: Literal["draft", "outstanding", "paid", "void", "uncollectible"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    invoice_type: InvoiceType | None = field(
+        default=None, metadata={"wire_name": "invoiceType", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    subtotal: int = field(default=0, metadata={"wire_name": "subtotal", "required": True})
+    discount_amount: int = field(
+        default=0, metadata={"wire_name": "discountAmount", "required": True}
+    )
+    tax_amount: int = field(default=0, metadata={"wire_name": "taxAmount", "required": True})
+    total: int = field(default=0, metadata={"wire_name": "total", "required": True})
+    period_start: str = field(default="", metadata={"wire_name": "periodStart", "required": True})
+    period_end: str = field(default="", metadata={"wire_name": "periodEnd", "required": True})
+    issue_date: str = field(default="", metadata={"wire_name": "issueDate", "required": True})
+    due_date: str = field(default="", metadata={"wire_name": "dueDate", "required": True})
+    memo: str | None = field(default=None, metadata={"wire_name": "memo", "required": True})
+    metadata: dict[str, Any] = field(
+        default_factory=dict, metadata={"wire_name": "metadata", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["invoice"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class InvoicesListResult:
-    object: Literal["list"] | None = None
-    data: list[InvoiceListItem] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[InvoiceListItem] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class Market:
-    id: str = ""
-    name: str = ""
-    country_codes: list[str] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["market"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    country_codes: list[str] = field(
+        default_factory=list, metadata={"wire_name": "countryCodes", "required": True}
+    )
+    metadata: dict[str, Any] = field(
+        default_factory=dict, metadata={"wire_name": "metadata", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["market"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class MarketsListResult:
-    object: Literal["list"] | None = None
-    data: list[Market] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Market] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class Offer:
-    id: str = ""
-    name: str = ""
-    phases: list[OfferPhasesItem] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
-    starts_at: str | None = None
-    ends_at: str | None = None
-    active: bool = False
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["offer"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    phases: list[OfferPhasesItem] = field(
+        default_factory=list, metadata={"wire_name": "phases", "required": True}
+    )
+    metadata: dict[str, Any] = field(
+        default_factory=dict, metadata={"wire_name": "metadata", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    active: bool = field(default=False, metadata={"wire_name": "active", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["offer"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class OfferPhasesItemVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
 
 
 @dataclass
 class OfferPhasesItemVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    percentage: int = 0
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
 
 @dataclass
 class OfferPhasesItemVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    amounts: list[OfferPhasesItemVariant3AmountsItem] = field(default_factory=list)
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    amounts: list[OfferPhasesItemVariant3AmountsItem] = field(
+        default_factory=list, metadata={"wire_name": "amounts", "required": True}
+    )
 
 
 @dataclass
 class OfferPhasesItemVariant3AmountsItem:
-    currency: str = ""
-    amount: int = 0
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class OfferPhasesItemVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    prices: list[OfferPhasesItemVariant4PricesItem] = field(default_factory=list)
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    prices: list[OfferPhasesItemVariant4PricesItem] = field(
+        default_factory=list, metadata={"wire_name": "prices", "required": True}
+    )
 
 
 @dataclass
 class OfferPhasesItemVariant4PricesItem:
-    currency: str = ""
-    amount: int = 0
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class OffersListResult:
-    object: Literal["list"] | None = None
-    data: list[Offer] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Offer] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class Payment:
-    id: str = ""
-    customer_id: str | None = None
-    kind: Literal["link", "charge"] | None = None
+    payment_context: PaymentPaymentContext | None = field(
+        default=None, metadata={"wire_name": "paymentContext", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str | None = field(
+        default=None, metadata={"wire_name": "customerId", "required": True}
+    )
+    kind: Literal["link", "charge"] | None = field(
+        default=None, metadata={"wire_name": "kind", "required": True}
+    )
     status: (
         Literal["pending", "processing", "succeeded", "requires_action", "failed", "canceled"]
         | None
-    ) = None
-    provider: Literal["stripe", "commet", "dlocal"] | None = None
-    amount_subtotal: int = 0
-    tax_amount: int = 0
-    amount_total: int = 0
-    currency: str = ""
-    description: str = ""
-    metadata: dict[str, Any] | None = None
-    url: str | None = None
-    expires_at: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["payment"] | None = None
-    livemode: bool = False
+    ) = field(default=None, metadata={"wire_name": "status", "required": True})
+    provider: Literal["stripe", "commet", "dlocal"] | None = field(
+        default=None, metadata={"wire_name": "provider", "required": True}
+    )
+    amount_subtotal: int = field(
+        default=0, metadata={"wire_name": "amountSubtotal", "required": True}
+    )
+    tax_amount: int = field(default=0, metadata={"wire_name": "taxAmount", "required": True})
+    amount_total: int = field(default=0, metadata={"wire_name": "amountTotal", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    description: str = field(default="", metadata={"wire_name": "description", "required": True})
+    metadata: dict[str, Any] | None = field(
+        default=None, metadata={"wire_name": "metadata", "required": True}
+    )
+    url: str | None = field(default=None, metadata={"wire_name": "url", "required": True})
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["payment"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PaymentMethodUpdateCheckout:
-    checkout_url: str = ""
-    object: Literal["checkout_session"] | None = None
-    livemode: bool = False
+    checkout_url: str = field(default="", metadata={"wire_name": "checkoutUrl", "required": True})
+    object: Literal["checkout_session"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class PaymentPaymentContext:
+    reason: (
+        Literal[
+            "first_subscription_payment",
+            "trial_conversion",
+            "recurring_billing",
+            "plan_change",
+            "reactivation",
+            "subscription_resume",
+            "one_time_payment",
+            "overage",
+            "adjustment",
+        ]
+        | None
+    ) = field(default=None, metadata={"wire_name": "reason", "required": True})
+    payment_link_id: str | None = field(
+        default=None, metadata={"wire_name": "paymentLinkId", "required": True}
+    )
+    recovery: PaymentPaymentContextRecovery | None = field(
+        default=None, metadata={"wire_name": "recovery", "required": True}
+    )
+
+
+@dataclass
+class PaymentPaymentContextRecoveryVariant1:
+    type: Literal["payment_recovery"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class PaymentPaymentContextRecoveryVariant2:
+    type: Literal["dunning_retry"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    attempt: int = field(default=0, metadata={"wire_name": "attempt", "required": True})
+    max_attempts: int = field(default=0, metadata={"wire_name": "maxAttempts", "required": True})
 
 
 @dataclass
 class PaymentsListResult:
-    object: Literal["list"] | None = None
-    data: list[Payment] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Payment] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class Payout:
-    id: str = ""
-    status: Literal["pending", "in_transit", "paid", "failed", "canceled"] | None = None
-    amount: int = 0
-    fee: int = 0
-    net_amount: int = 0
-    currency: str = ""
-    description: str | None = None
-    provider_transfer_id: str = ""
-    created_at: str = ""
-    object: Literal["payout"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    status: Literal["pending", "in_transit", "paid", "failed", "canceled"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    fee: int = field(default=0, metadata={"wire_name": "fee", "required": True})
+    net_amount: int = field(default=0, metadata={"wire_name": "netAmount", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    provider_transfer_id: str = field(
+        default="", metadata={"wire_name": "providerTransferId", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["payout"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PayoutBankAccount:
-    id: str = ""
-    provider_external_account_id: str | None = None
-    holder_name: str = ""
-    last4: str = ""
-    bank_name: str | None = None
-    country: str = ""
-    currency: str = ""
-    account_type: Literal["checking", "savings"] | None = None
-    is_default: bool = False
-    status: Literal["active", "errored"] | None = None
-    created_at: str = ""
-    object: Literal["payout_bank_account"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    provider_external_account_id: str | None = field(
+        default=None, metadata={"wire_name": "providerExternalAccountId", "required": True}
+    )
+    holder_name: str = field(default="", metadata={"wire_name": "holderName", "required": True})
+    last4: str = field(default="", metadata={"wire_name": "last4", "required": True})
+    bank_name: str | None = field(
+        default=None, metadata={"wire_name": "bankName", "required": True}
+    )
+    country: str = field(default="", metadata={"wire_name": "country", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    account_type: Literal["checking", "savings"] | None = field(
+        default=None, metadata={"wire_name": "accountType", "required": True}
+    )
+    is_default: bool = field(default=False, metadata={"wire_name": "isDefault", "required": True})
+    status: Literal["active", "errored"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["payout_bank_account"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class Plan:
-    id: str = ""
-    name: str = ""
-    code: str = ""
-    description: str | None = None
-    consumption_model: ConsumptionModel | None = None
-    is_public: bool = False
-    is_default: bool = False
-    is_free: bool = False
-    block_on_exhaustion: bool | None = None
-    sort_order: int = 0
-    plan_group_id: str | None = None
-    metadata: dict[str, Any] | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    features: list[PlanFeaturesItem] = field(default_factory=list)
-    prices: list[PlanPricesItem] = field(default_factory=list)
-    exchange_rates: list[PlanExchangeRatesItem] = field(default_factory=list)
-    object: Literal["plan"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    consumption_model: ConsumptionModel | None = field(
+        default=None, metadata={"wire_name": "consumptionModel", "required": True}
+    )
+    is_public: bool = field(default=False, metadata={"wire_name": "isPublic", "required": True})
+    is_default: bool = field(default=False, metadata={"wire_name": "isDefault", "required": True})
+    is_free: bool = field(default=False, metadata={"wire_name": "isFree", "required": True})
+    block_on_exhaustion: bool | None = field(
+        default=None, metadata={"wire_name": "blockOnExhaustion", "required": True}
+    )
+    sort_order: int = field(default=0, metadata={"wire_name": "sortOrder", "required": True})
+    plan_group_id: str | None = field(
+        default=None, metadata={"wire_name": "planGroupId", "required": True}
+    )
+    metadata: dict[str, Any] | None = field(
+        default=None, metadata={"wire_name": "metadata", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    features: list[PlanFeaturesItem] = field(
+        default_factory=list, metadata={"wire_name": "features", "required": True}
+    )
+    prices: list[PlanPricesItem] = field(
+        default_factory=list, metadata={"wire_name": "prices", "required": True}
+    )
+    exchange_rates: list[PlanExchangeRatesItem] = field(
+        default_factory=list, metadata={"wire_name": "exchangeRates", "required": True}
+    )
+    object: Literal["plan"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1:
-    outcome: Literal["requires_checkout"] | None = None
-    requires_checkout: Literal[True] | None = None
-    checkout_url: str = ""
-    offer_application: PlanChangeVariant1OfferApplication | None = None
-    object: Literal["plan_change"] | None = None
-    livemode: bool = False
+    outcome: Literal["requires_checkout"] | None = field(
+        default=None, metadata={"wire_name": "outcome", "required": True}
+    )
+    requires_checkout: Literal[True] | None = field(
+        default=None, metadata={"wire_name": "requiresCheckout", "required": True}
+    )
+    checkout_url: str = field(default="", metadata={"wire_name": "checkoutUrl", "required": True})
+    offer_application: PlanChangeVariant1OfferApplication | None = field(
+        default=None, metadata={"wire_name": "offerApplication", "required": False}
+    )
+    object: Literal["plan_change"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1OfferApplication:
-    id: str = ""
-    offer_id: str = ""
-    name: str = ""
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    total: int = 0
-    phases: list[PlanChangeVariant1OfferApplicationPhasesItem] = field(default_factory=list)
-    applies_to: PlanChangeVariant1OfferApplicationAppliesTo | None = None
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    offer_id: str = field(default="", metadata={"wire_name": "offerId", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    subtotal: int = field(default=0, metadata={"wire_name": "subtotal", "required": True})
+    discount_amount: int = field(
+        default=0, metadata={"wire_name": "discountAmount", "required": True}
+    )
+    total: int = field(default=0, metadata={"wire_name": "total", "required": True})
+    phases: list[PlanChangeVariant1OfferApplicationPhasesItem] = field(
+        default_factory=list, metadata={"wire_name": "phases", "required": True}
+    )
+    applies_to: PlanChangeVariant1OfferApplicationAppliesTo | None = field(
+        default=None, metadata={"wire_name": "appliesTo", "required": True}
+    )
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationAppliesToVariant1:
-    type: Literal["plan_price"] | None = None
-    id: str = ""
+    type: Literal["plan_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationAppliesToVariant2:
-    type: Literal["addon"] | None = None
-    id: str = ""
+    type: Literal["addon"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationAppliesToVariant3:
-    type: Literal["credit_pack"] | None = None
-    id: str = ""
+    type: Literal["credit_pack"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationPhasesItemVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationPhasesItemVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    percentage: int = 0
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationPhasesItemVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    amount: int = 0
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class PlanChangeVariant1OfferApplicationPhasesItemVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    price: int = 0
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class PlanChangeVariant2:
-    outcome: Literal["scheduled"] | None = None
-    id: str = ""
-    scheduled: Literal[True] | None = None
-    scheduled_for: str = ""
+    outcome: Literal["scheduled"] | None = field(
+        default=None, metadata={"wire_name": "outcome", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    scheduled: Literal[True] | None = field(
+        default=None, metadata={"wire_name": "scheduled", "required": True}
+    )
+    scheduled_for: str = field(default="", metadata={"wire_name": "scheduledFor", "required": True})
     change_type: (
         Literal[
             "subscription.plan_downgrade", "subscription.interval_change", "subscription.cancel"
         ]
         | None
-    ) = None
-    customer_id: str = ""
-    new_plan_id: str | None = None
-    new_plan_name: str | None = None
-    new_billing_interval: str | None = None
-    seat_limit_warning: PlanChangeVariant2SeatLimitWarning | None = None
-    object: Literal["plan_change"] | None = None
-    livemode: bool = False
+    ) = field(default=None, metadata={"wire_name": "changeType", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    new_plan_id: str | None = field(
+        default=None, metadata={"wire_name": "newPlanId", "required": False}
+    )
+    new_plan_name: str | None = field(
+        default=None, metadata={"wire_name": "newPlanName", "required": False}
+    )
+    new_billing_interval: str | None = field(
+        default=None, metadata={"wire_name": "newBillingInterval", "required": False}
+    )
+    seat_limit_warning: PlanChangeVariant2SeatLimitWarning | None = field(
+        default=None, metadata={"wire_name": "seatLimitWarning", "required": False}
+    )
+    object: Literal["plan_change"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanChangeVariant2SeatLimitWarning:
-    feature_code: str = ""
-    feature_name: str = ""
-    current_seats: int = 0
-    included: int = 0
-    new_plan_name: str = ""
-    effective_date: str = ""
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    feature_name: str = field(default="", metadata={"wire_name": "featureName", "required": True})
+    current_seats: int = field(default=0, metadata={"wire_name": "currentSeats", "required": True})
+    included: int = field(default=0, metadata={"wire_name": "included", "required": True})
+    new_plan_name: str = field(default="", metadata={"wire_name": "newPlanName", "required": True})
+    effective_date: str = field(
+        default="", metadata={"wire_name": "effectiveDate", "required": True}
+    )
 
 
 @dataclass
 class PlanChangeVariant3:
-    outcome: Literal["completed"] | None = None
-    id: str = ""
-    scheduled: Literal[False] | None = None
-    customer_id: str = ""
-    previous_plan: PlanChangeVariant3PreviousPlan | None = None
-    current_plan: PlanChangeVariant3CurrentPlan | None = None
-    billing_interval: str = ""
-    billing: PlanChangeVariant3Billing | None = None
-    invoice_id: str | None = None
-    offer_application: PlanChangeVariant3OfferApplication | None = None
-    object: Literal["plan_change"] | None = None
-    livemode: bool = False
+    outcome: Literal["completed"] | None = field(
+        default=None, metadata={"wire_name": "outcome", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    scheduled: Literal[False] | None = field(
+        default=None, metadata={"wire_name": "scheduled", "required": True}
+    )
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    previous_plan: PlanChangeVariant3PreviousPlan | None = field(
+        default=None, metadata={"wire_name": "previousPlan", "required": True}
+    )
+    current_plan: PlanChangeVariant3CurrentPlan | None = field(
+        default=None, metadata={"wire_name": "currentPlan", "required": True}
+    )
+    billing_interval: str = field(
+        default="", metadata={"wire_name": "billingInterval", "required": True}
+    )
+    billing: PlanChangeVariant3Billing | None = field(
+        default=None, metadata={"wire_name": "billing", "required": True}
+    )
+    invoice_id: str | None = field(
+        default=None, metadata={"wire_name": "invoiceId", "required": False}
+    )
+    offer_application: PlanChangeVariant3OfferApplication | None = field(
+        default=None, metadata={"wire_name": "offerApplication", "required": False}
+    )
+    object: Literal["plan_change"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3Billing:
-    credit: int = 0
-    credits_applied: int = 0
-    charge: int = 0
-    tax_amount: int = 0
-    net_amount: int = 0
-    total_charged: int = 0
-    remaining_credit_balance: int = 0
+    credit: int = field(default=0, metadata={"wire_name": "credit", "required": True})
+    credits_applied: int = field(
+        default=0, metadata={"wire_name": "creditsApplied", "required": True}
+    )
+    charge: int = field(default=0, metadata={"wire_name": "charge", "required": True})
+    tax_amount: int = field(default=0, metadata={"wire_name": "taxAmount", "required": True})
+    net_amount: int = field(default=0, metadata={"wire_name": "netAmount", "required": True})
+    total_charged: int = field(default=0, metadata={"wire_name": "totalCharged", "required": True})
+    remaining_credit_balance: int = field(
+        default=0, metadata={"wire_name": "remainingCreditBalance", "required": True}
+    )
 
 
 @dataclass
 class PlanChangeVariant3CurrentPlan:
-    id: str = ""
-    name: str = ""
-    price: int = 0
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3OfferApplication:
-    id: str = ""
-    offer_id: str = ""
-    name: str = ""
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    total: int = 0
-    phases: list[PlanChangeVariant3OfferApplicationPhasesItem] = field(default_factory=list)
-    applies_to: PlanChangeVariant3OfferApplicationAppliesTo | None = None
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    offer_id: str = field(default="", metadata={"wire_name": "offerId", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    subtotal: int = field(default=0, metadata={"wire_name": "subtotal", "required": True})
+    discount_amount: int = field(
+        default=0, metadata={"wire_name": "discountAmount", "required": True}
+    )
+    total: int = field(default=0, metadata={"wire_name": "total", "required": True})
+    phases: list[PlanChangeVariant3OfferApplicationPhasesItem] = field(
+        default_factory=list, metadata={"wire_name": "phases", "required": True}
+    )
+    applies_to: PlanChangeVariant3OfferApplicationAppliesTo | None = field(
+        default=None, metadata={"wire_name": "appliesTo", "required": True}
+    )
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationAppliesToVariant1:
-    type: Literal["plan_price"] | None = None
-    id: str = ""
+    type: Literal["plan_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationAppliesToVariant2:
-    type: Literal["addon"] | None = None
-    id: str = ""
+    type: Literal["addon"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationAppliesToVariant3:
-    type: Literal["credit_pack"] | None = None
-    id: str = ""
+    type: Literal["credit_pack"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationPhasesItemVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationPhasesItemVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    percentage: int = 0
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationPhasesItemVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    amount: int = 0
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3OfferApplicationPhasesItemVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    price: int = 0
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class PlanChangeVariant3PreviousPlan:
-    id: str = ""
-    name: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
 
 
 @dataclass
 class PlanExchangeRatesItem:
-    currency: str = ""
-    exchange_rate: float = 0.0
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    exchange_rate: float = field(
+        default=0.0, metadata={"wire_name": "exchangeRate", "required": True}
+    )
 
 
 @dataclass
 class PlanFeature:
-    plan_id: str = ""
-    feature_id: str = ""
-    enabled: bool = False
-    included_amount: int = 0
-    unlimited: bool = False
-    overage: PlanFeatureOverage | None = None
-    credits_per_unit: int | None = None
-    pricing_mode: Literal["fixed", "ai_model"] | None = None
-    margin: int | None = None
-    object: Literal["plan_feature"] | None = None
-    livemode: bool = False
+    plan_id: str = field(default="", metadata={"wire_name": "planId", "required": True})
+    feature_id: str = field(default="", metadata={"wire_name": "featureId", "required": True})
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    included_amount: int = field(
+        default=0, metadata={"wire_name": "includedAmount", "required": True}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    overage: PlanFeatureOverage | None = field(
+        default=None, metadata={"wire_name": "overage", "required": True}
+    )
+    credits_per_unit: int | None = field(
+        default=None, metadata={"wire_name": "creditsPerUnit", "required": True}
+    )
+    pricing_mode: Literal["fixed", "ai_model"] | None = field(
+        default=None, metadata={"wire_name": "pricingMode", "required": True}
+    )
+    margin: int | None = field(default=None, metadata={"wire_name": "margin", "required": True})
+    object: Literal["plan_feature"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanFeatureOverage:
-    enabled: bool = False
-    unit_price: int = 0
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    unit_price: int = field(default=0, metadata={"wire_name": "unitPrice", "required": True})
 
 
 @dataclass
 class PlanFeaturesItem:
-    code: str = ""
-    name: str = ""
-    type: FeatureType | None = None
-    unit_name: str | None = None
-    enabled: bool = False
-    included_amount: int | None = None
-    unlimited: bool = False
-    overage: PlanFeaturesItemOverage | None = None
-    regional_prices: list[PlanFeaturesItemRegionalPricesItem] = field(default_factory=list)
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    type: FeatureType | None = field(default=None, metadata={"wire_name": "type", "required": True})
+    unit_name: str | None = field(
+        default=None, metadata={"wire_name": "unitName", "required": True}
+    )
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    included_amount: int | None = field(
+        default=None, metadata={"wire_name": "includedAmount", "required": True}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    overage: PlanFeaturesItemOverage | None = field(
+        default=None, metadata={"wire_name": "overage", "required": True}
+    )
+    regional_prices: list[PlanFeaturesItemRegionalPricesItem] = field(
+        default_factory=list, metadata={"wire_name": "regionalPrices", "required": True}
+    )
 
 
 @dataclass
 class PlanFeaturesItemOverage:
-    enabled: bool = False
-    model: Literal["per_unit"] | None = None
-    unit_price: int | None = None
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    model: Literal["per_unit"] | None = field(
+        default=None, metadata={"wire_name": "model", "required": True}
+    )
+    unit_price: int | None = field(
+        default=None, metadata={"wire_name": "unitPrice", "required": True}
+    )
 
 
 @dataclass
 class PlanFeaturesItemRegionalPricesItem:
-    currency: str = ""
-    overage_unit_price: int | None = None
-    auto_synced: bool = False
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    overage_unit_price: int | None = field(
+        default=None, metadata={"wire_name": "overageUnitPrice", "required": True}
+    )
+    auto_synced: bool = field(default=False, metadata={"wire_name": "autoSynced", "required": True})
 
 
 @dataclass
 class PlanGrant:
-    id: str = ""
-    customer_id: str = ""
-    subscription_id: str = ""
-    base_plan_id: str = ""
-    plan_id: str = ""
-    plan_release_id: str = ""
-    status: Literal["active", "expired", "revoked"] | None = None
-    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
-    duration_cycles: int | None = None
-    starts_at: str = ""
-    expires_at: str | None = None
-    reason: str = ""
-    source: Literal["dashboard", "api"] | None = None
-    revoked_at: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    events: list[PlanGrantEventsItem] = field(default_factory=list)
-    object: Literal["plan_grant"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    subscription_id: str = field(
+        default="", metadata={"wire_name": "subscriptionId", "required": True}
+    )
+    base_plan_id: str = field(default="", metadata={"wire_name": "basePlanId", "required": True})
+    plan_id: str = field(default="", metadata={"wire_name": "planId", "required": True})
+    plan_release_id: str = field(
+        default="", metadata={"wire_name": "planReleaseId", "required": True}
+    )
+    status: Literal["active", "expired", "revoked"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = field(
+        default=None, metadata={"wire_name": "duration", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    starts_at: str = field(default="", metadata={"wire_name": "startsAt", "required": True})
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    reason: str = field(default="", metadata={"wire_name": "reason", "required": True})
+    source: Literal["dashboard", "api"] | None = field(
+        default=None, metadata={"wire_name": "source", "required": True}
+    )
+    revoked_at: str | None = field(
+        default=None, metadata={"wire_name": "revokedAt", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    events: list[PlanGrantEventsItem] = field(
+        default_factory=list, metadata={"wire_name": "events", "required": True}
+    )
+    object: Literal["plan_grant"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanGrantEventsItem:
-    id: str = ""
-    type: Literal["created", "updated", "expired", "revoked"] | None = None
-    reason: str = ""
-    source: Literal["dashboard", "api", "system"] | None = None
-    previous_expires_at: str | None = None
-    expires_at: str | None = None
-    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
-    duration_cycles: int | None = None
-    requested_expires_at: str | None = None
-    created_at: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    type: Literal["created", "updated", "expired", "revoked"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    reason: str = field(default="", metadata={"wire_name": "reason", "required": True})
+    source: Literal["dashboard", "api", "system"] | None = field(
+        default=None, metadata={"wire_name": "source", "required": True}
+    )
+    previous_expires_at: str | None = field(
+        default=None, metadata={"wire_name": "previousExpiresAt", "required": True}
+    )
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = field(
+        default=None, metadata={"wire_name": "duration", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    requested_expires_at: str | None = field(
+        default=None, metadata={"wire_name": "requestedExpiresAt", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
 
 
 @dataclass
 class PlanGroup:
-    id: str = ""
-    name: str = ""
-    description: str | None = None
-    is_public: bool = False
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["plan_group"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    is_public: bool = field(default=False, metadata={"wire_name": "isPublic", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["plan_group"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanGroupDetail:
-    id: str = ""
-    name: str = ""
-    description: str | None = None
-    is_public: bool = False
-    created_at: str = ""
-    updated_at: str = ""
-    plans: list[PlanGroupDetailPlansItem] = field(default_factory=list)
-    object: Literal["plan_group"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    is_public: bool = field(default=False, metadata={"wire_name": "isPublic", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    plans: list[PlanGroupDetailPlansItem] = field(
+        default_factory=list, metadata={"wire_name": "plans", "required": True}
+    )
+    object: Literal["plan_group"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanGroupDetailPlansItem:
-    id: str = ""
-    name: str = ""
-    sort_order: int = 0
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    sort_order: int = field(default=0, metadata={"wire_name": "sortOrder", "required": True})
 
 
 @dataclass
 class PlanGroupsListResult:
-    object: Literal["list"] | None = None
-    data: list[PlanGroup] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[PlanGroup] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class PlanPrice:
-    id: str = ""
-    plan_id: str = ""
-    billing_interval: BillingInterval | None = None
-    price: int = 0
-    is_default: bool = False
-    trial_days: int = 0
-    included_balance: int | None = None
-    included_credits: int | None = None
-    offer_id: str | None = None
-    inherits_from_price_id: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
-    market_prices: list[PlanPriceMarketPricesItem] = field(default_factory=list)
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["plan_price"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    plan_id: str = field(default="", metadata={"wire_name": "planId", "required": True})
+    billing_interval: BillingInterval | None = field(
+        default=None, metadata={"wire_name": "billingInterval", "required": True}
+    )
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    is_default: bool = field(default=False, metadata={"wire_name": "isDefault", "required": True})
+    trial_days: int = field(default=0, metadata={"wire_name": "trialDays", "required": True})
+    included_balance: int | None = field(
+        default=None, metadata={"wire_name": "includedBalance", "required": True}
+    )
+    included_credits: int | None = field(
+        default=None, metadata={"wire_name": "includedCredits", "required": True}
+    )
+    offer_id: str | None = field(default=None, metadata={"wire_name": "offerId", "required": True})
+    inherits_from_price_id: str | None = field(
+        default=None, metadata={"wire_name": "inheritsFromPriceId", "required": True}
+    )
+    metadata: dict[str, Any] = field(
+        default_factory=dict, metadata={"wire_name": "metadata", "required": True}
+    )
+    market_prices: list[PlanPriceMarketPricesItem] = field(
+        default_factory=list, metadata={"wire_name": "marketPrices", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["plan_price"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanPriceMarketPricesItem:
-    market_group_id: str = ""
-    currency: str = ""
-    price: int = 0
+    market_group_id: str = field(
+        default="", metadata={"wire_name": "marketGroupId", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class PlanPricesItem:
-    id: str = ""
-    billing_interval: BillingInterval | None = None
-    price: int = 0
-    is_default: bool = False
-    trial_days: int = 0
-    included_balance: int | None = None
-    included_credits: int | None = None
-    offer_id: str | None = None
-    inherits_from_price_id: str | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
-    market_prices: list[PlanPricesItemMarketPricesItem] = field(default_factory=list)
-    regional_prices: list[PlanPricesItemRegionalPricesItem] = field(default_factory=list)
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    billing_interval: BillingInterval | None = field(
+        default=None, metadata={"wire_name": "billingInterval", "required": True}
+    )
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    is_default: bool = field(default=False, metadata={"wire_name": "isDefault", "required": True})
+    trial_days: int = field(default=0, metadata={"wire_name": "trialDays", "required": True})
+    included_balance: int | None = field(
+        default=None, metadata={"wire_name": "includedBalance", "required": True}
+    )
+    included_credits: int | None = field(
+        default=None, metadata={"wire_name": "includedCredits", "required": True}
+    )
+    offer_id: str | None = field(default=None, metadata={"wire_name": "offerId", "required": True})
+    inherits_from_price_id: str | None = field(
+        default=None, metadata={"wire_name": "inheritsFromPriceId", "required": True}
+    )
+    metadata: dict[str, Any] = field(
+        default_factory=dict, metadata={"wire_name": "metadata", "required": True}
+    )
+    market_prices: list[PlanPricesItemMarketPricesItem] = field(
+        default_factory=list, metadata={"wire_name": "marketPrices", "required": True}
+    )
+    regional_prices: list[PlanPricesItemRegionalPricesItem] = field(
+        default_factory=list, metadata={"wire_name": "regionalPrices", "required": True}
+    )
 
 
 @dataclass
 class PlanPricesItemMarketPricesItem:
-    market_group_id: str = ""
-    currency: str = ""
-    price: int = 0
+    market_group_id: str = field(
+        default="", metadata={"wire_name": "marketGroupId", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class PlanPricesItemRegionalPricesItem:
-    currency: str = ""
-    price: int = 0
-    included_balance: int | None = None
-    auto_synced: bool = False
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    included_balance: int | None = field(
+        default=None, metadata={"wire_name": "includedBalance", "required": True}
+    )
+    auto_synced: bool = field(default=False, metadata={"wire_name": "autoSynced", "required": True})
 
 
 @dataclass
 class PlanRegionalPricing:
-    price_id: str = ""
-    overrides: list[PlanRegionalPricingOverridesItem] = field(default_factory=list)
-    object: Literal["plan_regional_pricing"] | None = None
-    livemode: bool = False
+    price_id: str = field(default="", metadata={"wire_name": "priceId", "required": True})
+    overrides: list[PlanRegionalPricingOverridesItem] = field(
+        default_factory=list, metadata={"wire_name": "overrides", "required": True}
+    )
+    object: Literal["plan_regional_pricing"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlanRegionalPricingOverridesItem:
-    currency: str = ""
-    price: int = 0
-    included_balance: int | None = None
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    included_balance: int | None = field(
+        default=None, metadata={"wire_name": "includedBalance", "required": False}
+    )
 
 
 @dataclass
 class PlanRegionalPricingResult:
-    plan_id: str = ""
-    currency: str = ""
-    exchange_rate: float = 0.0
-    prices_configured: int = 0
-    features_configured: int = 0
-    object: Literal["plan_regional_pricing"] | None = None
-    livemode: bool = False
+    plan_id: str = field(default="", metadata={"wire_name": "planId", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    exchange_rate: float = field(
+        default=0.0, metadata={"wire_name": "exchangeRate", "required": True}
+    )
+    prices_configured: int = field(
+        default=0, metadata={"wire_name": "pricesConfigured", "required": True}
+    )
+    features_configured: int = field(
+        default=0, metadata={"wire_name": "featuresConfigured", "required": True}
+    )
+    object: Literal["plan_regional_pricing"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PlansListResult:
-    object: Literal["list"] | None = None
-    data: list[Plan] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Plan] = field(default_factory=list, metadata={"wire_name": "data", "required": True})
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class PortalAccess:
-    portal_url: str = ""
-    object: Literal["portal_session"] | None = None
-    livemode: bool = False
+    portal_url: str = field(default="", metadata={"wire_name": "portalUrl", "required": True})
+    object: Literal["portal_session"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PreviewChange:
-    currency: str = ""
-    current_plan_credit: int = 0
-    new_plan_charge: int = 0
-    estimated_total: int = 0
-    effective_date: str = ""
-    days_remaining: int = 0
-    total_days: int = 0
-    is_upgrade: bool = False
-    offer_application: PreviewChangeOfferApplication | None = None
-    object: Literal["plan_change_preview"] | None = None
-    livemode: bool = False
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    current_plan_credit: int = field(
+        default=0, metadata={"wire_name": "currentPlanCredit", "required": True}
+    )
+    new_plan_charge: int = field(
+        default=0, metadata={"wire_name": "newPlanCharge", "required": True}
+    )
+    estimated_total: int = field(
+        default=0, metadata={"wire_name": "estimatedTotal", "required": True}
+    )
+    effective_date: str = field(
+        default="", metadata={"wire_name": "effectiveDate", "required": True}
+    )
+    days_remaining: int = field(
+        default=0, metadata={"wire_name": "daysRemaining", "required": True}
+    )
+    total_days: int = field(default=0, metadata={"wire_name": "totalDays", "required": True})
+    is_upgrade: bool = field(default=False, metadata={"wire_name": "isUpgrade", "required": True})
+    offer_application: PreviewChangeOfferApplication | None = field(
+        default=None, metadata={"wire_name": "offerApplication", "required": False}
+    )
+    object: Literal["plan_change_preview"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PreviewChangeOfferApplication:
-    id: str = ""
-    offer_id: str = ""
-    name: str = ""
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    total: int = 0
-    phases: list[PreviewChangeOfferApplicationPhasesItem] = field(default_factory=list)
-    applies_to: PreviewChangeOfferApplicationAppliesTo | None = None
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    offer_id: str = field(default="", metadata={"wire_name": "offerId", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    subtotal: int = field(default=0, metadata={"wire_name": "subtotal", "required": True})
+    discount_amount: int = field(
+        default=0, metadata={"wire_name": "discountAmount", "required": True}
+    )
+    total: int = field(default=0, metadata={"wire_name": "total", "required": True})
+    phases: list[PreviewChangeOfferApplicationPhasesItem] = field(
+        default_factory=list, metadata={"wire_name": "phases", "required": True}
+    )
+    applies_to: PreviewChangeOfferApplicationAppliesTo | None = field(
+        default=None, metadata={"wire_name": "appliesTo", "required": True}
+    )
 
 
 @dataclass
 class PreviewChangeOfferApplicationAppliesToVariant1:
-    type: Literal["plan_price"] | None = None
-    id: str = ""
+    type: Literal["plan_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PreviewChangeOfferApplicationAppliesToVariant2:
-    type: Literal["addon"] | None = None
-    id: str = ""
+    type: Literal["addon"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PreviewChangeOfferApplicationAppliesToVariant3:
-    type: Literal["credit_pack"] | None = None
-    id: str = ""
+    type: Literal["credit_pack"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class PreviewChangeOfferApplicationPhasesItemVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
 
 
 @dataclass
 class PreviewChangeOfferApplicationPhasesItemVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    percentage: int = 0
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
 
 @dataclass
 class PreviewChangeOfferApplicationPhasesItemVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    amount: int = 0
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class PreviewChangeOfferApplicationPhasesItemVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    price: int = 0
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class PromoCode:
-    id: str = ""
-    code: str = ""
-    offer_id: str = ""
-    billing_interval: BillingInterval | None = None
-    max_redemptions: int | None = None
-    expires_at: str | None = None
-    is_active: bool = False
-    redemption_count: int = 0
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["promo_code"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    offer_id: str = field(default="", metadata={"wire_name": "offerId", "required": True})
+    billing_interval: BillingInterval | None = field(
+        default=None, metadata={"wire_name": "billingInterval", "required": True}
+    )
+    max_redemptions: int | None = field(
+        default=None, metadata={"wire_name": "maxRedemptions", "required": True}
+    )
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    is_active: bool = field(default=False, metadata={"wire_name": "isActive", "required": True})
+    redemption_count: int = field(
+        default=0, metadata={"wire_name": "redemptionCount", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["promo_code"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class PromoCodesListResult:
-    object: Literal["list"] | None = None
-    data: list[PromoCode] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[PromoCode] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class QuotaGetAllResult:
-    object: Literal["list"] | None = None
-    data: list[UsageQuota] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[UsageQuota] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class ReactivatedSubscription:
-    subscription_id: str = ""
-    invoice_id: str = ""
-    status: Literal["processing", "succeeded"] | None = None
-    offer_application: ReactivatedSubscriptionOfferApplication | None = None
-    object: Literal["subscription_reactivation"] | None = None
-    livemode: bool = False
+    subscription_id: str = field(
+        default="", metadata={"wire_name": "subscriptionId", "required": True}
+    )
+    invoice_id: str = field(default="", metadata={"wire_name": "invoiceId", "required": True})
+    status: Literal["processing", "succeeded"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    offer_application: ReactivatedSubscriptionOfferApplication | None = field(
+        default=None, metadata={"wire_name": "offerApplication", "required": False}
+    )
+    object: Literal["subscription_reactivation"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplication:
-    id: str = ""
-    offer_id: str = ""
-    name: str = ""
-    currency: str = ""
-    subtotal: int = 0
-    discount_amount: int = 0
-    total: int = 0
-    phases: list[ReactivatedSubscriptionOfferApplicationPhasesItem] = field(default_factory=list)
-    applies_to: ReactivatedSubscriptionOfferApplicationAppliesTo | None = None
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    offer_id: str = field(default="", metadata={"wire_name": "offerId", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    subtotal: int = field(default=0, metadata={"wire_name": "subtotal", "required": True})
+    discount_amount: int = field(
+        default=0, metadata={"wire_name": "discountAmount", "required": True}
+    )
+    total: int = field(default=0, metadata={"wire_name": "total", "required": True})
+    phases: list[ReactivatedSubscriptionOfferApplicationPhasesItem] = field(
+        default_factory=list, metadata={"wire_name": "phases", "required": True}
+    )
+    applies_to: ReactivatedSubscriptionOfferApplicationAppliesTo | None = field(
+        default=None, metadata={"wire_name": "appliesTo", "required": True}
+    )
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationAppliesToVariant1:
-    type: Literal["plan_price"] | None = None
-    id: str = ""
+    type: Literal["plan_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationAppliesToVariant2:
-    type: Literal["addon"] | None = None
-    id: str = ""
+    type: Literal["addon"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationAppliesToVariant3:
-    type: Literal["credit_pack"] | None = None
-    id: str = ""
+    type: Literal["credit_pack"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    percentage: int = 0
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    amount: int = 0
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class ReactivatedSubscriptionOfferApplicationPhasesItemVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
-    price: int = 0
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class RecoveryLink:
-    url: str = ""
-    token: str = ""
-    object: Literal["recovery_link"] | None = None
-    livemode: bool = False
+    url: str = field(default="", metadata={"wire_name": "url", "required": True})
+    token: str = field(default="", metadata={"wire_name": "token", "required": True})
+    object: Literal["recovery_link"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class Refund:
-    id: str = ""
-    transaction_id: str = ""
-    amount: int = 0
-    currency: str = ""
-    charge_id: str | None = None
-    status: Literal["pending", "requires_action", "succeeded", "failed", "canceled"] | None = None
-    reason: Literal["duplicate", "fraudulent", "requested_by_customer"] | None = None
-    object: Literal["refund"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    transaction_id: str = field(
+        default="", metadata={"wire_name": "transactionId", "required": True}
+    )
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    charge_id: str | None = field(
+        default=None, metadata={"wire_name": "chargeId", "required": True}
+    )
+    status: Literal["pending", "requires_action", "succeeded", "failed", "canceled"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    reason: Literal["duplicate", "fraudulent", "requested_by_customer"] | None = field(
+        default=None, metadata={"wire_name": "reason", "required": True}
+    )
+    object: Literal["refund"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class RemovedPlanFeature:
-    id: str = ""
-    removed: Literal[True] | None = None
-    object: Literal["plan_feature"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    removed: Literal[True] | None = field(
+        default=None, metadata={"wire_name": "removed", "required": True}
+    )
+    object: Literal["plan_feature"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class RemovedPlanFromGroup:
-    id: str = ""
-    removed: bool = False
-    object: Literal["plan_group_membership"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    removed: bool = field(default=False, metadata={"wire_name": "removed", "required": True})
+    object: Literal["plan_group_membership"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class ReorderedPlans:
-    reordered: bool = False
-    object: Literal["plan_group_order"] | None = None
-    livemode: bool = False
+    reordered: bool = field(default=False, metadata={"wire_name": "reordered", "required": True})
+    object: Literal["plan_group_order"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SeatBalance:
-    current: int = 0
-    as_of: str = ""
-    object: Literal["seat_balance"] | None = None
-    livemode: bool = False
+    current: int = field(default=0, metadata={"wire_name": "current", "required": True})
+    as_of: str = field(default="", metadata={"wire_name": "asOf", "required": True})
+    object: Literal["seat_balance"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SeatBalanceCollection:
-    balances: dict[str, SeatBalanceCollectionBalancesValue] = field(default_factory=dict)
-    object: Literal["seat_balance_collection"] | None = None
-    livemode: bool = False
+    balances: dict[str, SeatBalanceCollectionBalancesValue] = field(
+        default_factory=dict, metadata={"wire_name": "balances", "required": True}
+    )
+    object: Literal["seat_balance_collection"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SeatBalanceCollectionBalancesValue:
-    current: int = 0
-    as_of: str = ""
+    current: int = field(default=0, metadata={"wire_name": "current", "required": True})
+    as_of: str = field(default="", metadata={"wire_name": "asOf", "required": True})
 
 
 @dataclass
 class SeatEvent:
-    id: str = ""
-    customer_id: str = ""
-    feature_code: str = ""
-    previous_balance: int = 0
-    new_balance: int = 0
-    ts: str = ""
-    created_at: str = ""
-    object: Literal["seat_event"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    previous_balance: int = field(
+        default=0, metadata={"wire_name": "previousBalance", "required": True}
+    )
+    new_balance: int = field(default=0, metadata={"wire_name": "newBalance", "required": True})
+    ts: str = field(default="", metadata={"wire_name": "ts", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["seat_event"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SeatsSetAllResult:
-    object: Literal["list"] | None = None
-    data: list[SeatEvent] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[SeatEvent] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class SentInvoice:
-    sent: bool = False
-    sent_at: str = ""
-    object: Literal["invoice_delivery"] | None = None
-    livemode: bool = False
+    sent: bool = field(default=False, metadata={"wire_name": "sent", "required": True})
+    sent_at: str = field(default="", metadata={"wire_name": "sentAt", "required": True})
+    object: Literal["invoice_delivery"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SetPlanRegionalPricingParamsFeaturesItem:
-    feature_id: str = ""
-    overage_unit_price: int = 0
+    feature_id: str = field(default="", metadata={"wire_name": "featureId", "required": True})
+    overage_unit_price: int = field(
+        default=0, metadata={"wire_name": "overageUnitPrice", "required": True}
+    )
 
 
 @dataclass
 class SetPlanRegionalPricingParamsPricesItem:
-    price_id: str = ""
-    price: int = 0
-    included_balance: int | None = None
+    price_id: str = field(default="", metadata={"wire_name": "priceId", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    included_balance: int | None = field(
+        default=None, metadata={"wire_name": "includedBalance", "required": False}
+    )
 
 
 @dataclass
 class Subscription:
-    id: str = ""
-    customer_id: str = ""
-    plan: SubscriptionPlan | None = None
-    name: str = ""
-    description: str | None = None
-    status: SubscriptionStatus | None = None
-    billing_interval: BillingInterval | None = None
-    trial_ends_at: str | None = None
-    current_period: SubscriptionCurrentPeriod | None = None
-    cancellation: SubscriptionCancellation | None = None
-    cancel_at_period_end: bool = False
-    scheduled_plan_change: SubscriptionScheduledPlanChange | None = None
-    start_date: str = ""
-    end_date: str | None = None
-    billing_day_of_month: int | None = None
-    next_billing_date: str | None = None
-    checkout_url: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    offer_applications: list[SubscriptionOfferApplication] = field(default_factory=list)
-    plan_grant: SubscriptionPlanGrant | None = None
-    consumption_model: ConsumptionModel | None = None
-    features: list[SubscriptionFeaturesItem] = field(default_factory=list)
-    credits: SubscriptionCredits | None = None
-    balance: SubscriptionBalance | None = None
-    price_id: str | None = None
-    object: Literal["subscription"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    plan: SubscriptionPlan | None = field(
+        default=None, metadata={"wire_name": "plan", "required": True}
+    )
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    status: SubscriptionStatus | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    billing_interval: BillingInterval | None = field(
+        default=None, metadata={"wire_name": "billingInterval", "required": True}
+    )
+    trial_ends_at: str | None = field(
+        default=None, metadata={"wire_name": "trialEndsAt", "required": True}
+    )
+    current_period: SubscriptionCurrentPeriod | None = field(
+        default=None, metadata={"wire_name": "currentPeriod", "required": True}
+    )
+    cancellation: SubscriptionCancellation | None = field(
+        default=None, metadata={"wire_name": "cancellation", "required": True}
+    )
+    cancel_at_period_end: bool = field(
+        default=False, metadata={"wire_name": "cancelAtPeriodEnd", "required": True}
+    )
+    scheduled_plan_change: SubscriptionScheduledPlanChange | None = field(
+        default=None, metadata={"wire_name": "scheduledPlanChange", "required": True}
+    )
+    start_date: str = field(default="", metadata={"wire_name": "startDate", "required": True})
+    end_date: str | None = field(default=None, metadata={"wire_name": "endDate", "required": True})
+    billing_day_of_month: int | None = field(
+        default=None, metadata={"wire_name": "billingDayOfMonth", "required": True}
+    )
+    next_billing_date: str | None = field(
+        default=None, metadata={"wire_name": "nextBillingDate", "required": True}
+    )
+    checkout_url: str | None = field(
+        default=None, metadata={"wire_name": "checkoutUrl", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    offer_applications: list[SubscriptionOfferApplication] = field(
+        default_factory=list, metadata={"wire_name": "offerApplications", "required": True}
+    )
+    pause: SubscriptionPause | None = field(
+        default=None, metadata={"wire_name": "pause", "required": True}
+    )
+    plan_grant: SubscriptionPlanGrant | None = field(
+        default=None, metadata={"wire_name": "planGrant", "required": False}
+    )
+    consumption_model: ConsumptionModel | None = field(
+        default=None, metadata={"wire_name": "consumptionModel", "required": True}
+    )
+    features: list[SubscriptionFeaturesItem] = field(
+        default_factory=list, metadata={"wire_name": "features", "required": True}
+    )
+    credits: SubscriptionCredits | None = field(
+        default=None, metadata={"wire_name": "credits", "required": True}
+    )
+    balance: SubscriptionBalance | None = field(
+        default=None, metadata={"wire_name": "balance", "required": True}
+    )
+    price_id: str | None = field(default=None, metadata={"wire_name": "priceId", "required": True})
+    object: Literal["subscription"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SubscriptionAddon:
-    addon_id: str = ""
-    status: Literal["active"] | None = None
-    prorated_charge: int = 0
-    object: Literal["subscription_addon"] | None = None
-    livemode: bool = False
+    addon_id: str = field(default="", metadata={"wire_name": "addonId", "required": True})
+    status: Literal["active"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    prorated_charge: int = field(
+        default=0, metadata={"wire_name": "proratedCharge", "required": True}
+    )
+    object: Literal["subscription_addon"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SubscriptionBalance:
-    remaining: float = 0.0
-    included: float = 0.0
-    currency: str = ""
+    remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
 
 
 @dataclass
 class SubscriptionCancellation:
-    scheduled_at: str = ""
-    reason: str | None = None
-    effective_at: str = ""
+    scheduled_at: str = field(default="", metadata={"wire_name": "scheduledAt", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
 
 
 @dataclass
 class SubscriptionCredits:
-    remaining: float = 0.0
-    included: float = 0.0
-    purchased: float = 0.0
+    remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    purchased: float = field(default=0.0, metadata={"wire_name": "purchased", "required": True})
 
 
 @dataclass
 class SubscriptionCurrentPeriod:
-    start: str = ""
-    end: str = ""
-    days_remaining: float = 0.0
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
+    days_remaining: float = field(
+        default=0.0, metadata={"wire_name": "daysRemaining", "required": True}
+    )
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant1:
-    code: str = ""
-    name: str = ""
-    type: Literal["boolean"] | None = None
-    enabled: bool = False
-    base_access: SubscriptionFeaturesItemVariant1BaseAccess | None = None
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    type: Literal["boolean"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    base_access: SubscriptionFeaturesItemVariant1BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant1BaseAccess:
-    enabled: bool = False
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant2:
-    code: str = ""
-    name: str = ""
-    type: Literal["usage"] | None = None
-    usage: SubscriptionFeaturesItemVariant2Usage | None = None
-    base_access: SubscriptionFeaturesItemVariant2BaseAccess | None = None
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    type: Literal["usage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    usage: SubscriptionFeaturesItemVariant2Usage | None = field(
+        default=None, metadata={"wire_name": "usage", "required": False}
+    )
+    base_access: SubscriptionFeaturesItemVariant2BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant2BaseAccess:
-    included: float = 0.0
-    unlimited: bool = False
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant2Usage:
-    current: float = 0.0
-    included: float = 0.0
-    overage_quantity: float = 0.0
-    overage_unit_price: float | None = None
-    unlimited: bool | None = None
+    current: float = field(default=0.0, metadata={"wire_name": "current", "required": True})
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    overage_quantity: float = field(
+        default=0.0, metadata={"wire_name": "overageQuantity", "required": True}
+    )
+    overage_unit_price: float | None = field(
+        default=None, metadata={"wire_name": "overageUnitPrice", "required": False}
+    )
+    unlimited: bool | None = field(
+        default=None, metadata={"wire_name": "unlimited", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant3:
-    code: str = ""
-    name: str = ""
-    type: Literal["seats"] | None = None
-    usage: SubscriptionFeaturesItemVariant3Usage | None = None
-    base_access: SubscriptionFeaturesItemVariant3BaseAccess | None = None
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    type: Literal["seats"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    usage: SubscriptionFeaturesItemVariant3Usage | None = field(
+        default=None, metadata={"wire_name": "usage", "required": True}
+    )
+    base_access: SubscriptionFeaturesItemVariant3BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant3BaseAccess:
-    included: float = 0.0
-    unlimited: bool = False
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant3Usage:
-    current: float = 0.0
-    included: float = 0.0
-    overage_quantity: float = 0.0
-    overage_unit_price: float | None = None
-    unlimited: bool | None = None
+    current: float = field(default=0.0, metadata={"wire_name": "current", "required": True})
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    overage_quantity: float = field(
+        default=0.0, metadata={"wire_name": "overageQuantity", "required": True}
+    )
+    overage_unit_price: float | None = field(
+        default=None, metadata={"wire_name": "overageUnitPrice", "required": False}
+    )
+    unlimited: bool | None = field(
+        default=None, metadata={"wire_name": "unlimited", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant4:
-    code: str = ""
-    name: str = ""
-    type: Literal["quota"] | None = None
-    usage: SubscriptionFeaturesItemVariant4Usage | None = None
-    base_access: SubscriptionFeaturesItemVariant4BaseAccess | None = None
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    type: Literal["quota"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    usage: SubscriptionFeaturesItemVariant4Usage | None = field(
+        default=None, metadata={"wire_name": "usage", "required": False}
+    )
+    base_access: SubscriptionFeaturesItemVariant4BaseAccess | None = field(
+        default=None, metadata={"wire_name": "baseAccess", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant4BaseAccess:
-    included: float = 0.0
-    unlimited: bool = False
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
 
 
 @dataclass
 class SubscriptionFeaturesItemVariant4Usage:
-    current: float = 0.0
-    included: float = 0.0
-    overage_quantity: float = 0.0
-    overage_unit_price: float | None = None
-    unlimited: bool | None = None
+    current: float = field(default=0.0, metadata={"wire_name": "current", "required": True})
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    overage_quantity: float = field(
+        default=0.0, metadata={"wire_name": "overageQuantity", "required": True}
+    )
+    overage_unit_price: float | None = field(
+        default=None, metadata={"wire_name": "overageUnitPrice", "required": False}
+    )
+    unlimited: bool | None = field(
+        default=None, metadata={"wire_name": "unlimited", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionOfferApplication:
-    id: str = ""
-    name: str = ""
-    applies_to: SubscriptionOfferApplicationAppliesTo | None = None
-    offer_id: str | None = None
-    source: Literal["direct", "introductory", "promo_code", "card_promotion", "custom"] | None = (
-        None
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    applies_to: SubscriptionOfferApplicationAppliesTo | None = field(
+        default=None, metadata={"wire_name": "appliesTo", "required": True}
     )
-    status: Literal["quoted", "applied", "failed", "expired"] | None = None
-    currency: str | None = None
-    subtotal: int | None = None
-    discount_amount: int | None = None
-    total: int | None = None
-    phases: list[SubscriptionOfferApplicationPhase] = field(default_factory=list)
-    quoted_at: str = ""
-    expires_at: str | None = None
-    applied_at: str | None = None
+    offer_id: str | None = field(default=None, metadata={"wire_name": "offerId", "required": True})
+    source: Literal["direct", "introductory", "promo_code", "card_promotion", "custom"] | None = (
+        field(default=None, metadata={"wire_name": "source", "required": True})
+    )
+    status: Literal["quoted", "applied", "failed", "expired"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    currency: str | None = field(default=None, metadata={"wire_name": "currency", "required": True})
+    subtotal: int | None = field(default=None, metadata={"wire_name": "subtotal", "required": True})
+    discount_amount: int | None = field(
+        default=None, metadata={"wire_name": "discountAmount", "required": True}
+    )
+    total: int | None = field(default=None, metadata={"wire_name": "total", "required": True})
+    phases: list[SubscriptionOfferApplicationPhase] = field(
+        default_factory=list, metadata={"wire_name": "phases", "required": True}
+    )
+    quoted_at: str = field(default="", metadata={"wire_name": "quotedAt", "required": True})
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    applied_at: str | None = field(
+        default=None, metadata={"wire_name": "appliedAt", "required": True}
+    )
 
 
 @dataclass
 class SubscriptionOfferApplicationAppliesToVariant1:
-    type: Literal["plan_price"] | None = None
-    id: str = ""
+    type: Literal["plan_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class SubscriptionOfferApplicationAppliesToVariant2:
-    type: Literal["addon"] | None = None
-    id: str = ""
+    type: Literal["addon"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class SubscriptionOfferApplicationAppliesToVariant3:
-    type: Literal["credit_pack"] | None = None
-    id: str = ""
+    type: Literal["credit_pack"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
 
 
 @dataclass
 class SubscriptionOfferApplicationPhaseVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
 
 
 @dataclass
 class SubscriptionOfferApplicationPhaseVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    percentage: int = 0
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
 
 
 @dataclass
 class SubscriptionOfferApplicationPhaseVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    amount: int = 0
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
 
 
 @dataclass
 class SubscriptionOfferApplicationPhaseVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    price: int = 0
-    starts_at: str | None = None
-    ends_at: str | None = None
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    )
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    starts_at: str | None = field(
+        default=None, metadata={"wire_name": "startsAt", "required": True}
+    )
+    ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
+
+
+@dataclass
+class SubscriptionPauseVariant1:
+    status: Literal["scheduled"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    mode: Literal["period_end"] | None = field(
+        default=None, metadata={"wire_name": "mode", "required": True}
+    )
+    requested_at: str = field(default="", metadata={"wire_name": "requestedAt", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
+    resume_at: str | None = field(
+        default=None, metadata={"wire_name": "resumeAt", "required": True}
+    )
+
+
+@dataclass
+class SubscriptionPauseVariant2:
+    status: Literal["active"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    mode: Literal["immediate", "period_end"] | None = field(
+        default=None, metadata={"wire_name": "mode", "required": True}
+    )
+    requested_at: str = field(default="", metadata={"wire_name": "requestedAt", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
+    resume_at: str | None = field(
+        default=None, metadata={"wire_name": "resumeAt", "required": True}
+    )
 
 
 @dataclass
 class SubscriptionPlan:
-    id: str = ""
-    name: str = ""
-    base_price: float = 0.0
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    base_price: float = field(default=0.0, metadata={"wire_name": "basePrice", "required": True})
 
 
 @dataclass
 class SubscriptionPlanGrant:
-    id: str = ""
-    plan: SubscriptionPlanGrantPlan | None = None
-    expires_at: str | None = None
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    plan: SubscriptionPlanGrantPlan | None = field(
+        default=None, metadata={"wire_name": "plan", "required": True}
+    )
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
 
 
 @dataclass
 class SubscriptionPlanGrantPlan:
-    id: str = ""
-    name: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+
+
+@dataclass
+class SubscriptionResume:
+    subscription_id: str = field(
+        default="", metadata={"wire_name": "subscriptionId", "required": True}
+    )
+    invoice_id: str | None = field(
+        default=None, metadata={"wire_name": "invoiceId", "required": True}
+    )
+    status: Literal["processing", "succeeded"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    object: Literal["subscription_resume"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SubscriptionScheduledPlanChange:
-    change_type: Literal["plan_downgrade", "interval_change"] | None = None
-    new_plan_id: str | None = None
-    new_plan_name: str | None = None
-    new_billing_interval: str | None = None
-    scheduled_for: str = ""
+    change_type: Literal["plan_downgrade", "interval_change"] | None = field(
+        default=None, metadata={"wire_name": "changeType", "required": True}
+    )
+    new_plan_id: str | None = field(
+        default=None, metadata={"wire_name": "newPlanId", "required": True}
+    )
+    new_plan_name: str | None = field(
+        default=None, metadata={"wire_name": "newPlanName", "required": True}
+    )
+    new_billing_interval: str | None = field(
+        default=None, metadata={"wire_name": "newBillingInterval", "required": True}
+    )
+    scheduled_for: str = field(default="", metadata={"wire_name": "scheduledFor", "required": True})
 
 
 @dataclass
 class SubscriptionsListResult:
-    object: Literal["list"] | None = None
-    data: list[SubscriptionSummary] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[SubscriptionSummary] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class SubscriptionSummary:
-    id: str = ""
-    customer_id: str = ""
-    plan: SubscriptionSummaryPlan | None = None
-    name: str = ""
-    description: str | None = None
-    status: SubscriptionStatus | None = None
-    billing_interval: BillingInterval | None = None
-    trial_ends_at: str | None = None
-    current_period: SubscriptionSummaryCurrentPeriod | None = None
-    cancellation: SubscriptionSummaryCancellation | None = None
-    cancel_at_period_end: bool = False
-    scheduled_plan_change: SubscriptionSummaryScheduledPlanChange | None = None
-    start_date: str = ""
-    end_date: str | None = None
-    billing_day_of_month: int | None = None
-    next_billing_date: str | None = None
-    checkout_url: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    offer_applications: list[SubscriptionOfferApplication] = field(default_factory=list)
-    price_id: str | None = None
-    object: Literal["subscription"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    plan: SubscriptionSummaryPlan | None = field(
+        default=None, metadata={"wire_name": "plan", "required": True}
+    )
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    status: SubscriptionStatus | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    billing_interval: BillingInterval | None = field(
+        default=None, metadata={"wire_name": "billingInterval", "required": True}
+    )
+    trial_ends_at: str | None = field(
+        default=None, metadata={"wire_name": "trialEndsAt", "required": True}
+    )
+    current_period: SubscriptionSummaryCurrentPeriod | None = field(
+        default=None, metadata={"wire_name": "currentPeriod", "required": True}
+    )
+    cancellation: SubscriptionSummaryCancellation | None = field(
+        default=None, metadata={"wire_name": "cancellation", "required": True}
+    )
+    cancel_at_period_end: bool = field(
+        default=False, metadata={"wire_name": "cancelAtPeriodEnd", "required": True}
+    )
+    scheduled_plan_change: SubscriptionSummaryScheduledPlanChange | None = field(
+        default=None, metadata={"wire_name": "scheduledPlanChange", "required": True}
+    )
+    start_date: str = field(default="", metadata={"wire_name": "startDate", "required": True})
+    end_date: str | None = field(default=None, metadata={"wire_name": "endDate", "required": True})
+    billing_day_of_month: int | None = field(
+        default=None, metadata={"wire_name": "billingDayOfMonth", "required": True}
+    )
+    next_billing_date: str | None = field(
+        default=None, metadata={"wire_name": "nextBillingDate", "required": True}
+    )
+    checkout_url: str | None = field(
+        default=None, metadata={"wire_name": "checkoutUrl", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    offer_applications: list[SubscriptionOfferApplication] = field(
+        default_factory=list, metadata={"wire_name": "offerApplications", "required": True}
+    )
+    pause: SubscriptionSummaryPause | None = field(
+        default=None, metadata={"wire_name": "pause", "required": True}
+    )
+    price_id: str | None = field(default=None, metadata={"wire_name": "priceId", "required": True})
+    object: Literal["subscription"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class SubscriptionSummaryCancellation:
-    scheduled_at: str = ""
-    reason: str | None = None
-    effective_at: str = ""
+    scheduled_at: str = field(default="", metadata={"wire_name": "scheduledAt", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
 
 
 @dataclass
 class SubscriptionSummaryCurrentPeriod:
-    start: str = ""
-    end: str = ""
-    days_remaining: float = 0.0
+    start: str = field(default="", metadata={"wire_name": "start", "required": True})
+    end: str = field(default="", metadata={"wire_name": "end", "required": True})
+    days_remaining: float = field(
+        default=0.0, metadata={"wire_name": "daysRemaining", "required": True}
+    )
+
+
+@dataclass
+class SubscriptionSummaryPauseVariant1:
+    status: Literal["scheduled"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    mode: Literal["period_end"] | None = field(
+        default=None, metadata={"wire_name": "mode", "required": True}
+    )
+    requested_at: str = field(default="", metadata={"wire_name": "requestedAt", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
+    resume_at: str | None = field(
+        default=None, metadata={"wire_name": "resumeAt", "required": True}
+    )
+
+
+@dataclass
+class SubscriptionSummaryPauseVariant2:
+    status: Literal["active"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    mode: Literal["immediate", "period_end"] | None = field(
+        default=None, metadata={"wire_name": "mode", "required": True}
+    )
+    requested_at: str = field(default="", metadata={"wire_name": "requestedAt", "required": True})
+    effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
+    resume_at: str | None = field(
+        default=None, metadata={"wire_name": "resumeAt", "required": True}
+    )
 
 
 @dataclass
 class SubscriptionSummaryPlan:
-    id: str = ""
-    name: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
 
 
 @dataclass
 class SubscriptionSummaryScheduledPlanChange:
-    change_type: Literal["plan_downgrade", "interval_change"] | None = None
-    new_plan_id: str | None = None
-    new_plan_name: str | None = None
-    new_billing_interval: str | None = None
-    scheduled_for: str = ""
+    change_type: Literal["plan_downgrade", "interval_change"] | None = field(
+        default=None, metadata={"wire_name": "changeType", "required": True}
+    )
+    new_plan_id: str | None = field(
+        default=None, metadata={"wire_name": "newPlanId", "required": True}
+    )
+    new_plan_name: str | None = field(
+        default=None, metadata={"wire_name": "newPlanName", "required": True}
+    )
+    new_billing_interval: str | None = field(
+        default=None, metadata={"wire_name": "newBillingInterval", "required": True}
+    )
+    scheduled_for: str = field(default="", metadata={"wire_name": "scheduledFor", "required": True})
 
 
 @dataclass
 class TestClock:
-    simulated_time: str | None = None
-    is_active: bool = False
-    now: str = ""
-    latest_run: TestClockLatestRun | None = None
-    object: Literal["test_clock"] | None = None
-    livemode: bool = False
+    simulated_time: str | None = field(
+        default=None, metadata={"wire_name": "simulatedTime", "required": True}
+    )
+    is_active: bool = field(default=False, metadata={"wire_name": "isActive", "required": True})
+    now: str = field(default="", metadata={"wire_name": "now", "required": True})
+    latest_run: TestClockLatestRun | None = field(
+        default=None, metadata={"wire_name": "latestRun", "required": True}
+    )
+    object: Literal["test_clock"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class TestClockLatestRun:
-    id: str = ""
-    status: Literal["pending", "running", "completed", "failed"] | None = None
-    started_at_time: str = ""
-    target_time: str = ""
-    estimated_deadline_count: int = 0
-    completed_deadline_count: int = 0
-    failed_deadline_count: int = 0
-    error: str | None = None
-    items: list[TestClockLatestRunItemsItem] = field(default_factory=list)
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    status: Literal["pending", "running", "completed", "failed"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    started_at_time: str = field(
+        default="", metadata={"wire_name": "startedAtTime", "required": True}
+    )
+    target_time: str = field(default="", metadata={"wire_name": "targetTime", "required": True})
+    estimated_deadline_count: int = field(
+        default=0, metadata={"wire_name": "estimatedDeadlineCount", "required": True}
+    )
+    completed_deadline_count: int = field(
+        default=0, metadata={"wire_name": "completedDeadlineCount", "required": True}
+    )
+    failed_deadline_count: int = field(
+        default=0, metadata={"wire_name": "failedDeadlineCount", "required": True}
+    )
+    error: str | None = field(default=None, metadata={"wire_name": "error", "required": True})
+    items: list[TestClockLatestRunItemsItem] = field(
+        default_factory=list, metadata={"wire_name": "items", "required": True}
+    )
 
 
 @dataclass
 class TestClockLatestRunItemsItem:
-    kind: Literal["billing_cycle", "dunning_retry"] | None = None
-    status: Literal["pending", "processing", "completed", "failed"] | None = None
-    due_at: str = ""
-    subscription_id: str = ""
-    customer_name: str | None = None
-    invoice_number: str | None = None
-    invoice_id: str | None = None
-    outcome: str | None = None
-    detail: str | None = None
-    error: str | None = None
+    kind: Literal["billing_cycle", "dunning_retry"] | None = field(
+        default=None, metadata={"wire_name": "kind", "required": True}
+    )
+    status: Literal["pending", "processing", "completed", "failed"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    due_at: str = field(default="", metadata={"wire_name": "dueAt", "required": True})
+    subscription_id: str = field(
+        default="", metadata={"wire_name": "subscriptionId", "required": True}
+    )
+    customer_name: str | None = field(
+        default=None, metadata={"wire_name": "customerName", "required": True}
+    )
+    invoice_number: str | None = field(
+        default=None, metadata={"wire_name": "invoiceNumber", "required": True}
+    )
+    invoice_id: str | None = field(
+        default=None, metadata={"wire_name": "invoiceId", "required": True}
+    )
+    outcome: str | None = field(default=None, metadata={"wire_name": "outcome", "required": True})
+    detail: str | None = field(default=None, metadata={"wire_name": "detail", "required": True})
+    error: str | None = field(default=None, metadata={"wire_name": "error", "required": True})
 
 
 @dataclass
 class TestClockRun:
-    id: str = ""
-    status: Literal["pending", "running", "completed", "failed"] | None = None
-    started_at_time: str = ""
-    target_time: str = ""
-    estimated_deadline_count: int = 0
-    completed_deadline_count: int = 0
-    failed_deadline_count: int = 0
-    error: str | None = None
-    items: list[TestClockRunItemsItem] = field(default_factory=list)
-    object: Literal["test_clock_run"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    status: Literal["pending", "running", "completed", "failed"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    started_at_time: str = field(
+        default="", metadata={"wire_name": "startedAtTime", "required": True}
+    )
+    target_time: str = field(default="", metadata={"wire_name": "targetTime", "required": True})
+    estimated_deadline_count: int = field(
+        default=0, metadata={"wire_name": "estimatedDeadlineCount", "required": True}
+    )
+    completed_deadline_count: int = field(
+        default=0, metadata={"wire_name": "completedDeadlineCount", "required": True}
+    )
+    failed_deadline_count: int = field(
+        default=0, metadata={"wire_name": "failedDeadlineCount", "required": True}
+    )
+    error: str | None = field(default=None, metadata={"wire_name": "error", "required": True})
+    items: list[TestClockRunItemsItem] = field(
+        default_factory=list, metadata={"wire_name": "items", "required": True}
+    )
+    object: Literal["test_clock_run"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class TestClockRunItemsItem:
-    kind: Literal["billing_cycle", "dunning_retry"] | None = None
-    status: Literal["pending", "processing", "completed", "failed"] | None = None
-    due_at: str = ""
-    subscription_id: str = ""
-    customer_name: str | None = None
-    invoice_number: str | None = None
-    invoice_id: str | None = None
-    outcome: str | None = None
-    detail: str | None = None
-    error: str | None = None
+    kind: Literal["billing_cycle", "dunning_retry"] | None = field(
+        default=None, metadata={"wire_name": "kind", "required": True}
+    )
+    status: Literal["pending", "processing", "completed", "failed"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    due_at: str = field(default="", metadata={"wire_name": "dueAt", "required": True})
+    subscription_id: str = field(
+        default="", metadata={"wire_name": "subscriptionId", "required": True}
+    )
+    customer_name: str | None = field(
+        default=None, metadata={"wire_name": "customerName", "required": True}
+    )
+    invoice_number: str | None = field(
+        default=None, metadata={"wire_name": "invoiceNumber", "required": True}
+    )
+    invoice_id: str | None = field(
+        default=None, metadata={"wire_name": "invoiceId", "required": True}
+    )
+    outcome: str | None = field(default=None, metadata={"wire_name": "outcome", "required": True})
+    detail: str | None = field(default=None, metadata={"wire_name": "detail", "required": True})
+    error: str | None = field(default=None, metadata={"wire_name": "error", "required": True})
 
 
 @dataclass
 class TrackUsageParamsPropertiesItem:
-    property: str = ""
-    value: str = ""
+    property: str = field(default="", metadata={"wire_name": "property", "required": True})
+    value: str = field(default="", metadata={"wire_name": "value", "required": True})
 
 
 @dataclass
 class Transaction:
-    id: str = ""
-    invoice_id: str | None = None
-    gross_amount: int | None = None
-    subtotal: int | None = None
-    tax_amount: int | None = None
-    presentment_amount: int | None = None
-    currency: str = ""
-    provider: PaymentProvider | None = None
-    status: TransactionStatus | None = None
-    customer_email: str | None = None
-    customer_name: str | None = None
-    paid_at: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    available_at: str | None = None
-    object: Literal["transaction"] | None = None
-    livemode: bool = False
+    payment_context: TransactionPaymentContext | None = field(
+        default=None, metadata={"wire_name": "paymentContext", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    invoice_id: str | None = field(
+        default=None, metadata={"wire_name": "invoiceId", "required": True}
+    )
+    gross_amount: int | None = field(
+        default=None, metadata={"wire_name": "grossAmount", "required": True}
+    )
+    subtotal: int | None = field(default=None, metadata={"wire_name": "subtotal", "required": True})
+    tax_amount: int | None = field(
+        default=None, metadata={"wire_name": "taxAmount", "required": True}
+    )
+    presentment_amount: int | None = field(
+        default=None, metadata={"wire_name": "presentmentAmount", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    provider: PaymentProvider | None = field(
+        default=None, metadata={"wire_name": "provider", "required": True}
+    )
+    payment_method: PaymentMethod | None = field(
+        default=None, metadata={"wire_name": "paymentMethod", "required": True}
+    )
+    sub_payment_method: SubPaymentMethod | None = field(
+        default=None, metadata={"wire_name": "subPaymentMethod", "required": True}
+    )
+    status: TransactionStatus | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    customer_email: str | None = field(
+        default=None, metadata={"wire_name": "customerEmail", "required": True}
+    )
+    customer_name: str | None = field(
+        default=None, metadata={"wire_name": "customerName", "required": True}
+    )
+    paid_at: str | None = field(default=None, metadata={"wire_name": "paidAt", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    available_at: str | None = field(
+        default=None, metadata={"wire_name": "availableAt", "required": True}
+    )
+    object: Literal["transaction"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class TransactionListItem:
-    id: str = ""
-    invoice_id: str | None = None
-    gross_amount: int | None = None
-    subtotal: int | None = None
-    tax_amount: int | None = None
-    presentment_amount: int | None = None
-    currency: str = ""
-    provider: PaymentProvider | None = None
-    status: TransactionStatus | None = None
-    customer_email: str | None = None
-    customer_name: str | None = None
-    paid_at: str | None = None
-    created_at: str = ""
-    updated_at: str = ""
-    object: Literal["transaction"] | None = None
-    livemode: bool = False
+    payment_context: TransactionListItemPaymentContext | None = field(
+        default=None, metadata={"wire_name": "paymentContext", "required": True}
+    )
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    invoice_id: str | None = field(
+        default=None, metadata={"wire_name": "invoiceId", "required": True}
+    )
+    gross_amount: int | None = field(
+        default=None, metadata={"wire_name": "grossAmount", "required": True}
+    )
+    subtotal: int | None = field(default=None, metadata={"wire_name": "subtotal", "required": True})
+    tax_amount: int | None = field(
+        default=None, metadata={"wire_name": "taxAmount", "required": True}
+    )
+    presentment_amount: int | None = field(
+        default=None, metadata={"wire_name": "presentmentAmount", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    provider: PaymentProvider | None = field(
+        default=None, metadata={"wire_name": "provider", "required": True}
+    )
+    payment_method: PaymentMethod | None = field(
+        default=None, metadata={"wire_name": "paymentMethod", "required": True}
+    )
+    sub_payment_method: SubPaymentMethod | None = field(
+        default=None, metadata={"wire_name": "subPaymentMethod", "required": True}
+    )
+    status: TransactionStatus | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    customer_email: str | None = field(
+        default=None, metadata={"wire_name": "customerEmail", "required": True}
+    )
+    customer_name: str | None = field(
+        default=None, metadata={"wire_name": "customerName", "required": True}
+    )
+    paid_at: str | None = field(default=None, metadata={"wire_name": "paidAt", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
+    object: Literal["transaction"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class TransactionListItemPaymentContext:
+    reason: (
+        Literal[
+            "first_subscription_payment",
+            "trial_conversion",
+            "recurring_billing",
+            "plan_change",
+            "reactivation",
+            "subscription_resume",
+            "one_time_payment",
+            "overage",
+            "adjustment",
+        ]
+        | None
+    ) = field(default=None, metadata={"wire_name": "reason", "required": True})
+    payment_link_id: str | None = field(
+        default=None, metadata={"wire_name": "paymentLinkId", "required": True}
+    )
+    recovery: TransactionListItemPaymentContextRecovery | None = field(
+        default=None, metadata={"wire_name": "recovery", "required": True}
+    )
+
+
+@dataclass
+class TransactionListItemPaymentContextRecoveryVariant1:
+    type: Literal["payment_recovery"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class TransactionListItemPaymentContextRecoveryVariant2:
+    type: Literal["dunning_retry"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    attempt: int = field(default=0, metadata={"wire_name": "attempt", "required": True})
+    max_attempts: int = field(default=0, metadata={"wire_name": "maxAttempts", "required": True})
+
+
+@dataclass
+class TransactionPaymentContext:
+    reason: (
+        Literal[
+            "first_subscription_payment",
+            "trial_conversion",
+            "recurring_billing",
+            "plan_change",
+            "reactivation",
+            "subscription_resume",
+            "one_time_payment",
+            "overage",
+            "adjustment",
+        ]
+        | None
+    ) = field(default=None, metadata={"wire_name": "reason", "required": True})
+    payment_link_id: str | None = field(
+        default=None, metadata={"wire_name": "paymentLinkId", "required": True}
+    )
+    recovery: TransactionPaymentContextRecovery | None = field(
+        default=None, metadata={"wire_name": "recovery", "required": True}
+    )
+
+
+@dataclass
+class TransactionPaymentContextRecoveryVariant1:
+    type: Literal["payment_recovery"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class TransactionPaymentContextRecoveryVariant2:
+    type: Literal["dunning_retry"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    attempt: int = field(default=0, metadata={"wire_name": "attempt", "required": True})
+    max_attempts: int = field(default=0, metadata={"wire_name": "maxAttempts", "required": True})
 
 
 @dataclass
 class TransactionRetry:
-    original_transaction_id: str = ""
-    invoice_id: str = ""
-    status: Literal["processing", "succeeded"] | None = None
-    object: Literal["transaction_retry"] | None = None
-    livemode: bool = False
+    original_transaction_id: str = field(
+        default="", metadata={"wire_name": "originalTransactionId", "required": True}
+    )
+    invoice_id: str = field(default="", metadata={"wire_name": "invoiceId", "required": True})
+    status: Literal["processing", "succeeded"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    object: Literal["transaction_retry"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class TransactionsListResult:
-    object: Literal["list"] | None = None
-    data: list[TransactionListItem] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[TransactionListItem] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class UpdateCustomerParamsAddress:
-    line1: str = ""
-    line2: str | None = None
-    city: str = ""
-    state: str | None = None
-    postal_code: str = ""
-    country: str = ""
-    region: str | None = None
+    line1: str = field(default="", metadata={"wire_name": "line1", "required": True})
+    line2: str | None = field(default=None, metadata={"wire_name": "line2", "required": False})
+    city: str = field(default="", metadata={"wire_name": "city", "required": True})
+    state: str | None = field(default=None, metadata={"wire_name": "state", "required": False})
+    postal_code: str = field(default="", metadata={"wire_name": "postalCode", "required": True})
+    country: str = field(default="", metadata={"wire_name": "country", "required": True})
+    region: str | None = field(default=None, metadata={"wire_name": "region", "required": False})
 
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant1:
-    type: Literal["free_trial"] | None = None
-    duration_days: int = 0
+    type: Literal["free_trial"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
 
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant2:
-    type: Literal["percentage"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    percentage: int = 0
+    type: Literal["percentage"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    )
+    percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant3:
-    type: Literal["amount_off"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    amounts: list[UpdateOfferParamsPhasesItemVariant3AmountsItem] = field(default_factory=list)
+    type: Literal["amount_off"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    )
+    amounts: list[UpdateOfferParamsPhasesItemVariant3AmountsItem] = field(
+        default_factory=list, metadata={"wire_name": "amounts", "required": True}
+    )
 
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant3AmountsItem:
-    currency: str = ""
-    amount: int = 0
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant4:
-    type: Literal["fixed_price"] | None = None
-    duration_cycles: int | None = None
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None
-    prices: list[UpdateOfferParamsPhasesItemVariant4PricesItem] = field(default_factory=list)
+    type: Literal["fixed_price"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
+        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    )
+    prices: list[UpdateOfferParamsPhasesItemVariant4PricesItem] = field(
+        default_factory=list, metadata={"wire_name": "prices", "required": True}
+    )
 
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant4PricesItem:
-    currency: str = ""
-    amount: int = 0
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
 class UpdatePlanFeatureParamsOverage:
-    enabled: bool | None = None
-    unit_price: int | None = None
+    enabled: bool | None = field(default=None, metadata={"wire_name": "enabled", "required": False})
+    unit_price: int | None = field(
+        default=None, metadata={"wire_name": "unitPrice", "required": False}
+    )
 
 
 @dataclass
 class UpdatePlanPriceParamsMarketPricesItem:
-    market_group_id: str = ""
+    market_group_id: str = field(
+        default="", metadata={"wire_name": "marketGroupId", "required": True}
+    )
     currency: (
         Literal[
             "usd",
@@ -2526,232 +4144,338 @@ class UpdatePlanPriceParamsMarketPricesItem:
             "thb",
         ]
         | None
-    ) = None
-    price: int = 0
+    ) = field(default=None, metadata={"wire_name": "currency", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
 
 
 @dataclass
 class UpsertRegionalPricesParamsOverridesItem:
-    currency: str = ""
-    price: int = 0
-    included_balance: int | None = None
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    price: int = field(default=0, metadata={"wire_name": "price", "required": True})
+    included_balance: int | None = field(
+        default=None, metadata={"wire_name": "includedBalance", "required": False}
+    )
 
 
 @dataclass
 class UsageAdjustment:
-    id: str = ""
-    value: int = 0
-    previous_value: int = 0
-    adjustment: int = 0
-    customer_id: str = ""
-    reason: str | None = None
-    ts: str = ""
-    created_at: str = ""
-    feature_code: str = ""
-    object: Literal["usage_adjustment"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    value: int = field(default=0, metadata={"wire_name": "value", "required": True})
+    previous_value: int = field(
+        default=0, metadata={"wire_name": "previousValue", "required": True}
+    )
+    adjustment: int = field(default=0, metadata={"wire_name": "adjustment", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": True})
+    ts: str = field(default="", metadata={"wire_name": "ts", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    object: Literal["usage_adjustment"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class UsageCheckVariant1:
-    allowed: bool = False
-    subscription_status: str = ""
-    feature_code: str = ""
-    quantity: int = 0
-    reason: str | None = None
-    message: str | None = None
-    consumption_model: Literal["metered"] | None = None
-    current: float = 0.0
-    remaining: float = 0.0
-    unlimited: bool = False
-    included: float = 0.0
-    overage_enabled: bool = False
-    overage_unit_price: float | None = None
-    object: Literal["usage_check"] | None = None
-    livemode: bool = False
+    allowed: bool = field(default=False, metadata={"wire_name": "allowed", "required": True})
+    subscription_status: str = field(
+        default="", metadata={"wire_name": "subscriptionStatus", "required": True}
+    )
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    quantity: int = field(default=0, metadata={"wire_name": "quantity", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": False})
+    message: str | None = field(default=None, metadata={"wire_name": "message", "required": False})
+    consumption_model: Literal["metered"] | None = field(
+        default=None, metadata={"wire_name": "consumptionModel", "required": True}
+    )
+    current: float = field(default=0.0, metadata={"wire_name": "current", "required": True})
+    remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    overage_enabled: bool = field(
+        default=False, metadata={"wire_name": "overageEnabled", "required": True}
+    )
+    overage_unit_price: float | None = field(
+        default=None, metadata={"wire_name": "overageUnitPrice", "required": True}
+    )
+    object: Literal["usage_check"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class UsageCheckVariant2:
-    allowed: bool = False
-    subscription_status: str = ""
-    feature_code: str = ""
-    quantity: int = 0
-    reason: str | None = None
-    message: str | None = None
-    consumption_model: Literal["credits"] | None = None
-    credits_per_unit: int = 0
-    estimated_credits: int = 0
-    plan_credits: int = 0
-    purchased_credits: int = 0
-    total_credits: int = 0
-    object: Literal["usage_check"] | None = None
-    livemode: bool = False
+    allowed: bool = field(default=False, metadata={"wire_name": "allowed", "required": True})
+    subscription_status: str = field(
+        default="", metadata={"wire_name": "subscriptionStatus", "required": True}
+    )
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    quantity: int = field(default=0, metadata={"wire_name": "quantity", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": False})
+    message: str | None = field(default=None, metadata={"wire_name": "message", "required": False})
+    consumption_model: Literal["credits"] | None = field(
+        default=None, metadata={"wire_name": "consumptionModel", "required": True}
+    )
+    credits_per_unit: int = field(
+        default=0, metadata={"wire_name": "creditsPerUnit", "required": True}
+    )
+    estimated_credits: int = field(
+        default=0, metadata={"wire_name": "estimatedCredits", "required": True}
+    )
+    plan_credits: int = field(default=0, metadata={"wire_name": "planCredits", "required": True})
+    purchased_credits: int = field(
+        default=0, metadata={"wire_name": "purchasedCredits", "required": True}
+    )
+    total_credits: int = field(default=0, metadata={"wire_name": "totalCredits", "required": True})
+    object: Literal["usage_check"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class UsageCheckVariant3:
-    allowed: bool = False
-    subscription_status: str = ""
-    feature_code: str = ""
-    quantity: int = 0
-    reason: str | None = None
-    message: str | None = None
-    consumption_model: Literal["balance"] | None = None
-    unit_price: float = 0.0
-    estimated_amount: float = 0.0
-    current_balance: float = 0.0
-    block_on_exhaustion: bool = False
-    currency: str = ""
-    object: Literal["usage_check"] | None = None
-    livemode: bool = False
+    allowed: bool = field(default=False, metadata={"wire_name": "allowed", "required": True})
+    subscription_status: str = field(
+        default="", metadata={"wire_name": "subscriptionStatus", "required": True}
+    )
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    quantity: int = field(default=0, metadata={"wire_name": "quantity", "required": True})
+    reason: str | None = field(default=None, metadata={"wire_name": "reason", "required": False})
+    message: str | None = field(default=None, metadata={"wire_name": "message", "required": False})
+    consumption_model: Literal["balance"] | None = field(
+        default=None, metadata={"wire_name": "consumptionModel", "required": True}
+    )
+    unit_price: float = field(default=0.0, metadata={"wire_name": "unitPrice", "required": True})
+    estimated_amount: float = field(
+        default=0.0, metadata={"wire_name": "estimatedAmount", "required": True}
+    )
+    current_balance: float = field(
+        default=0.0, metadata={"wire_name": "currentBalance", "required": True}
+    )
+    block_on_exhaustion: bool = field(
+        default=False, metadata={"wire_name": "blockOnExhaustion", "required": True}
+    )
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    object: Literal["usage_check"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class UsageEvent:
-    id: str = ""
-    feature_code: str = ""
-    value: float = 0.0
-    customer_id: str = ""
-    event_id: str | None = None
-    ts: str = ""
-    created_at: str = ""
-    properties: list[UsageEventPropertiesItem] = field(default_factory=list)
-    consumption: UsageEventConsumption | None = None
-    object: Literal["usage_event"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    value: float = field(default=0.0, metadata={"wire_name": "value", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    event_id: str | None = field(default=None, metadata={"wire_name": "eventId", "required": True})
+    ts: str = field(default="", metadata={"wire_name": "ts", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    properties: list[UsageEventPropertiesItem] = field(
+        default_factory=list, metadata={"wire_name": "properties", "required": True}
+    )
+    consumption: UsageEventConsumption | None = field(
+        default=None, metadata={"wire_name": "consumption", "required": False}
+    )
+    object: Literal["usage_event"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class UsageEventConsumption:
-    model: Literal["credits", "balance"] | None = None
-    deducted: float = 0.0
-    remaining: float = 0.0
-    blocked: bool = False
+    model: Literal["credits", "balance"] | None = field(
+        default=None, metadata={"wire_name": "model", "required": True}
+    )
+    deducted: float = field(default=0.0, metadata={"wire_name": "deducted", "required": True})
+    remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
+    blocked: bool = field(default=False, metadata={"wire_name": "blocked", "required": True})
 
 
 @dataclass
 class UsageEventPropertiesItem:
-    property: str = ""
-    value: str = ""
+    property: str = field(default="", metadata={"wire_name": "property", "required": True})
+    value: str = field(default="", metadata={"wire_name": "value", "required": True})
 
 
 @dataclass
 class UsageQuota:
-    feature_code: str = ""
-    current: float = 0.0
-    included: float = 0.0
-    remaining: float | None = None
-    billed_quantity: float = 0.0
-    unlimited: bool = False
-    overage_enabled: bool = False
-    as_of: str | None = None
-    object: Literal["usage_quota"] | None = None
-    livemode: bool = False
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    current: float = field(default=0.0, metadata={"wire_name": "current", "required": True})
+    included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
+    remaining: float | None = field(
+        default=None, metadata={"wire_name": "remaining", "required": True}
+    )
+    billed_quantity: float = field(
+        default=0.0, metadata={"wire_name": "billedQuantity", "required": True}
+    )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    overage_enabled: bool = field(
+        default=False, metadata={"wire_name": "overageEnabled", "required": True}
+    )
+    as_of: str | None = field(default=None, metadata={"wire_name": "asOf", "required": True})
+    object: Literal["usage_quota"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class UsageQuotaEvent:
-    id: str = ""
-    customer_id: str = ""
-    feature_code: str = ""
-    previous_balance: int = 0
-    new_balance: int = 0
-    ts: str = ""
-    created_at: str = ""
-    object: Literal["usage_quota_event"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    customer_id: str = field(default="", metadata={"wire_name": "customerId", "required": True})
+    feature_code: str = field(default="", metadata={"wire_name": "featureCode", "required": True})
+    previous_balance: int = field(
+        default=0, metadata={"wire_name": "previousBalance", "required": True}
+    )
+    new_balance: int = field(default=0, metadata={"wire_name": "newBalance", "required": True})
+    ts: str = field(default="", metadata={"wire_name": "ts", "required": True})
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["usage_quota_event"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class Webhook:
-    id: str = ""
-    url: str = ""
-    events: list[str] = field(default_factory=list)
-    description: str | None = None
-    is_active: bool = False
-    api_version: str | None = None
-    created_at: str = ""
-    object: Literal["webhook"] | None = None
-    livemode: bool = False
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    url: str = field(default="", metadata={"wire_name": "url", "required": True})
+    events: list[str] = field(
+        default_factory=list, metadata={"wire_name": "events", "required": True}
+    )
+    description: str | None = field(
+        default=None, metadata={"wire_name": "description", "required": True}
+    )
+    is_active: bool = field(default=False, metadata={"wire_name": "isActive", "required": True})
+    api_version: str | None = field(
+        default=None, metadata={"wire_name": "apiVersion", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
+    object: Literal["webhook"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 @dataclass
 class WebhookAddonRef:
-    id: str = ""
-    name: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
 
 
 @dataclass
 class WebhookBalance:
-    current_balance: float = 0.0
+    current_balance: float = field(
+        default=0.0, metadata={"wire_name": "currentBalance", "required": True}
+    )
 
 
 @dataclass
 class WebhookBankRef:
-    bank_name: str | None = None
-    last4: str = ""
+    bank_name: str | None = field(
+        default=None, metadata={"wire_name": "bankName", "required": True}
+    )
+    last4: str = field(default="", metadata={"wire_name": "last4", "required": True})
 
 
 @dataclass
 class WebhookCardInfo:
-    brand: str = ""
-    last4: str = ""
-    exp_month: float = 0.0
-    exp_year: float = 0.0
+    brand: str = field(default="", metadata={"wire_name": "brand", "required": True})
+    last4: str = field(default="", metadata={"wire_name": "last4", "required": True})
+    exp_month: float = field(default=0.0, metadata={"wire_name": "expMonth", "required": True})
+    exp_year: float = field(default=0.0, metadata={"wire_name": "expYear", "required": True})
 
 
 @dataclass
 class WebhookCreditsBalance:
-    plan_credits: float = 0.0
-    purchased_credits: float = 0.0
-    total_credits: float = 0.0
+    plan_credits: float = field(
+        default=0.0, metadata={"wire_name": "planCredits", "required": True}
+    )
+    purchased_credits: float = field(
+        default=0.0, metadata={"wire_name": "purchasedCredits", "required": True}
+    )
+    total_credits: float = field(
+        default=0.0, metadata={"wire_name": "totalCredits", "required": True}
+    )
 
 
 @dataclass
 class WebhookPlanGrantTimelineEvent:
-    id: str = ""
-    type: Literal["created", "updated", "expired", "revoked"] | None = None
-    reason: str = ""
-    source: Literal["dashboard", "api", "system"] | None = None
-    previous_expires_at: str | None = None
-    expires_at: str | None = None
-    duration: Literal["cycles", "until_date", "until_revoked"] | None = None
-    duration_cycles: int | None = None
-    requested_expires_at: str | None = None
-    created_at: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    type: Literal["created", "updated", "expired", "revoked"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    reason: str = field(default="", metadata={"wire_name": "reason", "required": True})
+    source: Literal["dashboard", "api", "system"] | None = field(
+        default=None, metadata={"wire_name": "source", "required": True}
+    )
+    previous_expires_at: str | None = field(
+        default=None, metadata={"wire_name": "previousExpiresAt", "required": True}
+    )
+    expires_at: str | None = field(
+        default=None, metadata={"wire_name": "expiresAt", "required": True}
+    )
+    duration: Literal["cycles", "until_date", "until_revoked"] | None = field(
+        default=None, metadata={"wire_name": "duration", "required": True}
+    )
+    duration_cycles: int | None = field(
+        default=None, metadata={"wire_name": "durationCycles", "required": True}
+    )
+    requested_expires_at: str | None = field(
+        default=None, metadata={"wire_name": "requestedExpiresAt", "required": True}
+    )
+    created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
 
 
 @dataclass
 class WebhookPlanRef:
-    id: str = ""
-    name: str = ""
+    id: str = field(default="", metadata={"wire_name": "id", "required": True})
+    name: str = field(default="", metadata={"wire_name": "name", "required": True})
 
 
 @dataclass
 class WebhookSeatSummary:
-    code: str = ""
-    current: float | None = None
-    included: float | None = None
-    remaining: float | None = None
-    unlimited: bool | None = None
+    code: str = field(default="", metadata={"wire_name": "code", "required": True})
+    current: float | None = field(default=None, metadata={"wire_name": "current", "required": True})
+    included: float | None = field(
+        default=None, metadata={"wire_name": "included", "required": True}
+    )
+    remaining: float | None = field(
+        default=None, metadata={"wire_name": "remaining", "required": True}
+    )
+    unlimited: bool | None = field(
+        default=None, metadata={"wire_name": "unlimited", "required": True}
+    )
 
 
 @dataclass
 class WebhooksListResult:
-    object: Literal["list"] | None = None
-    data: list[Webhook] = field(default_factory=list)
-    has_more: bool = False
-    next_cursor: str | None = None
+    object: Literal["list"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    data: list[Webhook] = field(
+        default_factory=list, metadata={"wire_name": "data", "required": True}
+    )
+    has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
+    next_cursor: str | None = field(
+        default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
 
 
 @dataclass
 class WebhookTest:
-    success: bool = False
-    delivery_id: str = ""
-    delivered_at: str = ""
-    object: Literal["webhook_delivery"] | None = None
-    livemode: bool = False
+    success: bool = field(default=False, metadata={"wire_name": "success", "required": True})
+    delivery_id: str = field(default="", metadata={"wire_name": "deliveryId", "required": True})
+    delivered_at: str = field(default="", metadata={"wire_name": "deliveredAt", "required": True})
+    object: Literal["webhook_delivery"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
 
 
 ReactivatedSubscriptionOfferApplicationPhasesItem = Union[
@@ -2799,6 +4523,12 @@ PlanChangeVariant3OfferApplicationAppliesTo = Union[
 ]
 
 
+TransactionListItemPaymentContextRecovery = Union[
+    TransactionListItemPaymentContextRecoveryVariant1,
+    TransactionListItemPaymentContextRecoveryVariant2,
+]
+
+
 PreviewChangeOfferApplicationPhasesItem = Union[
     PreviewChangeOfferApplicationPhasesItemVariant1,
     PreviewChangeOfferApplicationPhasesItemVariant2,
@@ -2829,10 +4559,20 @@ SubscriptionOfferApplicationPhase = Union[
 ]
 
 
+TransactionPaymentContextRecovery = Union[
+    TransactionPaymentContextRecoveryVariant1, TransactionPaymentContextRecoveryVariant2
+]
+
+
 FeatureAccessVariant2Consumption = Union[
     FeatureAccessVariant2ConsumptionVariant1,
     FeatureAccessVariant2ConsumptionVariant2,
     FeatureAccessVariant2ConsumptionVariant3,
+]
+
+
+PaymentPaymentContextRecovery = Union[
+    PaymentPaymentContextRecoveryVariant1, PaymentPaymentContextRecoveryVariant2
 ]
 
 
@@ -2852,12 +4592,21 @@ UpdateOfferParamsPhasesItem = Union[
 ]
 
 
+CreatedSubscriptionPause = Union[CreatedSubscriptionPauseVariant1, CreatedSubscriptionPauseVariant2]
+
+
 SubscriptionFeaturesItem = Union[
     SubscriptionFeaturesItemVariant1,
     SubscriptionFeaturesItemVariant2,
     SubscriptionFeaturesItemVariant3,
     SubscriptionFeaturesItemVariant4,
 ]
+
+
+SubscriptionSummaryPause = Union[SubscriptionSummaryPauseVariant1, SubscriptionSummaryPauseVariant2]
+
+
+SubscriptionPause = Union[SubscriptionPauseVariant1, SubscriptionPauseVariant2]
 
 
 OfferPhasesItem = Union[
@@ -2885,7 +4634,9 @@ _ENUM_TYPES.update(
         "ConsumptionModel": ConsumptionModel,
         "FeatureType": FeatureType,
         "InvoiceType": InvoiceType,
+        "PaymentMethod": PaymentMethod,
         "PaymentProvider": PaymentProvider,
+        "SubPaymentMethod": SubPaymentMethod,
         "SubscriptionStatus": SubscriptionStatus,
         "Timezone": Timezone,
         "TransactionStatus": TransactionStatus,
@@ -2908,11 +4659,14 @@ _DATACLASS_TYPES.update(
         "BatchCreateCustomersParamsCustomersItem": BatchCreateCustomersParamsCustomersItem,
         "BatchCreateCustomersParamsCustomersItemAddress": BatchCreateCustomersParamsCustomersItemAddress,
         "ClaimLink": ClaimLink,
+        "CreateApiKeyParamsPermissions": CreateApiKeyParamsPermissions,
         "CreateCustomerParamsAddress": CreateCustomerParamsAddress,
         "CreatedApiKey": CreatedApiKey,
         "CreatedSubscription": CreatedSubscription,
         "CreatedSubscriptionCancellation": CreatedSubscriptionCancellation,
         "CreatedSubscriptionCurrentPeriod": CreatedSubscriptionCurrentPeriod,
+        "CreatedSubscriptionPauseVariant1": CreatedSubscriptionPauseVariant1,
+        "CreatedSubscriptionPauseVariant2": CreatedSubscriptionPauseVariant2,
         "CreatedSubscriptionPlan": CreatedSubscriptionPlan,
         "CreatedSubscriptionScheduledPlanChange": CreatedSubscriptionScheduledPlanChange,
         "CreatedWebhook": CreatedWebhook,
@@ -2987,6 +4741,9 @@ _DATACLASS_TYPES.update(
         "OffersListResult": OffersListResult,
         "Payment": Payment,
         "PaymentMethodUpdateCheckout": PaymentMethodUpdateCheckout,
+        "PaymentPaymentContext": PaymentPaymentContext,
+        "PaymentPaymentContextRecoveryVariant1": PaymentPaymentContextRecoveryVariant1,
+        "PaymentPaymentContextRecoveryVariant2": PaymentPaymentContextRecoveryVariant2,
         "PaymentsListResult": PaymentsListResult,
         "Payout": Payout,
         "PayoutBankAccount": PayoutBankAccount,
@@ -3095,14 +4852,19 @@ _DATACLASS_TYPES.update(
         "SubscriptionOfferApplicationPhaseVariant2": SubscriptionOfferApplicationPhaseVariant2,
         "SubscriptionOfferApplicationPhaseVariant3": SubscriptionOfferApplicationPhaseVariant3,
         "SubscriptionOfferApplicationPhaseVariant4": SubscriptionOfferApplicationPhaseVariant4,
+        "SubscriptionPauseVariant1": SubscriptionPauseVariant1,
+        "SubscriptionPauseVariant2": SubscriptionPauseVariant2,
         "SubscriptionPlan": SubscriptionPlan,
         "SubscriptionPlanGrant": SubscriptionPlanGrant,
         "SubscriptionPlanGrantPlan": SubscriptionPlanGrantPlan,
+        "SubscriptionResume": SubscriptionResume,
         "SubscriptionScheduledPlanChange": SubscriptionScheduledPlanChange,
         "SubscriptionsListResult": SubscriptionsListResult,
         "SubscriptionSummary": SubscriptionSummary,
         "SubscriptionSummaryCancellation": SubscriptionSummaryCancellation,
         "SubscriptionSummaryCurrentPeriod": SubscriptionSummaryCurrentPeriod,
+        "SubscriptionSummaryPauseVariant1": SubscriptionSummaryPauseVariant1,
+        "SubscriptionSummaryPauseVariant2": SubscriptionSummaryPauseVariant2,
         "SubscriptionSummaryPlan": SubscriptionSummaryPlan,
         "SubscriptionSummaryScheduledPlanChange": SubscriptionSummaryScheduledPlanChange,
         "TestClock": TestClock,
@@ -3113,6 +4875,12 @@ _DATACLASS_TYPES.update(
         "TrackUsageParamsPropertiesItem": TrackUsageParamsPropertiesItem,
         "Transaction": Transaction,
         "TransactionListItem": TransactionListItem,
+        "TransactionListItemPaymentContext": TransactionListItemPaymentContext,
+        "TransactionListItemPaymentContextRecoveryVariant1": TransactionListItemPaymentContextRecoveryVariant1,
+        "TransactionListItemPaymentContextRecoveryVariant2": TransactionListItemPaymentContextRecoveryVariant2,
+        "TransactionPaymentContext": TransactionPaymentContext,
+        "TransactionPaymentContextRecoveryVariant1": TransactionPaymentContextRecoveryVariant1,
+        "TransactionPaymentContextRecoveryVariant2": TransactionPaymentContextRecoveryVariant2,
         "TransactionRetry": TransactionRetry,
         "TransactionsListResult": TransactionsListResult,
         "UpdateCustomerParamsAddress": UpdateCustomerParamsAddress,
@@ -3207,6 +4975,14 @@ _UNION_TYPES.update(
             },
             [],
         ),
+        "TransactionListItemPaymentContextRecovery": (
+            "type",
+            {
+                "payment_recovery": TransactionListItemPaymentContextRecoveryVariant1,
+                "dunning_retry": TransactionListItemPaymentContextRecoveryVariant2,
+            },
+            [],
+        ),
         "PreviewChangeOfferApplicationPhasesItem": (
             "type",
             {
@@ -3245,12 +5021,28 @@ _UNION_TYPES.update(
             },
             [],
         ),
+        "TransactionPaymentContextRecovery": (
+            "type",
+            {
+                "payment_recovery": TransactionPaymentContextRecoveryVariant1,
+                "dunning_retry": TransactionPaymentContextRecoveryVariant2,
+            },
+            [],
+        ),
         "FeatureAccessVariant2Consumption": (
             "model",
             {
                 "metered": FeatureAccessVariant2ConsumptionVariant1,
                 "credits": FeatureAccessVariant2ConsumptionVariant2,
                 "balance": FeatureAccessVariant2ConsumptionVariant3,
+            },
+            [],
+        ),
+        "PaymentPaymentContextRecovery": (
+            "type",
+            {
+                "payment_recovery": PaymentPaymentContextRecoveryVariant1,
+                "dunning_retry": PaymentPaymentContextRecoveryVariant2,
             },
             [],
         ),
@@ -3274,6 +5066,14 @@ _UNION_TYPES.update(
             },
             [],
         ),
+        "CreatedSubscriptionPause": (
+            "status",
+            {
+                "scheduled": CreatedSubscriptionPauseVariant1,
+                "active": CreatedSubscriptionPauseVariant2,
+            },
+            [],
+        ),
         "SubscriptionFeaturesItem": (
             "type",
             {
@@ -3282,6 +5082,19 @@ _UNION_TYPES.update(
                 "seats": SubscriptionFeaturesItemVariant3,
                 "quota": SubscriptionFeaturesItemVariant4,
             },
+            [],
+        ),
+        "SubscriptionSummaryPause": (
+            "status",
+            {
+                "scheduled": SubscriptionSummaryPauseVariant1,
+                "active": SubscriptionSummaryPauseVariant2,
+            },
+            [],
+        ),
+        "SubscriptionPause": (
+            "status",
+            {"scheduled": SubscriptionPauseVariant1, "active": SubscriptionPauseVariant2},
             [],
         ),
         "OfferPhasesItem": (
