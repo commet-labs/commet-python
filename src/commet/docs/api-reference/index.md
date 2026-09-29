@@ -1,6 +1,6 @@
 # API reference
 
-Generated from Commet API version `2026-07-31`.
+Generated from Commet API version `2026-08-27`.
 
 - [Schemas](../schemas.md)
 - [API errors](../errors/index.md) — 83 references
@@ -21,7 +21,7 @@ Generated from Commet API version `2026-07-31`.
 - [Portal](./portal.md) — 1 operations
 - [Promo Codes](./promo-codes.md) — 4 operations
 - [Seats](./seats.md) — 6 operations
-- [Subscriptions](./subscriptions.md) — 18 operations
+- [Subscriptions](./subscriptions.md) — 22 operations
 - [Test Clock](./test-clock.md) — 3 operations
 - [Transactions](./transactions.md) — 4 operations
 - [Usage](./usage.md) — 3 operations

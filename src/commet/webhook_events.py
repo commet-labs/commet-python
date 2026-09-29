@@ -8,6 +8,8 @@ from typing import Any, Literal
 
 from .types import (
     _DATACLASS_TYPES,
+    PaymentMethod,
+    SubPaymentMethod,
     WebhookAddonRef,
     WebhookBalance,
     WebhookBankRef,
@@ -24,6 +26,12 @@ class WebhookEventType:
     SUBSCRIPTION_CREATED = "subscription.created"
     SUBSCRIPTION_ACTIVATED = "subscription.activated"
     SUBSCRIPTION_REACTIVATED = "subscription.reactivated"
+    SUBSCRIPTION_PAUSE_SCHEDULED = "subscription.pause_scheduled"
+    SUBSCRIPTION_PAUSE_UPDATED = "subscription.pause_updated"
+    SUBSCRIPTION_PAUSE_REVOKED = "subscription.pause_revoked"
+    SUBSCRIPTION_PAUSED = "subscription.paused"
+    SUBSCRIPTION_RESUMED = "subscription.resumed"
+    SUBSCRIPTION_RESUME_FAILED = "subscription.resume_failed"
     SUBSCRIPTION_CANCELED = "subscription.canceled"
     SUBSCRIPTION_UPDATED = "subscription.updated"
     SUBSCRIPTION_PLAN_CHANGED = "subscription.plan_changed"
@@ -131,8 +139,75 @@ class SubscriptionReactivatedData:
 
 
 @dataclass
+class SubscriptionPauseScheduledData:
+    """Fired when a period-end pause is scheduled. Access and billing continue until effectiveAt."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    status: Literal["active", "trialing"] | None = None
+    mode: Literal["period_end"] | None = None
+    effectiveAt: str = ""
+    resumeAt: str | None = None
+
+
+@dataclass
+class SubscriptionPauseUpdatedData:
+    """Fired when the finite or indefinite pause duration changes."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    status: Literal["active", "trialing", "paused"] | None = None
+    effectiveAt: str = ""
+    resumeAt: str | None = None
+
+
+@dataclass
+class SubscriptionPauseRevokedData:
+    """Fired when a scheduled pause is revoked before it becomes effective."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    status: Literal["active", "trialing"] | None = None
+
+
+@dataclass
+class SubscriptionPausedData:
+    """Fired when a pause becomes effective and access is revoked."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    status: Literal["paused"] | None = None
+    mode: Literal["immediate", "period_end"] | None = None
+    effectiveAt: str = ""
+    resumeAt: str | None = None
+
+
+@dataclass
+class SubscriptionResumedData:
+    """Fired after a paused subscription restores access."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    status: Literal["active", "trialing"] | None = None
+    mode: Literal["immediate", "period_end"] | None = None
+    resumedAt: str = ""
+    invoiceId: str | None = None
+
+
+@dataclass
+class SubscriptionResumeFailedData:
+    """Fired when a period-end resume charge fails. The subscription remains paused."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    status: Literal["paused"] | None = None
+    invoiceId: str = ""
+    failedAt: str = ""
+
+
+@dataclass
 class SubscriptionCanceledData:
-    """Fired when a subscription is actually terminated. A scheduled cancellation fires it at the end of the billing period; immediate cancellations, full refunds (cancelReason refund), and exhausted dunning retries (cancelReason dunning_exhausted) fire it right away. The status is now canceled and access should be revoked. This event is NOT fired when cancellation is scheduled — that triggers subscription.updated instead. See the cancellation lifecycle below."""
+    """Fired when a subscription is actually terminated. A scheduled cancellation fires it at the end of the billing period; immediate cancellations and exhausted dunning retries (cancelReason dunning_exhausted) fire it right away. Refunds do not terminate subscriptions. The status is now canceled and access should be revoked. This event is NOT fired when cancellation is scheduled — that triggers subscription.updated instead. See the cancellation lifecycle below."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -303,6 +378,7 @@ class CheckoutReadyData:
 class PaymentReceivedData:
     """Fired every time a payment settles successfully — the first payment and every renewal alike. subscription.activated fires alongside it only on the first one."""
 
+    paymentContext: dict[str, Any] | None = None
     invoiceId: str = ""
     invoiceNumber: str = ""
     invoiceTotal: float = 0.0
@@ -310,6 +386,8 @@ class PaymentReceivedData:
     subscriptionId: str | None = None
     paymentTransactionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
+    paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
     grossAmount: float | None = None
     currency: str | None = None
     orgNetAmount: float | None = None
@@ -319,13 +397,16 @@ class PaymentReceivedData:
 
 @dataclass
 class PaymentFailedData:
-    """Fired when a recurring charge fails. This event is for recurring charge failures only — card declines during initial checkout do not trigger this event."""
+    """Fired when an invoice-linked subscription charge fails."""
 
+    paymentContext: dict[str, Any] | None = None
     invoiceId: str = ""
     invoiceNumber: str = ""
     customerId: str = ""
     subscriptionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
+    paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
     failureCode: str = ""
     failureMessage: str = ""
     recoveryUrl: str | None = None
@@ -341,6 +422,8 @@ class PaymentRecoveredData:
     customerId: str = ""
     subscriptionId: str | None = None
     provider: Literal["stripe", "commet", "dlocal"] | None = None
+    paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
 
 
 @dataclass
@@ -357,7 +440,7 @@ class PaymentRetryFailedData:
 
 @dataclass
 class PaymentRefundedData:
-    """Fired when a payment is refunded, fully or partially. A full refund of a subscription invoice also cancels the subscription immediately (subscription.canceled fires with reason refund); partial refunds leave the subscription untouched."""
+    """Fired when a payment is refunded, fully or partially. A refund does not change the subscription. Cancel it separately if it should end."""
 
     paymentTransactionId: str = ""
     provider: Literal["stripe", "commet", "dlocal"] | None = None
@@ -419,6 +502,7 @@ class PaymentLinkCreatedData:
 class PaymentLinkCompletedData:
     """Fired when a payment link is paid. The charge settled and a one-time invoice was generated. Fulfill the purchase on this event."""
 
+    paymentContext: dict[str, Any] | None = None
     paymentId: str = ""
     status: str = ""
     amount: float = 0.0
@@ -428,12 +512,15 @@ class PaymentLinkCompletedData:
     invoiceId: str = ""
     invoiceNumber: str = ""
     paymentTransactionId: str | None = None
+    paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
 
 
 @dataclass
 class PaymentLinkFailedData:
     """Fired when a payment link charge attempt is declined. The link stays open and can be paid again — a failed link is retryable."""
 
+    paymentContext: dict[str, Any] | None = None
     paymentId: str = ""
     status: str = ""
     amount: float = 0.0
@@ -442,6 +529,8 @@ class PaymentLinkFailedData:
     customerId: str | None = None
     failureCode: str = ""
     failureMessage: str = ""
+    paymentMethod: PaymentMethod | None = None
+    subPaymentMethod: SubPaymentMethod | None = None
 
 
 @dataclass
@@ -529,6 +618,7 @@ class PaymentMethodAttachedData:
 
     subscriptionId: str = ""
     customerId: str = ""
+    paymentMethod: PaymentMethod | None = None
     card: WebhookCardInfo | None = None
 
 
@@ -537,6 +627,7 @@ class PaymentMethodUpdatedData:
     """Fired when a customer replaces their default payment method through the customer portal. The new method applies to all of the customer's subscriptions. A payment method update is also a strong recovery signal for past-due subscriptions."""
 
     customerId: str = ""
+    paymentMethod: PaymentMethod | None = None
     card: WebhookCardInfo | None = None
 
 
@@ -574,7 +665,7 @@ class CustomerUpdatedData:
 
 @dataclass
 class CustomerStateChangedData:
-    """Aggregate entitlement event answering one question: what can this customer access right now? Fired on every entitlement transition (subscription lifecycle, plan changes, trials, past due, scheduled cancellations) with the customer's CURRENT subscription, plan, features, seats, and credits or balance. Handle this single event to keep access in sync instead of wiring every lifecycle event."""
+    """Aggregate entitlement event answering one question: what can this customer access right now? Fired on every entitlement transition (subscription lifecycle, pauses, plan changes, trials, past due, scheduled cancellations) with the customer's CURRENT subscription, plan, features, seats, and credits or balance. Handle this single event to keep access in sync instead of wiring every lifecycle event."""
 
     customerId: str = ""
     trigger: str = ""
@@ -916,6 +1007,24 @@ class WebhookEvent:
     def as_subscription_reactivated(self) -> SubscriptionReactivatedData:
         return _from_dict(SubscriptionReactivatedData, self.data)
 
+    def as_subscription_pause_scheduled(self) -> SubscriptionPauseScheduledData:
+        return _from_dict(SubscriptionPauseScheduledData, self.data)
+
+    def as_subscription_pause_updated(self) -> SubscriptionPauseUpdatedData:
+        return _from_dict(SubscriptionPauseUpdatedData, self.data)
+
+    def as_subscription_pause_revoked(self) -> SubscriptionPauseRevokedData:
+        return _from_dict(SubscriptionPauseRevokedData, self.data)
+
+    def as_subscription_paused(self) -> SubscriptionPausedData:
+        return _from_dict(SubscriptionPausedData, self.data)
+
+    def as_subscription_resumed(self) -> SubscriptionResumedData:
+        return _from_dict(SubscriptionResumedData, self.data)
+
+    def as_subscription_resume_failed(self) -> SubscriptionResumeFailedData:
+        return _from_dict(SubscriptionResumeFailedData, self.data)
+
     def as_subscription_canceled(self) -> SubscriptionCanceledData:
         return _from_dict(SubscriptionCanceledData, self.data)
 
@@ -1093,6 +1202,12 @@ _DATACLASS_TYPES.update(
         "SubscriptionCreatedData": SubscriptionCreatedData,
         "SubscriptionActivatedData": SubscriptionActivatedData,
         "SubscriptionReactivatedData": SubscriptionReactivatedData,
+        "SubscriptionPauseScheduledData": SubscriptionPauseScheduledData,
+        "SubscriptionPauseUpdatedData": SubscriptionPauseUpdatedData,
+        "SubscriptionPauseRevokedData": SubscriptionPauseRevokedData,
+        "SubscriptionPausedData": SubscriptionPausedData,
+        "SubscriptionResumedData": SubscriptionResumedData,
+        "SubscriptionResumeFailedData": SubscriptionResumeFailedData,
         "SubscriptionCanceledData": SubscriptionCanceledData,
         "SubscriptionUpdatedData": SubscriptionUpdatedData,
         "SubscriptionPlanChangedData": SubscriptionPlanChangedData,

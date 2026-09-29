@@ -3,7 +3,7 @@
 Install the SDK:
 
 ```bash
-pip install commet-sdk==9.3.0
+pip install commet-sdk==9.4.0
 ```
 
 Create one server-side client. Never expose an API key to browser code.

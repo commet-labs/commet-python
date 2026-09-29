@@ -1,6 +1,6 @@
 # Subscriptions
 
-API version: `2026-07-31`
+API version: `2026-08-27`
 
 ## deactivate_addon
 
@@ -189,6 +189,65 @@ Remove the quoted direct Offer from a subscription's pending payment checkout. T
 
 `Subscription`
 
+## pause
+
+`commet.subscriptions.pause(...)`
+
+`POST /subscriptions/{id}/pause` · operation `pause-subscription`
+
+Pause immediately or schedule a pause for the end of the current billing or trial period. Set durationDays to null for an indefinite pause.
+
+### Parameters
+
+- `id` (`str`, required)
+- `mode` (`Literal["immediate", "period_end"]`, required)
+- `duration_days` (`int | null`, required)
+
+### Request options
+
+- `idempotency_key` (`str`, optional) — Unique key used to safely retry this write for 24 hours without applying it twice.
+
+### Returns
+
+`Subscription`
+
+## update_pause
+
+`commet.subscriptions.update_pause(...)`
+
+`PATCH /subscriptions/{id}/pause` · operation `update-subscription-pause`
+
+Change the duration of a scheduled or active pause. Set durationDays to null to make it indefinite.
+
+### Parameters
+
+- `id` (`str`, required)
+- `duration_days` (`int | null`, required)
+
+### Request options
+
+- `idempotency_key` (`str`, optional) — Unique key used to safely retry this write for 24 hours without applying it twice.
+
+### Returns
+
+`Subscription`
+
+## revoke_pause
+
+`commet.subscriptions.revoke_pause(...)`
+
+`DELETE /subscriptions/{id}/pause` · operation `revoke-subscription-pause`
+
+Revoke a pause before it becomes effective. Active pauses must be resumed instead.
+
+### Parameters
+
+- `id` (`str`, required)
+
+### Returns
+
+`Subscription`
+
 ## update_payment_method
 
 `commet.subscriptions.update_payment_method(...)`
@@ -273,6 +332,26 @@ Generates a hosted, signed recovery link that lets the customer pay the outstand
 ### Returns
 
 `RecoveryLink`
+
+## resume
+
+`commet.subscriptions.resume(...)`
+
+`POST /subscriptions/{id}/resume` · operation `resume-subscription`
+
+Resume a paused subscription. Immediate pauses continue the preserved period without a charge. Period-end pauses charge a new period before access is restored.
+
+### Parameters
+
+- `id` (`str`, required)
+
+### Request options
+
+- `idempotency_key` (`str`, optional) — Unique key used to safely retry this write for 24 hours without applying it twice.
+
+### Returns
+
+`SubscriptionResume`
 
 ## get
 

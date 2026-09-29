@@ -1,6 +1,6 @@
 # API error reference
 
-Generated from Commet API version `2026-07-31`.
+Generated from Commet API version `2026-08-27`.
 
 - [`validation_error`](./validation_error.md) — The request failed validation. The response message, param, and details identify the invalid field, value, or field combination.
 - [`invalid_json`](./invalid_json.md) — The request body is not valid JSON.

@@ -1,6 +1,6 @@
 # Api Keys
 
-API version: `2026-07-31`
+API version: `2026-08-27`
 
 ## delete
 
@@ -41,12 +41,13 @@ List API keys with cursor-based pagination. Keys are returned without the full s
 
 `POST /api-keys` · operation `create-api-key`
 
-Create a new API key. The full key is only returned once in the response.
+Create a full-access or restricted API key. Provide permissions to restrict access; the full key is returned only once. A restricted key with api_key: write may only create restricted keys with the same or fewer permissions, and they expire no later than the key that creates them.
 
 ### Parameters
 
 - `name` (`str`, required)
 - `expires_in_days` (`int`, optional)
+- `permissions` (`CreateApiKeyParamsPermissions`, optional)
 
 ### Request options
 

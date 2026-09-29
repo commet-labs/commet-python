@@ -1,6 +1,6 @@
 # Schemas
 
-Generated from Commet API version `2026-07-31`.
+Generated from Commet API version `2026-08-27`.
 
 ## Enums
 
@@ -36,12 +36,27 @@ Generated from Commet API version `2026-07-31`.
 - `"addon_activation"`
 - `"one_time_payment"`
 - `"reactivation"`
+- `"resume"`
+
+### PaymentMethod
+
+- `"card"`
+- `"oxxo"`
+- `"mercado_pago"`
 
 ### PaymentProvider
 
 - `"stripe"`
 - `"commet"`
 - `"dlocal"`
+
+### SubPaymentMethod
+
+- `"credit_card"`
+- `"debit_card"`
+- `"prepaid_card"`
+- `"bank_transfer"`
+- `"account_money"`
 
 ### SubscriptionStatus
 
@@ -50,6 +65,7 @@ Generated from Commet API version `2026-07-31`.
 - `"trialing"`
 - `"active"`
 - `"past_due"`
+- `"paused"`
 - `"canceled"`
 
 ### Timezone
@@ -208,6 +224,28 @@ Generated from Commet API version `2026-07-31`.
 - `object` (`Literal["claim_link"]`, required)
 - `livemode` (`bool`, required)
 
+### CreateApiKeyParamsPermissions
+
+- `customer` (`list[Literal["read", "write"]]`, optional)
+- `subscription` (`list[Literal["read", "write"]]`, optional)
+- `invoice` (`list[Literal["read", "write"]]`, optional)
+- `usage` (`list[Literal["read", "write"]]`, optional)
+- `seat` (`list[Literal["read", "write"]]`, optional)
+- `plan` (`list[Literal["read", "write"]]`, optional)
+- `plan_group` (`list[Literal["read", "write"]]`, optional)
+- `feature` (`list[Literal["read", "write"]]`, optional)
+- `addon` (`list[Literal["read", "write"]]`, optional)
+- `credit_pack` (`list[Literal["read", "write"]]`, optional)
+- `offer` (`list[Literal["read", "write"]]`, optional)
+- `promo_code` (`list[Literal["read", "write"]]`, optional)
+- `market_group` (`list[Literal["read", "write"]]`, optional)
+- `payment` (`list[Literal["read", "write"]]`, optional)
+- `transaction` (`list[Literal["read", "write"]]`, optional)
+- `payout` (`list[Literal["read", "write"]]`, optional)
+- `test_clock` (`list[Literal["read", "write"]]`, optional)
+- `organization` (`list[Literal["read", "write"]]`, optional)
+- `api_key` (`list[Literal["read", "write"]]`, optional)
+
 ### CreateCustomerParamsAddress
 
 - `line1` (`str`, required)
@@ -251,6 +289,7 @@ Generated from Commet API version `2026-07-31`.
 - `created_at` (`str`, required)
 - `updated_at` (`str`, required)
 - `offer_applications` (`list[SubscriptionOfferApplication]`, required)
+- `pause` (`CreatedSubscriptionPause | null`, required)
 - `checkout_provider` (`PaymentProvider | null`, required) — Payment provider resolved for this checkout when the subscription response was created. This is an informational snapshot and may differ when the checkout is loaded if its country or the organization's routing changes.
 - `price_id` (`str | null`, required)
 - `object` (`Literal["subscription"]`, required)
@@ -267,6 +306,34 @@ Generated from Commet API version `2026-07-31`.
 - `start` (`str`, required)
 - `end` (`str`, required)
 - `days_remaining` (`float`, required)
+
+### CreatedSubscriptionPause
+
+Variants:
+
+- `CreatedSubscriptionPauseVariant1`
+- `CreatedSubscriptionPauseVariant2`
+
+Discriminator: `status`
+
+- `"scheduled"` → `CreatedSubscriptionPauseVariant1`
+- `"active"` → `CreatedSubscriptionPauseVariant2`
+
+### CreatedSubscriptionPauseVariant1
+
+- `status` (`Literal["scheduled"]`, required)
+- `mode` (`Literal["period_end"]`, required)
+- `requested_at` (`str`, required)
+- `effective_at` (`str`, required)
+- `resume_at` (`str | null`, required)
+
+### CreatedSubscriptionPauseVariant2
+
+- `status` (`Literal["active"]`, required)
+- `mode` (`Literal["immediate", "period_end"]`, required)
+- `requested_at` (`str`, required)
+- `effective_at` (`str`, required)
+- `resume_at` (`str | null`, required)
 
 ### CreatedSubscriptionPlan
 
@@ -930,6 +997,7 @@ Discriminator: `type`
 
 ### Payment
 
+- `payment_context` (`PaymentPaymentContext | null`, required) — Charge context captured for new payments. Null for historical payments with no captured context.
 - `id` (`str`, required)
 - `customer_id` (`str | null`, required)
 - `kind` (`Literal["link", "charge"]`, required)
@@ -953,6 +1021,34 @@ Discriminator: `type`
 - `checkout_url` (`str`, required)
 - `object` (`Literal["checkout_session"]`, required)
 - `livemode` (`bool`, required)
+
+### PaymentPaymentContext
+
+- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
+- `payment_link_id` (`str | null`, required) — The public payment link ID, independently of the reason, or null when no payment link originated the charge.
+- `recovery` (`PaymentPaymentContextRecovery | null`, required)
+
+### PaymentPaymentContextRecovery
+
+Variants:
+
+- `PaymentPaymentContextRecoveryVariant1`
+- `PaymentPaymentContextRecoveryVariant2`
+
+Discriminator: `type`
+
+- `"payment_recovery"` → `PaymentPaymentContextRecoveryVariant1`
+- `"dunning_retry"` → `PaymentPaymentContextRecoveryVariant2`
+
+### PaymentPaymentContextRecoveryVariant1
+
+- `type` (`Literal["payment_recovery"]`, required)
+
+### PaymentPaymentContextRecoveryVariant2
+
+- `type` (`Literal["dunning_retry"]`, required)
+- `attempt` (`int`, required) — Current retry, starting at 1. The original decline is not a retry.
+- `max_attempts` (`int`, required) — Total retries applicable to this charge's dunning schedule.
 
 ### PaymentsListResult
 
@@ -1836,6 +1932,7 @@ Discriminator: `type`
 - `created_at` (`str`, required)
 - `updated_at` (`str`, required)
 - `offer_applications` (`list[SubscriptionOfferApplication]`, required)
+- `pause` (`SubscriptionPause | null`, required)
 - `plan_grant` (`SubscriptionPlanGrant`, optional)
 - `consumption_model` (`ConsumptionModel | null`, required)
 - `features` (`list[SubscriptionFeaturesItem]`, required)
@@ -2065,6 +2162,34 @@ Discriminator: `type`
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 
+### SubscriptionPause
+
+Variants:
+
+- `SubscriptionPauseVariant1`
+- `SubscriptionPauseVariant2`
+
+Discriminator: `status`
+
+- `"scheduled"` → `SubscriptionPauseVariant1`
+- `"active"` → `SubscriptionPauseVariant2`
+
+### SubscriptionPauseVariant1
+
+- `status` (`Literal["scheduled"]`, required)
+- `mode` (`Literal["period_end"]`, required)
+- `requested_at` (`str`, required)
+- `effective_at` (`str`, required)
+- `resume_at` (`str | null`, required)
+
+### SubscriptionPauseVariant2
+
+- `status` (`Literal["active"]`, required)
+- `mode` (`Literal["immediate", "period_end"]`, required)
+- `requested_at` (`str`, required)
+- `effective_at` (`str`, required)
+- `resume_at` (`str | null`, required)
+
 ### SubscriptionPlan
 
 - `id` (`str`, required)
@@ -2081,6 +2206,14 @@ Discriminator: `type`
 
 - `id` (`str`, required)
 - `name` (`str`, required)
+
+### SubscriptionResume
+
+- `subscription_id` (`str`, required)
+- `invoice_id` (`str | null`, required)
+- `status` (`Literal["processing", "succeeded"]`, required)
+- `object` (`Literal["subscription_resume"]`, required)
+- `livemode` (`bool`, required)
 
 ### SubscriptionScheduledPlanChange
 
@@ -2119,6 +2252,7 @@ Discriminator: `type`
 - `created_at` (`str`, required)
 - `updated_at` (`str`, required)
 - `offer_applications` (`list[SubscriptionOfferApplication]`, required)
+- `pause` (`SubscriptionSummaryPause | null`, required)
 - `price_id` (`str | null`, required)
 - `object` (`Literal["subscription"]`, required)
 - `livemode` (`bool`, required)
@@ -2134,6 +2268,34 @@ Discriminator: `type`
 - `start` (`str`, required)
 - `end` (`str`, required)
 - `days_remaining` (`float`, required)
+
+### SubscriptionSummaryPause
+
+Variants:
+
+- `SubscriptionSummaryPauseVariant1`
+- `SubscriptionSummaryPauseVariant2`
+
+Discriminator: `status`
+
+- `"scheduled"` → `SubscriptionSummaryPauseVariant1`
+- `"active"` → `SubscriptionSummaryPauseVariant2`
+
+### SubscriptionSummaryPauseVariant1
+
+- `status` (`Literal["scheduled"]`, required)
+- `mode` (`Literal["period_end"]`, required)
+- `requested_at` (`str`, required)
+- `effective_at` (`str`, required)
+- `resume_at` (`str | null`, required)
+
+### SubscriptionSummaryPauseVariant2
+
+- `status` (`Literal["active"]`, required)
+- `mode` (`Literal["immediate", "period_end"]`, required)
+- `requested_at` (`str`, required)
+- `effective_at` (`str`, required)
+- `resume_at` (`str | null`, required)
 
 ### SubscriptionSummaryPlan
 
@@ -2216,6 +2378,7 @@ Discriminator: `type`
 
 ### Transaction
 
+- `payment_context` (`TransactionPaymentContext | null`, required) — Charge context captured for new payments. Null for historical payments with no captured context.
 - `id` (`str`, required)
 - `invoice_id` (`str | null`, required)
 - `gross_amount` (`int | null`, required) — Gross amount in USD cents. Null when the provider has not reported an honest USD figure; see presentmentAmount.
@@ -2224,6 +2387,8 @@ Discriminator: `type`
 - `presentment_amount` (`int | null`, required) — Amount in the charge currency's smallest unit, as presented to the customer. Set for non-USD charges; null when the charge was made in USD.
 - `currency` (`str`, required)
 - `provider` (`PaymentProvider`, required) — The payment provider the charge was routed to: stripe, commet, or dlocal.
+- `payment_method` (`PaymentMethod | null`, required) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
+- `sub_payment_method` (`SubPaymentMethod | null`, required) — The source of funds for this charge, when reported by the provider. Null when unavailable or unknown.
 - `status` (`TransactionStatus`, required)
 - `customer_email` (`str | null`, required)
 - `customer_name` (`str | null`, required)
@@ -2236,6 +2401,7 @@ Discriminator: `type`
 
 ### TransactionListItem
 
+- `payment_context` (`TransactionListItemPaymentContext | null`, required) — Charge context captured for new payments. Null for historical payments with no captured context.
 - `id` (`str`, required)
 - `invoice_id` (`str | null`, required)
 - `gross_amount` (`int | null`, required) — Gross amount in USD cents. Null when the provider has not reported an honest USD figure; see presentmentAmount.
@@ -2244,6 +2410,8 @@ Discriminator: `type`
 - `presentment_amount` (`int | null`, required) — Amount in the charge currency's smallest unit, as presented to the customer. Set for non-USD charges; null when the charge was made in USD.
 - `currency` (`str`, required)
 - `provider` (`PaymentProvider`, required) — The payment provider the charge was routed to: stripe, commet, or dlocal.
+- `payment_method` (`PaymentMethod | null`, required) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
+- `sub_payment_method` (`SubPaymentMethod | null`, required) — The source of funds for this charge, when reported by the provider. Null when unavailable or unknown.
 - `status` (`TransactionStatus`, required)
 - `customer_email` (`str | null`, required)
 - `customer_name` (`str | null`, required)
@@ -2252,6 +2420,62 @@ Discriminator: `type`
 - `updated_at` (`str`, required)
 - `object` (`Literal["transaction"]`, required)
 - `livemode` (`bool`, required)
+
+### TransactionListItemPaymentContext
+
+- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
+- `payment_link_id` (`str | null`, required) — The public payment link ID, independently of the reason, or null when no payment link originated the charge.
+- `recovery` (`TransactionListItemPaymentContextRecovery | null`, required)
+
+### TransactionListItemPaymentContextRecovery
+
+Variants:
+
+- `TransactionListItemPaymentContextRecoveryVariant1`
+- `TransactionListItemPaymentContextRecoveryVariant2`
+
+Discriminator: `type`
+
+- `"payment_recovery"` → `TransactionListItemPaymentContextRecoveryVariant1`
+- `"dunning_retry"` → `TransactionListItemPaymentContextRecoveryVariant2`
+
+### TransactionListItemPaymentContextRecoveryVariant1
+
+- `type` (`Literal["payment_recovery"]`, required)
+
+### TransactionListItemPaymentContextRecoveryVariant2
+
+- `type` (`Literal["dunning_retry"]`, required)
+- `attempt` (`int`, required) — Current retry, starting at 1. The original decline is not a retry.
+- `max_attempts` (`int`, required) — Total retries applicable to this charge's dunning schedule.
+
+### TransactionPaymentContext
+
+- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
+- `payment_link_id` (`str | null`, required) — The public payment link ID, independently of the reason, or null when no payment link originated the charge.
+- `recovery` (`TransactionPaymentContextRecovery | null`, required)
+
+### TransactionPaymentContextRecovery
+
+Variants:
+
+- `TransactionPaymentContextRecoveryVariant1`
+- `TransactionPaymentContextRecoveryVariant2`
+
+Discriminator: `type`
+
+- `"payment_recovery"` → `TransactionPaymentContextRecoveryVariant1`
+- `"dunning_retry"` → `TransactionPaymentContextRecoveryVariant2`
+
+### TransactionPaymentContextRecoveryVariant1
+
+- `type` (`Literal["payment_recovery"]`, required)
+
+### TransactionPaymentContextRecoveryVariant2
+
+- `type` (`Literal["dunning_retry"]`, required)
+- `attempt` (`int`, required) — Current retry, starting at 1. The original decline is not a retry.
+- `max_attempts` (`int`, required) — Total retries applicable to this charge's dunning schedule.
 
 ### TransactionRetry
 

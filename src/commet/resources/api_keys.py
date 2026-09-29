@@ -6,6 +6,7 @@ from .._http import CommetHTTPClient
 from .._shared import build_body
 from ..types import (
     ApiKeysListResult,
+    CreateApiKeyParamsPermissions,
     CreatedApiKey,
     DeletedObject,
     _parse_data,
@@ -26,10 +27,15 @@ class ApiKeysResource:
         return _parse_data(self._http.get("/api-keys", query), ApiKeysListResult)
 
     def create(
-        self, *, name: str, expires_in_days: int | None = None, idempotency_key: str | None = None
+        self,
+        *,
+        name: str,
+        expires_in_days: int | None = None,
+        permissions: CreateApiKeyParamsPermissions | None = None,
+        idempotency_key: str | None = None,
     ) -> CreatedApiKey:
-        """Create a new API key. The full key is only returned once in the response."""
-        body = build_body(name=name, expires_in_days=expires_in_days)
+        """Create a full-access or restricted API key. Provide permissions to restrict access; the full key is returned only once. A restricted key with api_key: write may only create restricted keys with the same or fewer permissions, and they expire no later than the key that creates them."""
+        body = build_body(name=name, expires_in_days=expires_in_days, permissions=permissions)
         return _parse_data(
             self._http.post("/api-keys", body, idempotency_key=idempotency_key), CreatedApiKey
         )
