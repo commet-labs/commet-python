@@ -1,5 +1,9 @@
 # Changelog
 
+## 9.5.0
+
+- Install the webhooks contract (`docs/webhooks.openapi.json`) with the SDK documentation in place of per-event pages, and refresh the documentation from commet.co/docs.
+
 ## 9.4.0
 
 - Add subscription pause, pause updates, pause revocation, resume, and their lifecycle webhooks, including indefinite pauses.
