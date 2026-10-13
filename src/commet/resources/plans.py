@@ -168,7 +168,9 @@ class PlansResource:
         self,
         id: str,
         *,
-        billing_interval: Literal["weekly", "monthly", "quarterly", "yearly", "one_time"],
+        billing_interval: Literal[
+            "weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"
+        ],
         metadata: dict[str, Any] | None = None,
         price: int | None = None,
         trial_days: int | None = None,

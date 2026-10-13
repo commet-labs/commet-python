@@ -26,7 +26,9 @@ class AsyncPromoCodesResource:
         self,
         id: str,
         *,
-        billing_interval: Literal["weekly", "monthly", "quarterly", "yearly", "one_time"]
+        billing_interval: Literal[
+            "weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"
+        ]
         | None = None,
         max_redemptions: int | None = None,
         expires_at: str | None = None,
@@ -59,7 +61,9 @@ class AsyncPromoCodesResource:
         *,
         code: str,
         offer_id: str,
-        billing_interval: Literal["weekly", "monthly", "quarterly", "yearly", "one_time"]
+        billing_interval: Literal[
+            "weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"
+        ]
         | None = None,
         max_redemptions: int | None = None,
         expires_at: str | None = None,

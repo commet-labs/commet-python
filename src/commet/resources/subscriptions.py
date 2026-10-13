@@ -97,7 +97,8 @@ class SubscriptionsResource:
         id: str,
         *,
         new_plan_id: str | None = None,
-        new_billing_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = None,
+        new_billing_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"]
+        | None = None,
         success_url: str | None = None,
         offer_id: str | None = None,
         idempotency_key: str | None = None,
@@ -191,7 +192,9 @@ class SubscriptionsResource:
         id: str,
         *,
         plan_id: str,
-        billing_interval: Literal["weekly", "monthly", "quarterly", "yearly", "one_time"]
+        billing_interval: Literal[
+            "weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"
+        ]
         | None = None,
         offer_id: str | None = None,
         idempotency_key: str | None = None,
@@ -258,7 +261,9 @@ class SubscriptionsResource:
         self,
         *,
         customer_id: str,
-        billing_interval: Literal["weekly", "monthly", "quarterly", "yearly", "one_time"]
+        billing_interval: Literal[
+            "weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"
+        ]
         | None = None,
         price_id: str | None = None,
         initial_seats: dict[str, int] | None = None,

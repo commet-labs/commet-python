@@ -189,7 +189,7 @@ Add a base price or a selectable market price variant. Variants inherit their ba
 ### Parameters
 
 - `id` (`str`, required)
-- `billing_interval` (`Literal["weekly", "monthly", "quarterly", "yearly", "one_time"]`, required)
+- `billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"]`, required)
 - `metadata` (`dict[str, Any]`, optional)
 - `price` (`int`, optional)
 - `trial_days` (`int`, optional)
