@@ -1,5 +1,9 @@
 # Changelog
 
+## 9.6.0
+
+- Add the `semiannual` billing interval.
+
 ## 9.5.0
 
 - Install the webhooks contract (`docs/webhooks.openapi.json`) with the SDK documentation in place of per-event pages, and refresh the documentation from commet.co/docs.

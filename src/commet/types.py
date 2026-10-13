@@ -153,6 +153,7 @@ class BillingInterval(str, Enum):
     WEEKLY = "weekly"
     MONTHLY = "monthly"
     QUARTERLY = "quarterly"
+    SEMIANNUAL = "semiannual"
     YEARLY = "yearly"
     ONE_TIME = "one_time"
 
@@ -726,8 +727,8 @@ class CreateOfferParamsPhasesItemVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
     percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
@@ -740,8 +741,8 @@ class CreateOfferParamsPhasesItemVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
     amounts: list[CreateOfferParamsPhasesItemVariant3AmountsItem] = field(
         default_factory=list, metadata={"wire_name": "amounts", "required": True}
@@ -762,8 +763,8 @@ class CreateOfferParamsPhasesItemVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
     prices: list[CreateOfferParamsPhasesItemVariant4PricesItem] = field(
         default_factory=list, metadata={"wire_name": "prices", "required": True}
@@ -1665,8 +1666,8 @@ class OfferPhasesItemVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
@@ -1679,8 +1680,8 @@ class OfferPhasesItemVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     amounts: list[OfferPhasesItemVariant3AmountsItem] = field(
         default_factory=list, metadata={"wire_name": "amounts", "required": True}
@@ -1701,8 +1702,8 @@ class OfferPhasesItemVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     prices: list[OfferPhasesItemVariant4PricesItem] = field(
         default_factory=list, metadata={"wire_name": "prices", "required": True}
@@ -2005,8 +2006,8 @@ class PlanChangeVariant1OfferApplicationPhasesItemVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2023,8 +2024,8 @@ class PlanChangeVariant1OfferApplicationPhasesItemVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2041,8 +2042,8 @@ class PlanChangeVariant1OfferApplicationPhasesItemVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2217,8 +2218,8 @@ class PlanChangeVariant3OfferApplicationPhasesItemVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2235,8 +2236,8 @@ class PlanChangeVariant3OfferApplicationPhasesItemVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2253,8 +2254,8 @@ class PlanChangeVariant3OfferApplicationPhasesItemVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2721,8 +2722,8 @@ class PreviewChangeOfferApplicationPhasesItemVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2739,8 +2740,8 @@ class PreviewChangeOfferApplicationPhasesItemVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2757,8 +2758,8 @@ class PreviewChangeOfferApplicationPhasesItemVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2902,8 +2903,8 @@ class ReactivatedSubscriptionOfferApplicationPhasesItemVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2920,8 +2921,8 @@ class ReactivatedSubscriptionOfferApplicationPhasesItemVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -2938,8 +2939,8 @@ class ReactivatedSubscriptionOfferApplicationPhasesItemVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -3403,8 +3404,8 @@ class SubscriptionOfferApplicationPhaseVariant1:
         default=None, metadata={"wire_name": "type", "required": True}
     )
     duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     starts_at: str | None = field(
         default=None, metadata={"wire_name": "startsAt", "required": True}
@@ -3420,8 +3421,8 @@ class SubscriptionOfferApplicationPhaseVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
     starts_at: str | None = field(
@@ -3438,8 +3439,8 @@ class SubscriptionOfferApplicationPhaseVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
     starts_at: str | None = field(
@@ -3456,8 +3457,8 @@ class SubscriptionOfferApplicationPhaseVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": True}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
     price: int = field(default=0, metadata={"wire_name": "price", "required": True})
     starts_at: str | None = field(
@@ -4056,8 +4057,8 @@ class UpdateOfferParamsPhasesItemVariant2:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
     percentage: int = field(default=0, metadata={"wire_name": "percentage", "required": True})
 
@@ -4070,8 +4071,8 @@ class UpdateOfferParamsPhasesItemVariant3:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
     amounts: list[UpdateOfferParamsPhasesItemVariant3AmountsItem] = field(
         default_factory=list, metadata={"wire_name": "amounts", "required": True}
@@ -4092,8 +4093,8 @@ class UpdateOfferParamsPhasesItemVariant4:
     duration_cycles: int | None = field(
         default=None, metadata={"wire_name": "durationCycles", "required": True}
     )
-    duration_interval: Literal["weekly", "monthly", "quarterly", "yearly"] | None = field(
-        default=None, metadata={"wire_name": "durationInterval", "required": False}
+    duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
+        field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
     prices: list[UpdateOfferParamsPhasesItemVariant4PricesItem] = field(
         default_factory=list, metadata={"wire_name": "prices", "required": True}

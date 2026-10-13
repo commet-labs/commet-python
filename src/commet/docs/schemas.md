@@ -9,6 +9,7 @@ Generated from Commet API version `2026-08-27`.
 - `"weekly"`
 - `"monthly"`
 - `"quarterly"`
+- `"semiannual"`
 - `"yearly"`
 - `"one_time"`
 
@@ -386,14 +387,14 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `percentage` (`int`, required) — Discount in basis points. 5000 means 50%.
 
 ### CreateOfferParamsPhasesItemVariant3
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `amounts` (`list[CreateOfferParamsPhasesItemVariant3AmountsItem]`, required)
 
 ### CreateOfferParamsPhasesItemVariant3AmountsItem
@@ -405,7 +406,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `prices` (`list[CreateOfferParamsPhasesItemVariant4PricesItem]`, required)
 
 ### CreateOfferParamsPhasesItemVariant4PricesItem
@@ -961,14 +962,14 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `percentage` (`int`, required) — Discount in basis points. 5000 means 50%.
 
 ### OfferPhasesItemVariant3
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `amounts` (`list[OfferPhasesItemVariant3AmountsItem]`, required)
 
 ### OfferPhasesItemVariant3AmountsItem
@@ -980,7 +981,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `prices` (`list[OfferPhasesItemVariant4PricesItem]`, required)
 
 ### OfferPhasesItemVariant4PricesItem
@@ -1200,7 +1201,7 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `percentage` (`int`, required) — Discount in basis points. 5000 means 50%.
@@ -1209,7 +1210,7 @@ Discriminator: `type`
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `amount` (`int`, required) — Discount in the application currency's minor unit.
@@ -1218,7 +1219,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `price` (`int`, required) — Fixed price in the application currency's minor unit.
@@ -1346,7 +1347,7 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `percentage` (`int`, required) — Discount in basis points. 5000 means 50%.
@@ -1355,7 +1356,7 @@ Discriminator: `type`
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `amount` (`int`, required) — Discount in the application currency's minor unit.
@@ -1364,7 +1365,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `price` (`int`, required) — Fixed price in the application currency's minor unit.
@@ -1664,7 +1665,7 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `percentage` (`int`, required) — Discount in basis points. 5000 means 50%.
@@ -1673,7 +1674,7 @@ Discriminator: `type`
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `amount` (`int`, required) — Discount in the application currency's minor unit.
@@ -1682,7 +1683,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `price` (`int`, required) — Fixed price in the application currency's minor unit.
@@ -1793,7 +1794,7 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `percentage` (`int`, required) — Discount in basis points. 5000 means 50%.
@@ -1802,7 +1803,7 @@ Discriminator: `type`
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `amount` (`int`, required) — Discount in the application currency's minor unit.
@@ -1811,7 +1812,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 - `price` (`int`, required) — Fixed price in the application currency's minor unit.
@@ -2131,7 +2132,7 @@ Discriminator: `type`
 
 - `type` (`Literal["free_trial"]`, required)
 - `duration_days` (`int`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
 
@@ -2139,7 +2140,7 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `percentage` (`int`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
@@ -2148,7 +2149,7 @@ Discriminator: `type`
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `amount` (`int`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
@@ -2157,7 +2158,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, required)
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, required)
 - `price` (`int`, required)
 - `starts_at` (`str | null`, required)
 - `ends_at` (`str | null`, required)
@@ -2527,14 +2528,14 @@ Discriminator: `type`
 
 - `type` (`Literal["percentage"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `percentage` (`int`, required) — Discount in basis points. 5000 means 50%.
 
 ### UpdateOfferParamsPhasesItemVariant3
 
 - `type` (`Literal["amount_off"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `amounts` (`list[UpdateOfferParamsPhasesItemVariant3AmountsItem]`, required)
 
 ### UpdateOfferParamsPhasesItemVariant3AmountsItem
@@ -2546,7 +2547,7 @@ Discriminator: `type`
 
 - `type` (`Literal["fixed_price"]`, required)
 - `duration_cycles` (`int | null`, required)
-- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
+- `duration_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | null`, optional) — Unit the phase duration is counted in. Only a fixed-price phase may set it, because its amount is declared rather than derived from the plan. Defaults to the plan's own billing interval.
 - `prices` (`list[UpdateOfferParamsPhasesItemVariant4PricesItem]`, required)
 
 ### UpdateOfferParamsPhasesItemVariant4PricesItem

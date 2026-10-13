@@ -118,7 +118,7 @@ Upgrade or change billing interval immediately, optionally applying an Offer. Sc
 
 - `id` (`str`, required)
 - `new_plan_id` (`str`, optional)
-- `new_billing_interval` (`Literal["weekly", "monthly", "quarterly", "yearly"]`, optional)
+- `new_billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"]`, optional)
 - `success_url` (`str`, optional)
 - `offer_id` (`str`, optional)
 
@@ -281,7 +281,7 @@ Preview proration details for an immediate plan change without applying it. Free
 
 - `id` (`str`, required)
 - `plan_id` (`str`, required)
-- `billing_interval` (`Literal["weekly", "monthly", "quarterly", "yearly", "one_time"]`, optional)
+- `billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"]`, optional)
 - `offer_id` (`str`, optional)
 
 ### Request options
@@ -433,7 +433,7 @@ Create a subscription for a customer. Commet selects the default price when pric
 ### Parameters
 
 - `customer_id` (`str`, required)
-- `billing_interval` (`Literal["weekly", "monthly", "quarterly", "yearly", "one_time"] | null`, optional)
+- `billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"] | null`, optional)
 - `price_id` (`str`, optional) — Public price ID. When omitted, Commet selects the default price for the billing interval and still applies its market pricing.
 - `initial_seats` (`dict[str, int]`, optional)
 - `provider` (`Literal["stripe"] | Literal["commet"] | Literal["dlocal"] | str`, optional) — Payment provider name or exact public payment connection ID for the initial checkout. Overrides country routing when present.
