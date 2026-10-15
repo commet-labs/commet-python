@@ -14,6 +14,7 @@ from ..types import (
     DeletedSubscriptionAddon,
     PaymentMethodUpdateCheckout,
     PlanChange,
+    PrepaidPeriodsCheckout,
     PreviewChange,
     ReactivatedSubscription,
     RecoveryLink,
@@ -178,13 +179,31 @@ class SubscriptionsResource:
     def update_payment_method(
         self, id: str, *, success_url: str | None = None, idempotency_key: str | None = None
     ) -> PaymentMethodUpdateCheckout:
-        """Creates a hosted checkout session for the customer to update the subscription's default payment method."""
+        """Creates a hosted checkout to update the payment method of an active, trialing or past_due subscription. Pending-payment subscriptions must use their payment checkout."""
         body = build_body(success_url=success_url)
         return _parse_data(
             self._http.post(
                 f"/subscriptions/{id}/payment-method/update", body, idempotency_key=idempotency_key
             ),
             PaymentMethodUpdateCheckout,
+        )
+
+    def create_prepaid_periods_checkout(
+        self,
+        id: str,
+        *,
+        periods: int,
+        offer_id: str | None = None,
+        success_url: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> PrepaidPeriodsCheckout:
+        """Creates a hosted checkout to pay billing periods of a recurring subscription in advance with any payment method. On an active subscription the paid periods start after the last paid period and replace any open prepaid-periods checkout. On a pending-payment subscription the first payment covers the requested periods and replaces its pending checkout. The billing interval does not change."""
+        body = build_body(periods=periods, offer_id=offer_id, success_url=success_url)
+        return _parse_data(
+            self._http.post(
+                f"/subscriptions/{id}/prepaid-periods", body, idempotency_key=idempotency_key
+            ),
+            PrepaidPeriodsCheckout,
         )
 
     def preview_change(
@@ -271,6 +290,8 @@ class SubscriptionsResource:
         name: str | None = None,
         start_date: str | None = None,
         success_url: str | None = None,
+        prepaid_periods: int | None = None,
+        cancel_at_period_end: bool | None = None,
         offer_id: str | None = None,
         promo_code: str | None = None,
         custom_trial_days: int | None = None,
@@ -290,6 +311,8 @@ class SubscriptionsResource:
             name=name,
             start_date=start_date,
             success_url=success_url,
+            prepaid_periods=prepaid_periods,
+            cancel_at_period_end=cancel_at_period_end,
             offer_id=offer_id,
             promo_code=promo_code,
             custom_trial_days=custom_trial_days,
