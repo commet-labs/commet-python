@@ -1,5 +1,10 @@
 # Changelog
 
+## 9.7.0
+
+- Add paying billing periods in advance: create a prepaid-periods checkout for a subscription, and set `prepaidPeriods` and `cancelAtPeriodEnd` when creating one.
+- Support the `prepayment` invoice type and payment reason, the `prepaid_period` invoice line type, and the `google_pay` and `smartpix` payment methods.
+
 ## 9.6.0
 
 - Add the `semiannual` billing interval.

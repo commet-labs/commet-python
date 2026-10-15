@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "package": "commet-sdk",
-  "packageVersion": "9.6.0",
+  "packageVersion": "9.7.0",
   "apiVersion": "2026-08-27",
   "entrypoint": "README.md",
   "gettingStarted": "getting-started.md",
