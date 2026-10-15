@@ -38,12 +38,15 @@ Generated from Commet API version `2026-08-27`.
 - `"one_time_payment"`
 - `"reactivation"`
 - `"resume"`
+- `"prepayment"`
 
 ### PaymentMethod
 
 - `"card"`
 - `"oxxo"`
 - `"mercado_pago"`
+- `"google_pay"`
+- `"smartpix"`
 
 ### PaymentProvider
 
@@ -860,7 +863,7 @@ Discriminator: `model`
 
 ### InvoiceLineItemsItem
 
-- `line_type` (`Literal["plan_base", "feature_overage", "feature_seats", "feature_quota", "discount", "promo_code_discount", "credit", "balance_overage", "addon_base", "one_time"]`, required)
+- `line_type` (`Literal["plan_base", "feature_overage", "feature_seats", "feature_quota", "discount", "promo_code_discount", "credit", "balance_overage", "addon_base", "one_time", "prepaid_period"]`, required)
 - `feature_name` (`str | null`, required)
 - `description` (`str`, required)
 - `quantity` (`int`, required)
@@ -1025,7 +1028,7 @@ Discriminator: `type`
 
 ### PaymentPaymentContext
 
-- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
+- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment", "addon_activation", "prepayment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
 - `payment_link_id` (`str | null`, required) — The public payment link ID, independently of the reason, or null when no payment link originated the charge.
 - `recovery` (`PaymentPaymentContextRecovery | null`, required)
 
@@ -1581,6 +1584,12 @@ Discriminator: `type`
 
 - `portal_url` (`str`, required)
 - `object` (`Literal["portal_session"]`, required)
+- `livemode` (`bool`, required)
+
+### PrepaidPeriodsCheckout
+
+- `checkout_url` (`str`, required)
+- `object` (`Literal["checkout_session"]`, required)
 - `livemode` (`bool`, required)
 
 ### PreviewChange
@@ -2424,7 +2433,7 @@ Discriminator: `status`
 
 ### TransactionListItemPaymentContext
 
-- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
+- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment", "addon_activation", "prepayment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
 - `payment_link_id` (`str | null`, required) — The public payment link ID, independently of the reason, or null when no payment link originated the charge.
 - `recovery` (`TransactionListItemPaymentContextRecovery | null`, required)
 
@@ -2452,7 +2461,7 @@ Discriminator: `type`
 
 ### TransactionPaymentContext
 
-- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
+- `reason` (`Literal["first_subscription_payment", "trial_conversion", "recurring_billing", "plan_change", "reactivation", "subscription_resume", "one_time_payment", "overage", "adjustment", "addon_activation", "prepayment"]`, required) — The original reason for the charge. Recovery never replaces this reason.
 - `payment_link_id` (`str | null`, required) — The public payment link ID, independently of the reason, or null when no payment link originated the charge.
 - `recovery` (`TransactionPaymentContextRecovery | null`, required)
 

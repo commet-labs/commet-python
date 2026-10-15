@@ -182,12 +182,15 @@ class InvoiceType(str, Enum):
     ONE_TIME_PAYMENT = "one_time_payment"
     REACTIVATION = "reactivation"
     RESUME = "resume"
+    PREPAYMENT = "prepayment"
 
 
 class PaymentMethod(str, Enum):
     CARD = "card"
     OXXO = "oxxo"
     MERCADO_PAGO = "mercado_pago"
+    GOOGLE_PAY = "google_pay"
+    SMARTPIX = "smartpix"
 
 
 class PaymentProvider(str, Enum):
@@ -1509,6 +1512,7 @@ class InvoiceLineItemsItem:
             "balance_overage",
             "addon_base",
             "one_time",
+            "prepaid_period",
         ]
         | None
     ) = field(default=None, metadata={"wire_name": "lineType", "required": True})
@@ -1793,6 +1797,8 @@ class PaymentPaymentContext:
             "one_time_payment",
             "overage",
             "adjustment",
+            "addon_activation",
+            "prepayment",
         ]
         | None
     ) = field(default=None, metadata={"wire_name": "reason", "required": True})
@@ -2625,6 +2631,15 @@ class PlansListResult:
 class PortalAccess:
     portal_url: str = field(default="", metadata={"wire_name": "portalUrl", "required": True})
     object: Literal["portal_session"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class PrepaidPeriodsCheckout:
+    checkout_url: str = field(default="", metadata={"wire_name": "checkoutUrl", "required": True})
+    object: Literal["checkout_session"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
     )
     livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
@@ -3934,6 +3949,8 @@ class TransactionListItemPaymentContext:
             "one_time_payment",
             "overage",
             "adjustment",
+            "addon_activation",
+            "prepayment",
         ]
         | None
     ) = field(default=None, metadata={"wire_name": "reason", "required": True})
@@ -3974,6 +3991,8 @@ class TransactionPaymentContext:
             "one_time_payment",
             "overage",
             "adjustment",
+            "addon_activation",
+            "prepayment",
         ]
         | None
     ) = field(default=None, metadata={"wire_name": "reason", "required": True})
@@ -4794,6 +4813,7 @@ _DATACLASS_TYPES.update(
         "PlanRegionalPricingResult": PlanRegionalPricingResult,
         "PlansListResult": PlansListResult,
         "PortalAccess": PortalAccess,
+        "PrepaidPeriodsCheckout": PrepaidPeriodsCheckout,
         "PreviewChange": PreviewChange,
         "PreviewChangeOfferApplication": PreviewChangeOfferApplication,
         "PreviewChangeOfferApplicationAppliesToVariant1": PreviewChangeOfferApplicationAppliesToVariant1,
