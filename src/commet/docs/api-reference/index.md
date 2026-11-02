@@ -3,7 +3,7 @@
 Generated from Commet API version `2026-08-27`.
 
 - [Schemas](../schemas.md)
-- [API errors](../errors/index.md) — 83 references
+- [API errors](../errors/index.md) — 87 references
 - [Addons](./addons.md) — 6 operations
 - [Api Keys](./api-keys.md) — 3 operations
 - [Provisioning](./provisioning.md) — 1 operations
@@ -21,7 +21,7 @@ Generated from Commet API version `2026-08-27`.
 - [Portal](./portal.md) — 1 operations
 - [Promo Codes](./promo-codes.md) — 4 operations
 - [Seats](./seats.md) — 6 operations
-- [Subscriptions](./subscriptions.md) — 23 operations
+- [Subscriptions](./subscriptions.md) — 26 operations
 - [Test Clock](./test-clock.md) — 3 operations
 - [Transactions](./transactions.md) — 4 operations
 - [Usage](./usage.md) — 3 operations

@@ -605,6 +605,9 @@ class CreatedSubscription:
     checkout_url: str | None = field(
         default=None, metadata={"wire_name": "checkoutUrl", "required": True}
     )
+    has_payment_method: bool = field(
+        default=False, metadata={"wire_name": "hasPaymentMethod", "required": True}
+    )
     created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
     updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
     offer_applications: list[SubscriptionOfferApplication] = field(
@@ -716,14 +719,6 @@ class CreatedWebhook:
 
 @dataclass
 class CreateOfferParamsPhasesItemVariant1:
-    type: Literal["free_trial"] | None = field(
-        default=None, metadata={"wire_name": "type", "required": True}
-    )
-    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
-
-
-@dataclass
-class CreateOfferParamsPhasesItemVariant2:
     type: Literal["percentage"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -737,7 +732,7 @@ class CreateOfferParamsPhasesItemVariant2:
 
 
 @dataclass
-class CreateOfferParamsPhasesItemVariant3:
+class CreateOfferParamsPhasesItemVariant2:
     type: Literal["amount_off"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -747,19 +742,19 @@ class CreateOfferParamsPhasesItemVariant3:
     duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
         field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
-    amounts: list[CreateOfferParamsPhasesItemVariant3AmountsItem] = field(
+    amounts: list[CreateOfferParamsPhasesItemVariant2AmountsItem] = field(
         default_factory=list, metadata={"wire_name": "amounts", "required": True}
     )
 
 
 @dataclass
-class CreateOfferParamsPhasesItemVariant3AmountsItem:
+class CreateOfferParamsPhasesItemVariant2AmountsItem:
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
-class CreateOfferParamsPhasesItemVariant4:
+class CreateOfferParamsPhasesItemVariant3:
     type: Literal["fixed_price"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -769,15 +764,40 @@ class CreateOfferParamsPhasesItemVariant4:
     duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
         field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
-    prices: list[CreateOfferParamsPhasesItemVariant4PricesItem] = field(
+    prices: list[CreateOfferParamsPhasesItemVariant3PricesItem] = field(
         default_factory=list, metadata={"wire_name": "prices", "required": True}
     )
 
 
 @dataclass
-class CreateOfferParamsPhasesItemVariant4PricesItem:
+class CreateOfferParamsPhasesItemVariant3PricesItem:
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+
+
+@dataclass
+class CreatePlanParamsPlanCreditLimit:
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
+class CreatePlanParamsUnusedPlanCreditsVariant1:
+    type: Literal["expire"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class CreatePlanParamsUnusedPlanCreditsVariant2:
+    type: Literal["roll_over"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    max_plan_credits: int | None = field(
+        default=None, metadata={"wire_name": "maxPlanCredits", "required": True}
+    )
 
 
 @dataclass
@@ -1646,6 +1666,9 @@ class Offer:
     )
     ends_at: str | None = field(default=None, metadata={"wire_name": "endsAt", "required": True})
     active: bool = field(default=False, metadata={"wire_name": "active", "required": True})
+    managed_by: ManagedBy | None = field(
+        default=None, metadata={"wire_name": "managedBy", "required": True}
+    )
     created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
     updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
     object: Literal["offer"] | None = field(
@@ -1656,14 +1679,6 @@ class Offer:
 
 @dataclass
 class OfferPhasesItemVariant1:
-    type: Literal["free_trial"] | None = field(
-        default=None, metadata={"wire_name": "type", "required": True}
-    )
-    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
-
-
-@dataclass
-class OfferPhasesItemVariant2:
     type: Literal["percentage"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -1677,7 +1692,7 @@ class OfferPhasesItemVariant2:
 
 
 @dataclass
-class OfferPhasesItemVariant3:
+class OfferPhasesItemVariant2:
     type: Literal["amount_off"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -1687,19 +1702,19 @@ class OfferPhasesItemVariant3:
     duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
         field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
-    amounts: list[OfferPhasesItemVariant3AmountsItem] = field(
+    amounts: list[OfferPhasesItemVariant2AmountsItem] = field(
         default_factory=list, metadata={"wire_name": "amounts", "required": True}
     )
 
 
 @dataclass
-class OfferPhasesItemVariant3AmountsItem:
+class OfferPhasesItemVariant2AmountsItem:
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
-class OfferPhasesItemVariant4:
+class OfferPhasesItemVariant3:
     type: Literal["fixed_price"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -1709,13 +1724,13 @@ class OfferPhasesItemVariant4:
     duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
         field(default=None, metadata={"wire_name": "durationInterval", "required": True})
     )
-    prices: list[OfferPhasesItemVariant4PricesItem] = field(
+    prices: list[OfferPhasesItemVariant3PricesItem] = field(
         default_factory=list, metadata={"wire_name": "prices", "required": True}
     )
 
 
 @dataclass
-class OfferPhasesItemVariant4PricesItem:
+class OfferPhasesItemVariant3PricesItem:
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
@@ -1906,6 +1921,12 @@ class Plan:
     is_free: bool = field(default=False, metadata={"wire_name": "isFree", "required": True})
     block_on_exhaustion: bool | None = field(
         default=None, metadata={"wire_name": "blockOnExhaustion", "required": True}
+    )
+    unused_plan_credits: PlanUnusedPlanCredits | None = field(
+        default=None, metadata={"wire_name": "unusedPlanCredits", "required": True}
+    )
+    plan_credit_limit: PlanPlanCreditLimit | None = field(
+        default=None, metadata={"wire_name": "planCreditLimit", "required": True}
     )
     sort_order: int = field(default=0, metadata={"wire_name": "sortOrder", "required": True})
     plan_group_id: str | None = field(
@@ -2484,6 +2505,14 @@ class PlanGroupsListResult:
 
 
 @dataclass
+class PlanPlanCreditLimit:
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
 class PlanPrice:
     id: str = field(default="", metadata={"wire_name": "id", "required": True})
     plan_id: str = field(default="", metadata={"wire_name": "planId", "required": True})
@@ -2493,6 +2522,9 @@ class PlanPrice:
     price: int = field(default=0, metadata={"wire_name": "price", "required": True})
     is_default: bool = field(default=False, metadata={"wire_name": "isDefault", "required": True})
     trial_days: int = field(default=0, metadata={"wire_name": "trialDays", "required": True})
+    trial_requires_payment_method: bool | None = field(
+        default=None, metadata={"wire_name": "trialRequiresPaymentMethod", "required": True}
+    )
     included_balance: int | None = field(
         default=None, metadata={"wire_name": "includedBalance", "required": True}
     )
@@ -2535,6 +2567,9 @@ class PlanPricesItem:
     price: int = field(default=0, metadata={"wire_name": "price", "required": True})
     is_default: bool = field(default=False, metadata={"wire_name": "isDefault", "required": True})
     trial_days: int = field(default=0, metadata={"wire_name": "trialDays", "required": True})
+    trial_requires_payment_method: bool | None = field(
+        default=None, metadata={"wire_name": "trialRequiresPaymentMethod", "required": True}
+    )
     included_balance: int | None = field(
         default=None, metadata={"wire_name": "includedBalance", "required": True}
     )
@@ -2624,6 +2659,23 @@ class PlansListResult:
     has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
     next_cursor: str | None = field(
         default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
+
+
+@dataclass
+class PlanUnusedPlanCreditsVariant1:
+    type: Literal["expire"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class PlanUnusedPlanCreditsVariant2:
+    type: Literal["roll_over"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    max_plan_credits: int | None = field(
+        default=None, metadata={"wire_name": "maxPlanCredits", "required": True}
     )
 
 
@@ -2800,6 +2852,12 @@ class PromoCode:
     is_active: bool = field(default=False, metadata={"wire_name": "isActive", "required": True})
     redemption_count: int = field(
         default=0, metadata={"wire_name": "redemptionCount", "required": True}
+    )
+    first_purchase_only: bool = field(
+        default=False, metadata={"wire_name": "firstPurchaseOnly", "required": True}
+    )
+    managed_by: ManagedBy | None = field(
+        default=None, metadata={"wire_name": "managedBy", "required": True}
     )
     created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
     updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
@@ -3156,6 +3214,9 @@ class Subscription:
     checkout_url: str | None = field(
         default=None, metadata={"wire_name": "checkoutUrl", "required": True}
     )
+    has_payment_method: bool = field(
+        default=False, metadata={"wire_name": "hasPaymentMethod", "required": True}
+    )
     created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
     updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
     offer_applications: list[SubscriptionOfferApplication] = field(
@@ -3199,6 +3260,45 @@ class SubscriptionAddon:
         default=None, metadata={"wire_name": "object", "required": True}
     )
     livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class SubscriptionAutoTopUp:
+    enabled: bool = field(default=False, metadata={"wire_name": "enabled", "required": True})
+    threshold: int | None = field(
+        default=None, metadata={"wire_name": "threshold", "required": True}
+    )
+    quantity: int | None = field(default=None, metadata={"wire_name": "quantity", "required": True})
+    max_per_period: int | None = field(
+        default=None, metadata={"wire_name": "maxPerPeriod", "required": True}
+    )
+    status: Literal["active", "paused", "off"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
+    top_ups_this_period: int = field(
+        default=0, metadata={"wire_name": "topUpsThisPeriod", "required": True}
+    )
+    period_resets_at: str | None = field(
+        default=None, metadata={"wire_name": "periodResetsAt", "required": True}
+    )
+    last_failure: SubscriptionAutoTopUpLastFailure | None = field(
+        default=None, metadata={"wire_name": "lastFailure", "required": True}
+    )
+    object: Literal["subscription_auto_top_up"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class SubscriptionAutoTopUpLastFailure:
+    reason: (
+        Literal[
+            "payment_declined", "no_payment_method", "quantity_below_minimum", "purchase_failed"
+        ]
+        | None
+    ) = field(default=None, metadata={"wire_name": "reason", "required": True})
+    at: str = field(default="", metadata={"wire_name": "at", "required": True})
 
 
 @dataclass
@@ -3626,6 +3726,9 @@ class SubscriptionSummary:
     )
     checkout_url: str | None = field(
         default=None, metadata={"wire_name": "checkoutUrl", "required": True}
+    )
+    has_payment_method: bool = field(
+        default=False, metadata={"wire_name": "hasPaymentMethod", "required": True}
     )
     created_at: str = field(default="", metadata={"wire_name": "createdAt", "required": True})
     updated_at: str = field(default="", metadata={"wire_name": "updatedAt", "required": True})
@@ -4062,14 +4165,6 @@ class UpdateCustomerParamsAddress:
 
 @dataclass
 class UpdateOfferParamsPhasesItemVariant1:
-    type: Literal["free_trial"] | None = field(
-        default=None, metadata={"wire_name": "type", "required": True}
-    )
-    duration_days: int = field(default=0, metadata={"wire_name": "durationDays", "required": True})
-
-
-@dataclass
-class UpdateOfferParamsPhasesItemVariant2:
     type: Literal["percentage"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -4083,7 +4178,7 @@ class UpdateOfferParamsPhasesItemVariant2:
 
 
 @dataclass
-class UpdateOfferParamsPhasesItemVariant3:
+class UpdateOfferParamsPhasesItemVariant2:
     type: Literal["amount_off"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -4093,19 +4188,19 @@ class UpdateOfferParamsPhasesItemVariant3:
     duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
         field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
-    amounts: list[UpdateOfferParamsPhasesItemVariant3AmountsItem] = field(
+    amounts: list[UpdateOfferParamsPhasesItemVariant2AmountsItem] = field(
         default_factory=list, metadata={"wire_name": "amounts", "required": True}
     )
 
 
 @dataclass
-class UpdateOfferParamsPhasesItemVariant3AmountsItem:
+class UpdateOfferParamsPhasesItemVariant2AmountsItem:
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
 
 @dataclass
-class UpdateOfferParamsPhasesItemVariant4:
+class UpdateOfferParamsPhasesItemVariant3:
     type: Literal["fixed_price"] | None = field(
         default=None, metadata={"wire_name": "type", "required": True}
     )
@@ -4115,13 +4210,13 @@ class UpdateOfferParamsPhasesItemVariant4:
     duration_interval: Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"] | None = (
         field(default=None, metadata={"wire_name": "durationInterval", "required": False})
     )
-    prices: list[UpdateOfferParamsPhasesItemVariant4PricesItem] = field(
+    prices: list[UpdateOfferParamsPhasesItemVariant3PricesItem] = field(
         default_factory=list, metadata={"wire_name": "prices", "required": True}
     )
 
 
 @dataclass
-class UpdateOfferParamsPhasesItemVariant4PricesItem:
+class UpdateOfferParamsPhasesItemVariant3PricesItem:
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
 
@@ -4131,6 +4226,31 @@ class UpdatePlanFeatureParamsOverage:
     enabled: bool | None = field(default=None, metadata={"wire_name": "enabled", "required": False})
     unit_price: int | None = field(
         default=None, metadata={"wire_name": "unitPrice", "required": False}
+    )
+
+
+@dataclass
+class UpdatePlanParamsPlanCreditLimit:
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
+class UpdatePlanParamsUnusedPlanCreditsVariant1:
+    type: Literal["expire"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class UpdatePlanParamsUnusedPlanCreditsVariant2:
+    type: Literal["roll_over"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    max_plan_credits: int | None = field(
+        default=None, metadata={"wire_name": "maxPlanCredits", "required": True}
     )
 
 
@@ -4249,10 +4369,24 @@ class UsageCheckVariant2:
         default=0, metadata={"wire_name": "purchasedCredits", "required": True}
     )
     total_credits: int = field(default=0, metadata={"wire_name": "totalCredits", "required": True})
+    plan_credit_limit: UsageCheckVariant2PlanCreditLimit | None = field(
+        default=None, metadata={"wire_name": "planCreditLimit", "required": True}
+    )
     object: Literal["usage_check"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
     )
     livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class UsageCheckVariant2PlanCreditLimit:
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+    spent: int = field(default=0, metadata={"wire_name": "spent", "required": True})
+    remaining: int = field(default=0, metadata={"wire_name": "remaining", "required": True})
+    resets_at: str = field(default="", metadata={"wire_name": "resetsAt", "required": True})
 
 
 @dataclass
@@ -4314,6 +4448,20 @@ class UsageEventConsumption:
     deducted: float = field(default=0.0, metadata={"wire_name": "deducted", "required": True})
     remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
     blocked: bool = field(default=False, metadata={"wire_name": "blocked", "required": True})
+    plan_credit_limit: UsageEventConsumptionPlanCreditLimit | None = field(
+        default=None, metadata={"wire_name": "planCreditLimit", "required": False}
+    )
+
+
+@dataclass
+class UsageEventConsumptionPlanCreditLimit:
+    credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+    spent: int = field(default=0, metadata={"wire_name": "spent", "required": True})
+    remaining: int = field(default=0, metadata={"wire_name": "remaining", "required": True})
+    resets_at: str = field(default="", metadata={"wire_name": "resetsAt", "required": True})
 
 
 @dataclass
@@ -4571,6 +4719,11 @@ SubscriptionOfferApplicationAppliesTo = Union[
 ]
 
 
+CreatePlanParamsUnusedPlanCredits = Union[
+    CreatePlanParamsUnusedPlanCreditsVariant1, CreatePlanParamsUnusedPlanCreditsVariant2
+]
+
+
 SubscriptionOfferApplicationPhase = Union[
     SubscriptionOfferApplicationPhaseVariant1,
     SubscriptionOfferApplicationPhaseVariant2,
@@ -4581,6 +4734,11 @@ SubscriptionOfferApplicationPhase = Union[
 
 TransactionPaymentContextRecovery = Union[
     TransactionPaymentContextRecoveryVariant1, TransactionPaymentContextRecoveryVariant2
+]
+
+
+UpdatePlanParamsUnusedPlanCredits = Union[
+    UpdatePlanParamsUnusedPlanCreditsVariant1, UpdatePlanParamsUnusedPlanCreditsVariant2
 ]
 
 
@@ -4600,7 +4758,6 @@ CreateOfferParamsPhasesItem = Union[
     CreateOfferParamsPhasesItemVariant1,
     CreateOfferParamsPhasesItemVariant2,
     CreateOfferParamsPhasesItemVariant3,
-    CreateOfferParamsPhasesItemVariant4,
 ]
 
 
@@ -4608,7 +4765,6 @@ UpdateOfferParamsPhasesItem = Union[
     UpdateOfferParamsPhasesItemVariant1,
     UpdateOfferParamsPhasesItemVariant2,
     UpdateOfferParamsPhasesItemVariant3,
-    UpdateOfferParamsPhasesItemVariant4,
 ]
 
 
@@ -4626,15 +4782,13 @@ SubscriptionFeaturesItem = Union[
 SubscriptionSummaryPause = Union[SubscriptionSummaryPauseVariant1, SubscriptionSummaryPauseVariant2]
 
 
+PlanUnusedPlanCredits = Union[PlanUnusedPlanCreditsVariant1, PlanUnusedPlanCreditsVariant2]
+
+
 SubscriptionPause = Union[SubscriptionPauseVariant1, SubscriptionPauseVariant2]
 
 
-OfferPhasesItem = Union[
-    OfferPhasesItemVariant1,
-    OfferPhasesItemVariant2,
-    OfferPhasesItemVariant3,
-    OfferPhasesItemVariant4,
-]
+OfferPhasesItem = Union[OfferPhasesItemVariant1, OfferPhasesItemVariant2, OfferPhasesItemVariant3]
 
 
 FeatureAccess = Union[
@@ -4646,6 +4800,9 @@ PlanChange = Union[PlanChangeVariant1, PlanChangeVariant2, PlanChangeVariant3]
 
 
 UsageCheck = Union[UsageCheckVariant1, UsageCheckVariant2, UsageCheckVariant3]
+
+
+ManagedBy = Union[Literal["dub"], None]
 
 
 _ENUM_TYPES.update(
@@ -4692,10 +4849,12 @@ _DATACLASS_TYPES.update(
         "CreatedWebhook": CreatedWebhook,
         "CreateOfferParamsPhasesItemVariant1": CreateOfferParamsPhasesItemVariant1,
         "CreateOfferParamsPhasesItemVariant2": CreateOfferParamsPhasesItemVariant2,
+        "CreateOfferParamsPhasesItemVariant2AmountsItem": CreateOfferParamsPhasesItemVariant2AmountsItem,
         "CreateOfferParamsPhasesItemVariant3": CreateOfferParamsPhasesItemVariant3,
-        "CreateOfferParamsPhasesItemVariant3AmountsItem": CreateOfferParamsPhasesItemVariant3AmountsItem,
-        "CreateOfferParamsPhasesItemVariant4": CreateOfferParamsPhasesItemVariant4,
-        "CreateOfferParamsPhasesItemVariant4PricesItem": CreateOfferParamsPhasesItemVariant4PricesItem,
+        "CreateOfferParamsPhasesItemVariant3PricesItem": CreateOfferParamsPhasesItemVariant3PricesItem,
+        "CreatePlanParamsPlanCreditLimit": CreatePlanParamsPlanCreditLimit,
+        "CreatePlanParamsUnusedPlanCreditsVariant1": CreatePlanParamsUnusedPlanCreditsVariant1,
+        "CreatePlanParamsUnusedPlanCreditsVariant2": CreatePlanParamsUnusedPlanCreditsVariant2,
         "CreditGrant": CreditGrant,
         "CreditPack": CreditPack,
         "CreditPackListItem": CreditPackListItem,
@@ -4754,10 +4913,9 @@ _DATACLASS_TYPES.update(
         "Offer": Offer,
         "OfferPhasesItemVariant1": OfferPhasesItemVariant1,
         "OfferPhasesItemVariant2": OfferPhasesItemVariant2,
+        "OfferPhasesItemVariant2AmountsItem": OfferPhasesItemVariant2AmountsItem,
         "OfferPhasesItemVariant3": OfferPhasesItemVariant3,
-        "OfferPhasesItemVariant3AmountsItem": OfferPhasesItemVariant3AmountsItem,
-        "OfferPhasesItemVariant4": OfferPhasesItemVariant4,
-        "OfferPhasesItemVariant4PricesItem": OfferPhasesItemVariant4PricesItem,
+        "OfferPhasesItemVariant3PricesItem": OfferPhasesItemVariant3PricesItem,
         "OffersListResult": OffersListResult,
         "Payment": Payment,
         "PaymentMethodUpdateCheckout": PaymentMethodUpdateCheckout,
@@ -4803,6 +4961,7 @@ _DATACLASS_TYPES.update(
         "PlanGroupDetail": PlanGroupDetail,
         "PlanGroupDetailPlansItem": PlanGroupDetailPlansItem,
         "PlanGroupsListResult": PlanGroupsListResult,
+        "PlanPlanCreditLimit": PlanPlanCreditLimit,
         "PlanPrice": PlanPrice,
         "PlanPriceMarketPricesItem": PlanPriceMarketPricesItem,
         "PlanPricesItem": PlanPricesItem,
@@ -4812,6 +4971,8 @@ _DATACLASS_TYPES.update(
         "PlanRegionalPricingOverridesItem": PlanRegionalPricingOverridesItem,
         "PlanRegionalPricingResult": PlanRegionalPricingResult,
         "PlansListResult": PlansListResult,
+        "PlanUnusedPlanCreditsVariant1": PlanUnusedPlanCreditsVariant1,
+        "PlanUnusedPlanCreditsVariant2": PlanUnusedPlanCreditsVariant2,
         "PortalAccess": PortalAccess,
         "PrepaidPeriodsCheckout": PrepaidPeriodsCheckout,
         "PreviewChange": PreviewChange,
@@ -4850,6 +5011,8 @@ _DATACLASS_TYPES.update(
         "SetPlanRegionalPricingParamsPricesItem": SetPlanRegionalPricingParamsPricesItem,
         "Subscription": Subscription,
         "SubscriptionAddon": SubscriptionAddon,
+        "SubscriptionAutoTopUp": SubscriptionAutoTopUp,
+        "SubscriptionAutoTopUpLastFailure": SubscriptionAutoTopUpLastFailure,
         "SubscriptionBalance": SubscriptionBalance,
         "SubscriptionCancellation": SubscriptionCancellation,
         "SubscriptionCredits": SubscriptionCredits,
@@ -4907,19 +5070,23 @@ _DATACLASS_TYPES.update(
         "UpdateCustomerParamsAddress": UpdateCustomerParamsAddress,
         "UpdateOfferParamsPhasesItemVariant1": UpdateOfferParamsPhasesItemVariant1,
         "UpdateOfferParamsPhasesItemVariant2": UpdateOfferParamsPhasesItemVariant2,
+        "UpdateOfferParamsPhasesItemVariant2AmountsItem": UpdateOfferParamsPhasesItemVariant2AmountsItem,
         "UpdateOfferParamsPhasesItemVariant3": UpdateOfferParamsPhasesItemVariant3,
-        "UpdateOfferParamsPhasesItemVariant3AmountsItem": UpdateOfferParamsPhasesItemVariant3AmountsItem,
-        "UpdateOfferParamsPhasesItemVariant4": UpdateOfferParamsPhasesItemVariant4,
-        "UpdateOfferParamsPhasesItemVariant4PricesItem": UpdateOfferParamsPhasesItemVariant4PricesItem,
+        "UpdateOfferParamsPhasesItemVariant3PricesItem": UpdateOfferParamsPhasesItemVariant3PricesItem,
         "UpdatePlanFeatureParamsOverage": UpdatePlanFeatureParamsOverage,
+        "UpdatePlanParamsPlanCreditLimit": UpdatePlanParamsPlanCreditLimit,
+        "UpdatePlanParamsUnusedPlanCreditsVariant1": UpdatePlanParamsUnusedPlanCreditsVariant1,
+        "UpdatePlanParamsUnusedPlanCreditsVariant2": UpdatePlanParamsUnusedPlanCreditsVariant2,
         "UpdatePlanPriceParamsMarketPricesItem": UpdatePlanPriceParamsMarketPricesItem,
         "UpsertRegionalPricesParamsOverridesItem": UpsertRegionalPricesParamsOverridesItem,
         "UsageAdjustment": UsageAdjustment,
         "UsageCheckVariant1": UsageCheckVariant1,
         "UsageCheckVariant2": UsageCheckVariant2,
+        "UsageCheckVariant2PlanCreditLimit": UsageCheckVariant2PlanCreditLimit,
         "UsageCheckVariant3": UsageCheckVariant3,
         "UsageEvent": UsageEvent,
         "UsageEventConsumption": UsageEventConsumption,
+        "UsageEventConsumptionPlanCreditLimit": UsageEventConsumptionPlanCreditLimit,
         "UsageEventPropertiesItem": UsageEventPropertiesItem,
         "UsageQuota": UsageQuota,
         "UsageQuotaEvent": UsageQuotaEvent,
@@ -5032,6 +5199,14 @@ _UNION_TYPES.update(
             },
             [],
         ),
+        "CreatePlanParamsUnusedPlanCredits": (
+            "type",
+            {
+                "expire": CreatePlanParamsUnusedPlanCreditsVariant1,
+                "roll_over": CreatePlanParamsUnusedPlanCreditsVariant2,
+            },
+            [],
+        ),
         "SubscriptionOfferApplicationPhase": (
             "type",
             {
@@ -5047,6 +5222,14 @@ _UNION_TYPES.update(
             {
                 "payment_recovery": TransactionPaymentContextRecoveryVariant1,
                 "dunning_retry": TransactionPaymentContextRecoveryVariant2,
+            },
+            [],
+        ),
+        "UpdatePlanParamsUnusedPlanCredits": (
+            "type",
+            {
+                "expire": UpdatePlanParamsUnusedPlanCreditsVariant1,
+                "roll_over": UpdatePlanParamsUnusedPlanCreditsVariant2,
             },
             [],
         ),
@@ -5070,20 +5253,18 @@ _UNION_TYPES.update(
         "CreateOfferParamsPhasesItem": (
             "type",
             {
-                "free_trial": CreateOfferParamsPhasesItemVariant1,
-                "percentage": CreateOfferParamsPhasesItemVariant2,
-                "amount_off": CreateOfferParamsPhasesItemVariant3,
-                "fixed_price": CreateOfferParamsPhasesItemVariant4,
+                "percentage": CreateOfferParamsPhasesItemVariant1,
+                "amount_off": CreateOfferParamsPhasesItemVariant2,
+                "fixed_price": CreateOfferParamsPhasesItemVariant3,
             },
             [],
         ),
         "UpdateOfferParamsPhasesItem": (
             "type",
             {
-                "free_trial": UpdateOfferParamsPhasesItemVariant1,
-                "percentage": UpdateOfferParamsPhasesItemVariant2,
-                "amount_off": UpdateOfferParamsPhasesItemVariant3,
-                "fixed_price": UpdateOfferParamsPhasesItemVariant4,
+                "percentage": UpdateOfferParamsPhasesItemVariant1,
+                "amount_off": UpdateOfferParamsPhasesItemVariant2,
+                "fixed_price": UpdateOfferParamsPhasesItemVariant3,
             },
             [],
         ),
@@ -5113,6 +5294,11 @@ _UNION_TYPES.update(
             },
             [],
         ),
+        "PlanUnusedPlanCredits": (
+            "type",
+            {"expire": PlanUnusedPlanCreditsVariant1, "roll_over": PlanUnusedPlanCreditsVariant2},
+            [],
+        ),
         "SubscriptionPause": (
             "status",
             {"scheduled": SubscriptionPauseVariant1, "active": SubscriptionPauseVariant2},
@@ -5121,10 +5307,9 @@ _UNION_TYPES.update(
         "OfferPhasesItem": (
             "type",
             {
-                "free_trial": OfferPhasesItemVariant1,
-                "percentage": OfferPhasesItemVariant2,
-                "amount_off": OfferPhasesItemVariant3,
-                "fixed_price": OfferPhasesItemVariant4,
+                "percentage": OfferPhasesItemVariant1,
+                "amount_off": OfferPhasesItemVariant2,
+                "fixed_price": OfferPhasesItemVariant3,
             },
             [],
         ),
@@ -5156,5 +5341,6 @@ _UNION_TYPES.update(
             },
             [],
         ),
+        "ManagedBy": (None, {}, []),
     }
 )

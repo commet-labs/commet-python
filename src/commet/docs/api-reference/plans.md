@@ -148,6 +148,7 @@ Update a base price or market price variant. Removing a base market override is 
 - `price` (`int`, optional)
 - `is_default` (`bool`, optional)
 - `trial_days` (`int`, optional)
+- `trial_requires_payment_method` (`bool`, optional) — Set to false so the price's free trial starts without a payment method. Requires trialDays on the price.
 - `included_balance` (`int | null`, optional)
 - `included_credits` (`int | null`, optional)
 - `metadata` (`dict[str, Any]`, optional) — Metadata keys to merge into the existing price metadata.
@@ -193,6 +194,7 @@ Add a base price or a selectable market price variant. Variants inherit their ba
 - `metadata` (`dict[str, Any]`, optional)
 - `price` (`int`, optional)
 - `trial_days` (`int`, optional)
+- `trial_requires_payment_method` (`bool`, optional) — Set to false so the price's free trial starts without a payment method. Requires trialDays on the price.
 - `is_default` (`bool`, optional)
 - `included_balance` (`int | null`, optional)
 - `included_credits` (`int | null`, optional)
@@ -258,7 +260,7 @@ Get a plan with public price IDs and their automatic introductory offer IDs.
 
 `PATCH /plans/{id}` · operation `update-plan`
 
-Update a plan's name, description, visibility, or metadata.
+Update a plan's name, description, visibility, default status, metadata, what happens to its unused plan credits, or its plan credit limit.
 
 ### Parameters
 
@@ -267,6 +269,9 @@ Update a plan's name, description, visibility, or metadata.
 - `description` (`str | null`, optional)
 - `metadata` (`dict[str, Any]`, optional)
 - `is_public` (`bool`, optional)
+- `unused_plan_credits` (`UpdatePlanParamsUnusedPlanCredits`, optional) — Credits plans only. What happens to unused plan credits at each reset. Existing subscriptions apply it from their next reset.
+- `plan_credit_limit` (`UpdatePlanParamsPlanCreditLimit | null`, optional) — Credits plans only. The most plan credits a subscription spends per day or per week; null removes the limit. Raising or removing it applies to existing subscriptions at once; lowering it, adding it or changing its interval applies from their next period.
+- `is_default` (`bool`, optional) — Make this plan the default plan of its plan group: customers created with that planGroupId start on it, and a paid plan of the group that ends from the customer portal, a revoked payment authorization or exhausted dunning moves to it instead of canceling. Requires a free plan in a plan group; replaces the group's previous default plan. false unmarks it.
 
 ### Request options
 
@@ -346,7 +351,10 @@ Create a new plan with optional consumption model, visibility, and plan group as
 - `is_public` (`bool`, optional)
 - `is_free` (`bool`, optional)
 - `block_on_exhaustion` (`bool`, optional)
+- `unused_plan_credits` (`CreatePlanParamsUnusedPlanCredits`, optional) — Credits plans only. What happens to unused plan credits at each reset; omitted means they expire.
+- `plan_credit_limit` (`CreatePlanParamsPlanCreditLimit | null`, optional) — Credits plans only. The most plan credits a subscription spends per day or per week; omitted or null means no limit.
 - `plan_group_id` (`str`, optional)
+- `is_default` (`bool`, optional) — Make this plan the default plan of its plan group: customers created with that planGroupId start on it, and a paid plan of the group that ends from the customer portal, a revoked payment authorization or exhausted dunning moves to it instead of canceling. Requires a free plan with a planGroupId; replaces the group's previous default plan.
 - `metadata` (`dict[str, Any]`, optional)
 
 ### Request options

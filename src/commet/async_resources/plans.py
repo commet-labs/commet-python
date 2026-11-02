@@ -10,6 +10,8 @@ from .._shared import build_body
 from ..types import (
     AddPlanFeatureParamsOverage,
     AddPlanPriceParamsMarketPricesItem,
+    CreatePlanParamsPlanCreditLimit,
+    CreatePlanParamsUnusedPlanCredits,
     DeletedObject,
     DeletedPlanRegionalPricing,
     Plan,
@@ -22,6 +24,8 @@ from ..types import (
     SetPlanRegionalPricingParamsFeaturesItem,
     SetPlanRegionalPricingParamsPricesItem,
     UpdatePlanFeatureParamsOverage,
+    UpdatePlanParamsPlanCreditLimit,
+    UpdatePlanParamsUnusedPlanCredits,
     UpdatePlanPriceParamsMarketPricesItem,
     UpsertRegionalPricesParamsOverridesItem,
     _parse_data,
@@ -138,6 +142,7 @@ class AsyncPlansResource:
         price: int | None = None,
         is_default: bool | None = None,
         trial_days: int | None = None,
+        trial_requires_payment_method: bool | None = None,
         included_balance: int | None = None,
         included_credits: int | None = None,
         metadata: dict[str, Any] | None = None,
@@ -149,6 +154,7 @@ class AsyncPlansResource:
             price=price,
             is_default=is_default,
             trial_days=trial_days,
+            trial_requires_payment_method=trial_requires_payment_method,
             included_balance=included_balance,
             included_credits=included_credits,
             metadata=metadata,
@@ -175,6 +181,7 @@ class AsyncPlansResource:
         metadata: dict[str, Any] | None = None,
         price: int | None = None,
         trial_days: int | None = None,
+        trial_requires_payment_method: bool | None = None,
         is_default: bool | None = None,
         included_balance: int | None = None,
         included_credits: int | None = None,
@@ -188,6 +195,7 @@ class AsyncPlansResource:
             metadata=metadata,
             price=price,
             trial_days=trial_days,
+            trial_requires_payment_method=trial_requires_payment_method,
             is_default=is_default,
             included_balance=included_balance,
             included_credits=included_credits,
@@ -252,11 +260,20 @@ class AsyncPlansResource:
         description: str | None = None,
         metadata: dict[str, Any] | None = None,
         is_public: bool | None = None,
+        unused_plan_credits: UpdatePlanParamsUnusedPlanCredits | None = None,
+        plan_credit_limit: UpdatePlanParamsPlanCreditLimit | None = None,
+        is_default: bool | None = None,
         idempotency_key: str | None = None,
     ) -> Plan:
-        """Update a plan's name, description, visibility, or metadata."""
+        """Update a plan's name, description, visibility, default status, metadata, what happens to its unused plan credits, or its plan credit limit."""
         body = build_body(
-            name=name, description=description, metadata=metadata, is_public=is_public
+            name=name,
+            description=description,
+            metadata=metadata,
+            is_public=is_public,
+            unused_plan_credits=unused_plan_credits,
+            plan_credit_limit=plan_credit_limit,
+            is_default=is_default,
         )
         return _parse_data(
             await self._http.patch(f"/plans/{id}", body, idempotency_key=idempotency_key), Plan
@@ -291,7 +308,10 @@ class AsyncPlansResource:
         is_public: bool | None = None,
         is_free: bool | None = None,
         block_on_exhaustion: bool | None = None,
+        unused_plan_credits: CreatePlanParamsUnusedPlanCredits | None = None,
+        plan_credit_limit: CreatePlanParamsPlanCreditLimit | None = None,
         plan_group_id: str | None = None,
+        is_default: bool | None = None,
         metadata: dict[str, Any] | None = None,
         idempotency_key: str | None = None,
     ) -> Plan:
@@ -304,7 +324,10 @@ class AsyncPlansResource:
             is_public=is_public,
             is_free=is_free,
             block_on_exhaustion=block_on_exhaustion,
+            unused_plan_credits=unused_plan_credits,
+            plan_credit_limit=plan_credit_limit,
             plan_group_id=plan_group_id,
+            is_default=is_default,
             metadata=metadata,
         )
         return _parse_data(
