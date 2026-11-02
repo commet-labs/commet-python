@@ -4,7 +4,7 @@ from commet._shared import build_body, convert_keys, to_camel, to_snake
 from commet.types import (
     CreateApiKeyParamsPermissions,
     CreateCustomerParamsAddress,
-    CreateOfferParamsPhasesItemVariant2,
+    CreateOfferParamsPhasesItemVariant1,
 )
 
 
@@ -77,7 +77,7 @@ class TestConvertKeys:
                 country="US",
             ),
             "phases": [
-                CreateOfferParamsPhasesItemVariant2(
+                CreateOfferParamsPhasesItemVariant1(
                     type="percentage",
                     duration_cycles=None,
                     duration_interval="month",

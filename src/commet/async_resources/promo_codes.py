@@ -34,6 +34,7 @@ class AsyncPromoCodesResource:
         expires_at: str | None = None,
         active: bool | None = None,
         plan_ids: builtins.list[str] | None = None,
+        first_purchase_only: bool | None = None,
         idempotency_key: str | None = None,
     ) -> PromoCode:
         """Update a promo code's billing interval, redemption limits, expiration, active status, or plan restrictions."""
@@ -43,6 +44,7 @@ class AsyncPromoCodesResource:
             expires_at=expires_at,
             active=active,
             plan_ids=plan_ids,
+            first_purchase_only=first_purchase_only,
         )
         return _parse_data(
             await self._http.patch(f"/promo-codes/{id}", body, idempotency_key=idempotency_key),
@@ -68,9 +70,10 @@ class AsyncPromoCodesResource:
         max_redemptions: int | None = None,
         expires_at: str | None = None,
         plan_ids: builtins.list[str] | None = None,
+        first_purchase_only: bool | None = None,
         idempotency_key: str | None = None,
     ) -> PromoCode:
-        """Create a distribution code for an existing Offer with one or more sequential discount phases and an optional leading trial. The code owns redemption restrictions."""
+        """Create a distribution code for an existing Offer with one or more sequential discount phases. The code owns redemption restrictions."""
         body = build_body(
             code=code,
             offer_id=offer_id,
@@ -78,6 +81,7 @@ class AsyncPromoCodesResource:
             max_redemptions=max_redemptions,
             expires_at=expires_at,
             plan_ids=plan_ids,
+            first_purchase_only=first_purchase_only,
         )
         return _parse_data(
             await self._http.post("/promo-codes", body, idempotency_key=idempotency_key), PromoCode

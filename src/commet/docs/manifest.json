@@ -115,7 +115,7 @@
   },
   "errorReferences": {
     "index": "errors/index.md",
-    "count": 83,
+    "count": 87,
     "entries": [
       {
         "code": "validation_error",
@@ -164,6 +164,12 @@
         "type": "not_found_error",
         "documentation": "errors/customer_not_found.md",
         "canonicalUrl": "/docs/api-reference/2026-08-27/errors/customer_not_found.md"
+      },
+      {
+        "code": "customer_deleted",
+        "type": "conflict_error",
+        "documentation": "errors/customer_deleted.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/customer_deleted.md"
       },
       {
         "code": "feature_not_found",
@@ -278,6 +284,12 @@
         "type": "billing_error",
         "documentation": "errors/included_limit_reached.md",
         "canonicalUrl": "/docs/api-reference/2026-08-27/errors/included_limit_reached.md"
+      },
+      {
+        "code": "plan_credit_limit_reached",
+        "type": "billing_error",
+        "documentation": "errors/plan_credit_limit_reached.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/plan_credit_limit_reached.md"
       },
       {
         "code": "missing_regional_price",
@@ -430,6 +442,12 @@
         "canonicalUrl": "/docs/api-reference/2026-08-27/errors/plan_change_scheduled.md"
       },
       {
+        "code": "no_scheduled_plan_change",
+        "type": "conflict_error",
+        "documentation": "errors/no_scheduled_plan_change.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/no_scheduled_plan_change.md"
+      },
+      {
         "code": "addon_not_found",
         "type": "not_found_error",
         "documentation": "errors/addon_not_found.md",
@@ -554,6 +572,12 @@
         "type": "conflict_error",
         "documentation": "errors/price_in_use.md",
         "canonicalUrl": "/docs/api-reference/2026-08-27/errors/price_in_use.md"
+      },
+      {
+        "code": "managed_by_integration",
+        "type": "conflict_error",
+        "documentation": "errors/managed_by_integration.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/managed_by_integration.md"
       },
       {
         "code": "market_not_found",
@@ -1289,6 +1313,18 @@
           "path": "/subscriptions/{id}/addons"
         },
         {
+          "name": "getAutoTopUp",
+          "operationId": "get-subscription-auto-top-up",
+          "method": "GET",
+          "path": "/subscriptions/{id}/auto-top-up"
+        },
+        {
+          "name": "updateAutoTopUp",
+          "operationId": "update-subscription-auto-top-up",
+          "method": "PATCH",
+          "path": "/subscriptions/{id}/auto-top-up"
+        },
+        {
           "name": "adjustBalance",
           "operationId": "adjust-balance",
           "method": "POST",
@@ -1389,6 +1425,12 @@
           "operationId": "get-subscription",
           "method": "GET",
           "path": "/subscriptions/{id}"
+        },
+        {
+          "name": "revokeScheduledPlanChange",
+          "operationId": "revoke-scheduled-plan-change",
+          "method": "DELETE",
+          "path": "/subscriptions/{id}/scheduled-plan-change"
         },
         {
           "name": "uncancel",

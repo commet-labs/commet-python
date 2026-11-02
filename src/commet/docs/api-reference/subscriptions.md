@@ -40,6 +40,46 @@ Activate an add-on on a subscription. Charges a prorated amount for the current 
 
 `SubscriptionAddon`
 
+## get_auto_top_up
+
+`commet.subscriptions.get_auto_top_up(...)`
+
+`GET /subscriptions/{id}/auto-top-up` · operation `get-subscription-auto-top-up`
+
+Read whether the subscription buys credits automatically with its saved payment method when credits reach a threshold, with the top-ups used this period and the last failure.
+
+### Parameters
+
+- `id` (`str`, required)
+
+### Returns
+
+`SubscriptionAutoTopUp`
+
+## update_auto_top_up
+
+`commet.subscriptions.update_auto_top_up(...)`
+
+`PATCH /subscriptions/{id}/auto-top-up` · operation `update-subscription-auto-top-up`
+
+Turn automatic credit purchases on or off and set the threshold, the credits each top-up buys and the maximum top-ups per period. Send only the fields that change. Enabling requires a plan that sells credits. The quantity must be at least the plan's purchase minimum when auto top-up is enabled or when the quantity changes, so turning it off keeps working after the minimum rises. Saving it enabled resumes a paused auto top-up.
+
+### Parameters
+
+- `id` (`str`, required)
+- `enabled` (`bool`, optional)
+- `threshold` (`int`, optional)
+- `quantity` (`int`, optional)
+- `max_per_period` (`int`, optional)
+
+### Request options
+
+- `idempotency_key` (`str`, optional) — Unique key used to safely retry this write for 24 hours without applying it twice.
+
+### Returns
+
+`SubscriptionAutoTopUp`
+
 ## adjust_balance
 
 `commet.subscriptions.adjust_balance(...)`
@@ -112,7 +152,7 @@ Cancel immediately or at period end and return the updated subscription.
 
 `POST /subscriptions/{id}/change-plan` · operation `change-plan`
 
-Upgrade or change billing interval immediately, optionally applying an Offer. Scheduled changes do not accept offers.
+Upgrade or change billing interval immediately, optionally applying an Offer by offerId or the Offer of a promoCode. Scheduled changes accept neither offerId nor promoCode. From a free plan, a promoCode opens the checkout with the code applied and counts its use when the checkout is paid; without offerId or promoCode, a destination price whose free trial requires no payment method starts that trial right away without checkout. During a trial without a payment method, an immediate change returns 409 no_payment_method; scheduled changes still apply.
 
 ### Parameters
 
@@ -121,6 +161,11 @@ Upgrade or change billing interval immediately, optionally applying an Offer. Sc
 - `new_billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"]`, optional)
 - `success_url` (`str`, optional)
 - `offer_id` (`str`, optional)
+- `promo_code` (`str`, optional)
+
+### Valid parameter combinations
+
+- `promo_code`
 
 ### Request options
 
@@ -136,12 +181,18 @@ Upgrade or change billing interval immediately, optionally applying an Offer. Sc
 
 `POST /subscriptions/{id}/credits` · operation `purchase-credits`
 
-Purchase a credit pack for a subscription. Charges the customer and adds credits to their balance.
+Purchase a fixed credit pack or choose a whole credit quantity at the subscription plan price and minimum. Charges the saved payment method and adds purchased credits.
 
 ### Parameters
 
 - `id` (`str`, required)
-- `credit_pack_id` (`str`, required)
+- `credit_pack_id` (`str`, optional)
+- `quantity` (`int`, optional)
+
+### Valid parameter combinations
+
+- `credit_pack_id`
+- `quantity`
 
 ### Request options
 
@@ -157,7 +208,7 @@ Purchase a credit pack for a subscription. Charges the customer and adds credits
 
 `PUT /subscriptions/{id}/offer` · operation `apply-subscription-offer`
 
-Apply a direct Offer to a subscription. On a pending payment checkout it quotes or replaces the checkout discount and the existing checkout URL remains unchanged. On an active subscription it applies the Offer immediately with its discount phases starting at the next billing cycle; the call is rejected while another applied Offer still has active or upcoming discount phases. Offers with a free trial phase cannot be applied after checkout creation.
+Apply a direct Offer to a subscription. On a pending checkout it quotes or replaces the checkout discount, which starts after the plan price trial when there is one, and the existing checkout URL remains unchanged. On an active subscription it applies the Offer immediately with its discount phases starting at the next billing cycle; the call is rejected while another applied Offer still has active or upcoming discount phases.
 
 ### Parameters
 
@@ -298,7 +349,7 @@ Creates a hosted checkout to pay billing periods of a recurring subscription in 
 
 `POST /subscriptions/{id}/preview-change` · operation `preview-change-plan`
 
-Preview proration details for an immediate plan change without applying it. Free-to-paid changes are never scheduled and the change-plan endpoint always returns hosted checkout for them. For paid plans, interval direction takes precedence: a longer interval is immediate and a shorter interval is scheduled. When the interval is unchanged, a higher-sort-order plan is immediate and a lower-sort-order plan is scheduled. A paid-to-free change is always scheduled. Returns credit, charge, and net amount. The target plan must belong to the same plan group as the current plan, otherwise a 400 with code `plans_not_in_same_group` is returned. A change between two free plans has nothing to prorate and returns a zero-amount estimate. Scheduled changes return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint. Pass offerId to quote the destination plan with an Offer.
+Preview proration details for an immediate plan change without applying it. Free-to-paid changes are never scheduled and the change-plan endpoint returns hosted checkout for them, except a change without offerId or promoCode to a price whose free trial needs no payment method, for a customer who never had that plan: it starts the trial at once, so the preview reports nothing due today. For paid plans, interval direction takes precedence: a longer interval is immediate and a shorter interval is scheduled. When the interval is unchanged, a higher-sort-order plan is immediate and a lower-sort-order plan is scheduled. A paid-to-free change is always scheduled. Returns credit, charge, and net amount. The target plan must belong to the same plan group as the current plan, otherwise a 400 with code `plans_not_in_same_group` is returned. A change between two free plans has nothing to prorate and returns a zero-amount estimate. Scheduled changes return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint. Pass offerId to quote the destination plan with an Offer, or promoCode to quote it with the Offer of a promo code validated with the checkout's rules.
 
 ### Parameters
 
@@ -306,6 +357,12 @@ Preview proration details for an immediate plan change without applying it. Free
 - `plan_id` (`str`, required)
 - `billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly", "one_time"]`, optional)
 - `offer_id` (`str`, optional)
+- `promo_code` (`str`, optional)
+
+### Valid parameter combinations
+
+- `plan_id`
+- `plan_id` + `promo_code`
 
 ### Request options
 
@@ -392,6 +449,22 @@ Get a subscription by its public ID, regardless of status (including pending_pay
 
 `Subscription`
 
+## revoke_scheduled_plan_change
+
+`commet.subscriptions.revoke_scheduled_plan_change(...)`
+
+`DELETE /subscriptions/{id}/scheduled-plan-change` · operation `revoke-scheduled-plan-change`
+
+Revoke the plan or interval change scheduled for the end of the period, so the subscription stays on its current plan. Returns the updated subscription.
+
+### Parameters
+
+- `id` (`str`, required)
+
+### Returns
+
+`Subscription`
+
 ## uncancel
 
 `commet.subscriptions.uncancel(...)`
@@ -451,7 +524,7 @@ List all subscriptions. Filter by customer ID or status.
 
 `POST /subscriptions` · operation `create-subscription`
 
-Create a subscription for a customer. Commet selects the default price when priceId is omitted. The subscription starts at the base USD price; market and currency are resolved from the buyer's request country when the checkout opens. Without an offer override, Commet applies the price's automatic introductory Offer. Pass offerId to apply an active compatible Offer directly, or cardPromotionId to preselect a card-eligible Promotional Offer for the initial checkout when card promotions are enabled for the organization. For the initial checkout, provider accepts either a processor name or an exact payment connection ID.
+Create a subscription for a customer. Commet selects the default price when priceId is omitted. The subscription starts at the base USD price; market and currency are resolved from the buyer's request country when the checkout opens. Without an offer override, Commet applies the price's automatic introductory Offer. Pass offerId to apply an active compatible Offer directly, or cardPromotionId to preselect a card-eligible Promotional Offer for the initial checkout when card promotions are enabled for the organization. For the initial checkout, provider accepts either a processor name or an exact payment connection ID. When the price's free trial requires no payment method, the subscription starts trialing right away with no checkout (checkoutUrl null, hasPaymentMethod false); it cannot be combined with offerId, promoCode, cardPromotionId or provider, and an organization that cannot charge yet receives 403.
 
 ### Parameters
 
@@ -467,7 +540,7 @@ Create a subscription for a customer. Commet selects the default price when pric
 - `cancel_at_period_end` (`bool`, optional) — Schedules the cancellation from creation so the subscription ends after its last paid period and never renews with any payment method.
 - `offer_id` (`str`, optional)
 - `promo_code` (`str`, optional)
-- `custom_trial_days` (`int`, optional)
+- `custom_trial_days` (`int`, optional) — Trial length in days, replacing the price's trial. A customer who already had this plan, in a trial or paying, gets no trial and goes through the regular checkout.
 - `skip_trial` (`bool`, optional)
 - `plan_id` (`str`, optional)
 - `plan_code` (`str`, optional)

@@ -20,6 +20,7 @@ from ..types import (
     RecoveryLink,
     Subscription,
     SubscriptionAddon,
+    SubscriptionAutoTopUp,
     SubscriptionResume,
     SubscriptionsListResult,
     SubscriptionStatus,
@@ -49,6 +50,33 @@ class AsyncSubscriptionsResource:
                 f"/subscriptions/{id}/addons", body, idempotency_key=idempotency_key
             ),
             SubscriptionAddon,
+        )
+
+    async def get_auto_top_up(self, id: str) -> SubscriptionAutoTopUp:
+        """Read whether the subscription buys credits automatically with its saved payment method when credits reach a threshold, with the top-ups used this period and the last failure."""
+        return _parse_data(
+            await self._http.get(f"/subscriptions/{id}/auto-top-up"), SubscriptionAutoTopUp
+        )
+
+    async def update_auto_top_up(
+        self,
+        id: str,
+        *,
+        enabled: bool | None = None,
+        threshold: int | None = None,
+        quantity: int | None = None,
+        max_per_period: int | None = None,
+        idempotency_key: str | None = None,
+    ) -> SubscriptionAutoTopUp:
+        """Turn automatic credit purchases on or off and set the threshold, the credits each top-up buys and the maximum top-ups per period. Send only the fields that change. Enabling requires a plan that sells credits. The quantity must be at least the plan's purchase minimum when auto top-up is enabled or when the quantity changes, so turning it off keeps working after the minimum rises. Saving it enabled resumes a paused auto top-up."""
+        body = build_body(
+            enabled=enabled, threshold=threshold, quantity=quantity, max_per_period=max_per_period
+        )
+        return _parse_data(
+            await self._http.patch(
+                f"/subscriptions/{id}/auto-top-up", body, idempotency_key=idempotency_key
+            ),
+            SubscriptionAutoTopUp,
         )
 
     async def adjust_balance(
@@ -107,14 +135,16 @@ class AsyncSubscriptionsResource:
         | None = None,
         success_url: str | None = None,
         offer_id: str | None = None,
+        promo_code: str | None = None,
         idempotency_key: str | None = None,
     ) -> PlanChange:
-        """Upgrade or change billing interval immediately, optionally applying an Offer. Scheduled changes do not accept offers."""
+        """Upgrade or change billing interval immediately, optionally applying an Offer by offerId or the Offer of a promoCode. Scheduled changes accept neither offerId nor promoCode. From a free plan, a promoCode opens the checkout with the code applied and counts its use when the checkout is paid; without offerId or promoCode, a destination price whose free trial requires no payment method starts that trial right away without checkout. During a trial without a payment method, an immediate change returns 409 no_payment_method; scheduled changes still apply."""
         body = build_body(
             new_plan_id=new_plan_id,
             new_billing_interval=new_billing_interval,
             success_url=success_url,
             offer_id=offer_id,
+            promo_code=promo_code,
         )
         return _parse_union_data(
             await self._http.post(
@@ -124,10 +154,15 @@ class AsyncSubscriptionsResource:
         )
 
     async def purchase_credits(
-        self, id: str, *, credit_pack_id: str, idempotency_key: str | None = None
+        self,
+        id: str,
+        *,
+        credit_pack_id: str | None = None,
+        quantity: int | None = None,
+        idempotency_key: str | None = None,
     ) -> CreditGrant:
-        """Purchase a credit pack for a subscription. Charges the customer and adds credits to their balance."""
-        body = build_body(credit_pack_id=credit_pack_id)
+        """Purchase a fixed credit pack or choose a whole credit quantity at the subscription plan price and minimum. Charges the saved payment method and adds purchased credits."""
+        body = build_body(credit_pack_id=credit_pack_id, quantity=quantity)
         return _parse_data(
             await self._http.post(
                 f"/subscriptions/{id}/credits", body, idempotency_key=idempotency_key
@@ -143,7 +178,7 @@ class AsyncSubscriptionsResource:
         expires_at: str | None = None,
         idempotency_key: str | None = None,
     ) -> Subscription:
-        """Apply a direct Offer to a subscription. On a pending payment checkout it quotes or replaces the checkout discount and the existing checkout URL remains unchanged. On an active subscription it applies the Offer immediately with its discount phases starting at the next billing cycle; the call is rejected while another applied Offer still has active or upcoming discount phases. Offers with a free trial phase cannot be applied after checkout creation."""
+        """Apply a direct Offer to a subscription. On a pending checkout it quotes or replaces the checkout discount, which starts after the plan price trial when there is one, and the existing checkout URL remains unchanged. On an active subscription it applies the Offer immediately with its discount phases starting at the next billing cycle; the call is rejected while another applied Offer still has active or upcoming discount phases."""
         body = build_body(offer_id=offer_id, expires_at=expires_at)
         return _parse_data(
             await self._http.put(
@@ -229,10 +264,16 @@ class AsyncSubscriptionsResource:
         ]
         | None = None,
         offer_id: str | None = None,
+        promo_code: str | None = None,
         idempotency_key: str | None = None,
     ) -> PreviewChange:
-        """Preview proration details for an immediate plan change without applying it. Free-to-paid changes are never scheduled and the change-plan endpoint always returns hosted checkout for them. For paid plans, interval direction takes precedence: a longer interval is immediate and a shorter interval is scheduled. When the interval is unchanged, a higher-sort-order plan is immediate and a lower-sort-order plan is scheduled. A paid-to-free change is always scheduled. Returns credit, charge, and net amount. The target plan must belong to the same plan group as the current plan, otherwise a 400 with code `plans_not_in_same_group` is returned. A change between two free plans has nothing to prorate and returns a zero-amount estimate. Scheduled changes return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint. Pass offerId to quote the destination plan with an Offer."""
-        body = build_body(plan_id=plan_id, billing_interval=billing_interval, offer_id=offer_id)
+        """Preview proration details for an immediate plan change without applying it. Free-to-paid changes are never scheduled and the change-plan endpoint returns hosted checkout for them, except a change without offerId or promoCode to a price whose free trial needs no payment method, for a customer who never had that plan: it starts the trial at once, so the preview reports nothing due today. For paid plans, interval direction takes precedence: a longer interval is immediate and a shorter interval is scheduled. When the interval is unchanged, a higher-sort-order plan is immediate and a lower-sort-order plan is scheduled. A paid-to-free change is always scheduled. Returns credit, charge, and net amount. The target plan must belong to the same plan group as the current plan, otherwise a 400 with code `plans_not_in_same_group` is returned. A change between two free plans has nothing to prorate and returns a zero-amount estimate. Scheduled changes return a 400 with code `plan_change_scheduled`; apply those via the change-plan endpoint. Pass offerId to quote the destination plan with an Offer, or promoCode to quote it with the Offer of a promo code validated with the checkout's rules."""
+        body = build_body(
+            plan_id=plan_id,
+            billing_interval=billing_interval,
+            offer_id=offer_id,
+            promo_code=promo_code,
+        )
         return _parse_data(
             await self._http.post(
                 f"/subscriptions/{id}/preview-change", body, idempotency_key=idempotency_key
@@ -273,6 +314,12 @@ class AsyncSubscriptionsResource:
     async def get(self, id: str) -> Subscription:
         """Get a subscription by its public ID, regardless of status (including pending_payment and past_due)."""
         return _parse_data(await self._http.get(f"/subscriptions/{id}"), Subscription)
+
+    async def revoke_scheduled_plan_change(self, id: str) -> Subscription:
+        """Revoke the plan or interval change scheduled for the end of the period, so the subscription stays on its current plan. Returns the updated subscription."""
+        return _parse_data(
+            await self._http.delete(f"/subscriptions/{id}/scheduled-plan-change"), Subscription
+        )
 
     async def uncancel(self, id: str, *, idempotency_key: str | None = None) -> Subscription:
         """Revert a scheduled cancellation and return the updated subscription. Only works before cancellation takes effect."""
@@ -318,7 +365,7 @@ class AsyncSubscriptionsResource:
         card_promotion_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> CreatedSubscription:
-        """Create a subscription for a customer. Commet selects the default price when priceId is omitted. The subscription starts at the base USD price; market and currency are resolved from the buyer's request country when the checkout opens. Without an offer override, Commet applies the price's automatic introductory Offer. Pass offerId to apply an active compatible Offer directly, or cardPromotionId to preselect a card-eligible Promotional Offer for the initial checkout when card promotions are enabled for the organization. For the initial checkout, provider accepts either a processor name or an exact payment connection ID."""
+        """Create a subscription for a customer. Commet selects the default price when priceId is omitted. The subscription starts at the base USD price; market and currency are resolved from the buyer's request country when the checkout opens. Without an offer override, Commet applies the price's automatic introductory Offer. Pass offerId to apply an active compatible Offer directly, or cardPromotionId to preselect a card-eligible Promotional Offer for the initial checkout when card promotions are enabled for the organization. For the initial checkout, provider accepts either a processor name or an exact payment connection ID. When the price's free trial requires no payment method, the subscription starts trialing right away with no checkout (checkoutUrl null, hasPaymentMethod false); it cannot be combined with offerId, promoCode, cardPromotionId or provider, and an organization that cannot charge yet receives 403."""
         body = build_body(
             customer_id=customer_id,
             billing_interval=billing_interval,

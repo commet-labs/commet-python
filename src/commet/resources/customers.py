@@ -185,10 +185,11 @@ class CustomersResource:
         self,
         *,
         customers: builtins.list[BatchCreateCustomersParamsCustomersItem],
+        plan_group_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> CustomerBatch:
-        """Create up to 100 customers in a single request."""
-        body = build_body(customers=customers)
+        """Create up to 100 customers in a single request. With planGroupId, each customer without an open subscription starts on that group's starting plan (see planGroupId), and the entry of a deleted customer fails with customer_deleted."""
+        body = build_body(customers=customers, plan_group_id=plan_group_id)
         return _parse_data(
             self._http.post("/customers/batch", body, idempotency_key=idempotency_key),
             CustomerBatch,
@@ -213,9 +214,10 @@ class CustomersResource:
         address_id: str | None = None,
         timezone: Timezone | None = None,
         metadata: dict[str, Any] | None = None,
+        plan_group_id: str | None = None,
         idempotency_key: str | None = None,
     ) -> Customer:
-        """Create a new customer. Idempotent when customerId is provided."""
+        """Create a new customer. Idempotent when customerId is provided. With planGroupId, a customer without an open subscription starts on that group's starting plan (see planGroupId), and the externalId of a deleted customer is rejected."""
         body = build_body(
             id=id,
             external_id=external_id,
@@ -226,6 +228,7 @@ class CustomersResource:
             email=email,
             timezone=timezone,
             metadata=metadata,
+            plan_group_id=plan_group_id,
         )
         return _parse_data(
             self._http.post("/customers", body, idempotency_key=idempotency_key), Customer
