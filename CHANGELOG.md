@@ -1,5 +1,18 @@
 # Changelog
 
+## 9.8.0
+
+- `subscriptions.purchase_credits` buys a chosen `quantity` of credits at the plan's price, besides a `credit_pack_id`.
+- `subscriptions.get_auto_top_up` and `subscriptions.update_auto_top_up` read and configure automatic credit purchases.
+- `subscriptions.change_plan` and `subscriptions.preview_change` accept `promo_code`, as an alternative to `offer_id`.
+- `subscriptions.revoke_scheduled_plan_change` keeps a subscription on its current plan by revoking the change scheduled for the end of the period.
+- `customers.create` and `customers.create_batch` accept `plan_group_id`, so a customer starts on that plan group's starting plan.
+- `plans.create` and `plans.update` accept `unused_plan_credits`, `plan_credit_limit` and `is_default`, and plan prices accept `trial_requires_payment_method`.
+- `promo_codes.create` and `promo_codes.update` accept `first_purchase_only`.
+- Creating a subscription accepts a custom trial length or skipping the trial together with an Offer.
+- Responses add whether a subscription has a payment method, which integration manages an Offer or promo code, whether a promo code is limited to a first purchase, the unused plan credit and plan credit limit settings of plans, and the plan credit limit window of usage checks and events.
+- Creating or updating an Offer no longer accepts a `free_trial` phase, which the API already rejects; trials belong to plan prices. The generated offer phase variants are renumbered: `CreateOfferParamsPhasesItemVariant1`, `Variant2` and `Variant3` are now the percentage, amount-off and fixed-price phases, and the same applies to `UpdateOfferParamsPhasesItem` and `OfferPhasesItem`.
+
 ## 9.7.0
 
 - Add paying billing periods in advance: create a prepaid-periods checkout for a subscription, and set `prepaidPeriods` and `cancelAtPeriodEnd` when creating one.
