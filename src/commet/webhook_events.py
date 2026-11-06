@@ -63,6 +63,7 @@ class WebhookEventType:
     INVOICE_UPCOMING = "invoice.upcoming"
     PAYMENT_METHOD_ATTACHED = "payment_method.attached"
     PAYMENT_METHOD_UPDATED = "payment_method.updated"
+    PAYMENT_METHOD_DETACHED = "payment_method.detached"
     CUSTOMER_CREATED = "customer.created"
     CUSTOMER_UPDATED = "customer.updated"
     CUSTOMER_STATE_CHANGED = "customer.state_changed"
@@ -75,9 +76,11 @@ class WebhookEventType:
     CREDITS_LOW = "credits.low"
     CREDITS_DEPLETED = "credits.depleted"
     CREDITS_EXPIRED = "credits.expired"
+    BALANCE_GRANTED = "balance.granted"
     BALANCE_TOPPED_UP = "balance.topped_up"
     BALANCE_LOW = "balance.low"
     BALANCE_DEPLETED = "balance.depleted"
+    BALANCE_EXPIRED = "balance.expired"
     QUOTA_THRESHOLD_REACHED = "quota.threshold_reached"
     QUOTA_EXCEEDED = "quota.exceeded"
     SEATS_UPDATED = "seats.updated"
@@ -632,6 +635,16 @@ class PaymentMethodUpdatedData:
 
 
 @dataclass
+class PaymentMethodDetachedData:
+    """Fired when a saved payment method is removed from a customer: the customer unlinked it at the payment provider (for example, revoking a Mercado Pago authorization), or removed it through the customer portal. Removing a method never changes the customer's subscriptions; a renewal that finds no usable method follows the usual failed-payment recovery."""
+
+    customerId: str = ""
+    paymentMethod: PaymentMethod | None = None
+    card: WebhookCardInfo | None = None
+    reason: Literal["unlinked_at_provider", "removed_by_customer"] | None = None
+
+
+@dataclass
 class CustomerCreatedData:
     """Fired when a customer is created, via the API (including batch create), SDK, or dashboard. The payload is the customer resource exactly as GET /customers returns it."""
 
@@ -641,6 +654,7 @@ class CustomerCreatedData:
     email: str = ""
     taxDocument: str | None = None
     documentType: str | None = None
+    businessTaxId: dict[str, Any] | None = None
     timezone: str | None = None
     metadata: dict[str, Any] | None = None
     createdAt: str = ""
@@ -657,6 +671,7 @@ class CustomerUpdatedData:
     email: str = ""
     taxDocument: str | None = None
     documentType: str | None = None
+    businessTaxId: dict[str, Any] | None = None
     timezone: str | None = None
     metadata: dict[str, Any] | None = None
     createdAt: str = ""
@@ -796,7 +811,7 @@ class CreditsPurchasedData:
 
 @dataclass
 class CreditsLowData:
-    """Fired when a subscription's remaining credits cross below 10% of the credits granted for the current period. Emitted once per billing period, when the crossing happens."""
+    """Fired when a subscription's available credits (plan plus purchased) cross below 10% of their last refill: a period reset, a purchase or a manual adjustment. Emitted once per crossing, the same rule as balance.low."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -807,7 +822,7 @@ class CreditsLowData:
 
 @dataclass
 class CreditsDepletedData:
-    """Fired when a subscription's credits hit zero. Usage requests that need more credits than remain are rejected from this point. Also fires customer.state_changed with trigger credits_depleted."""
+    """Fired each time a subscription's available credits cross to zero or below. Usage that needs more credits than remain is rejected from this point, unless the plan allows overage, which is billed at its price per credit at the next renewal. Also fires customer.state_changed with trigger credits_depleted."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -824,8 +839,19 @@ class CreditsExpiredData:
 
 
 @dataclass
+class BalanceGrantedData:
+    """Fired when non-purchase balance is granted to a subscription: the plan balance at the start of each billing period, or a manual adjustment from the dashboard or the API, which goes to the purchased balance. Balance top-ups fire balance.topped_up instead."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    amount: float = 0.0
+    currency: str = ""
+    reason: str = ""
+
+
+@dataclass
 class BalanceToppedUpData:
-    """Fired when a customer on a balance plan tops up their prepaid balance through the customer portal and the payment succeeds."""
+    """Fired when a balance top-up succeeds: through the API, an automatic top-up or the customer portal. The amount goes to the purchased balance, which is spent after the plan balance and kept until the subscription ends."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -853,6 +879,16 @@ class BalanceDepletedData:
     subscriptionId: str = ""
     customerId: str = ""
     currentBalance: float = 0.0
+    currency: str = ""
+
+
+@dataclass
+class BalanceExpiredData:
+    """Fired at a reset when unused plan balance is discarded. On a plan whose unused plan balance expires, all of it expires at each reset. On a plan that rolls it over, a reset keeps it, up to the plan's maxPlanBalance when it has one, and only the excess expires. An overage debt invoiced at the renewal counts as nothing left over. Purchased balance never expires and is not affected."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    expiredAmount: float = 0.0
     currency: str = ""
 
 
@@ -1118,6 +1154,9 @@ class WebhookEvent:
     def as_payment_method_updated(self) -> PaymentMethodUpdatedData:
         return _from_dict(PaymentMethodUpdatedData, self.data)
 
+    def as_payment_method_detached(self) -> PaymentMethodDetachedData:
+        return _from_dict(PaymentMethodDetachedData, self.data)
+
     def as_customer_created(self) -> CustomerCreatedData:
         return _from_dict(CustomerCreatedData, self.data)
 
@@ -1154,6 +1193,9 @@ class WebhookEvent:
     def as_credits_expired(self) -> CreditsExpiredData:
         return _from_dict(CreditsExpiredData, self.data)
 
+    def as_balance_granted(self) -> BalanceGrantedData:
+        return _from_dict(BalanceGrantedData, self.data)
+
     def as_balance_topped_up(self) -> BalanceToppedUpData:
         return _from_dict(BalanceToppedUpData, self.data)
 
@@ -1162,6 +1204,9 @@ class WebhookEvent:
 
     def as_balance_depleted(self) -> BalanceDepletedData:
         return _from_dict(BalanceDepletedData, self.data)
+
+    def as_balance_expired(self) -> BalanceExpiredData:
+        return _from_dict(BalanceExpiredData, self.data)
 
     def as_quota_threshold_reached(self) -> QuotaThresholdReachedData:
         return _from_dict(QuotaThresholdReachedData, self.data)
@@ -1239,6 +1284,7 @@ _DATACLASS_TYPES.update(
         "InvoiceUpcomingData": InvoiceUpcomingData,
         "PaymentMethodAttachedData": PaymentMethodAttachedData,
         "PaymentMethodUpdatedData": PaymentMethodUpdatedData,
+        "PaymentMethodDetachedData": PaymentMethodDetachedData,
         "CustomerCreatedData": CustomerCreatedData,
         "CustomerUpdatedData": CustomerUpdatedData,
         "CustomerStateChangedData": CustomerStateChangedData,
@@ -1251,9 +1297,11 @@ _DATACLASS_TYPES.update(
         "CreditsLowData": CreditsLowData,
         "CreditsDepletedData": CreditsDepletedData,
         "CreditsExpiredData": CreditsExpiredData,
+        "BalanceGrantedData": BalanceGrantedData,
         "BalanceToppedUpData": BalanceToppedUpData,
         "BalanceLowData": BalanceLowData,
         "BalanceDepletedData": BalanceDepletedData,
+        "BalanceExpiredData": BalanceExpiredData,
         "QuotaThresholdReachedData": QuotaThresholdReachedData,
         "QuotaExceededData": QuotaExceededData,
         "SeatsUpdatedData": SeatsUpdatedData,

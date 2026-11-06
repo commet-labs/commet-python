@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Literal
 
 from .._async_http import AsyncCommetHTTPClient
@@ -53,7 +54,7 @@ class AsyncSubscriptionsResource:
         )
 
     async def get_auto_top_up(self, id: str) -> SubscriptionAutoTopUp:
-        """Read whether the subscription buys credits automatically with its saved payment method when credits reach a threshold, with the top-ups used this period and the last failure."""
+        """Read whether the subscription tops up automatically with its saved payment method when its available credits or balance reach a threshold, with the top-ups used this period and the last failure."""
         return _parse_data(
             await self._http.get(f"/subscriptions/{id}/auto-top-up"), SubscriptionAutoTopUp
         )
@@ -65,12 +66,17 @@ class AsyncSubscriptionsResource:
         enabled: bool | None = None,
         threshold: int | None = None,
         quantity: int | None = None,
+        amount: int | None = None,
         max_per_period: int | None = None,
         idempotency_key: str | None = None,
     ) -> SubscriptionAutoTopUp:
-        """Turn automatic credit purchases on or off and set the threshold, the credits each top-up buys and the maximum top-ups per period. Send only the fields that change. Enabling requires a plan that sells credits. The quantity must be at least the plan's purchase minimum when auto top-up is enabled or when the quantity changes, so turning it off keeps working after the minimum rises. Saving it enabled resumes a paused auto top-up."""
+        """Turn automatic top-ups on or off and set the threshold, the size of each top-up and the maximum top-ups per period. Send only the fields that change. On a credits plan each top-up buys `quantity` credits; on a balance plan it adds `amount` in minor units of the subscription currency, plus tax, and `threshold` is in the same minor units. Enabling requires a plan that sells credits or has balance top-ups on. The size must be at least the plan's minimum when auto top-up is enabled or when the size changes, so turning it off keeps working after the minimum rises. Saving it enabled resumes a paused auto top-up."""
         body = build_body(
-            enabled=enabled, threshold=threshold, quantity=quantity, max_per_period=max_per_period
+            enabled=enabled,
+            threshold=threshold,
+            quantity=quantity,
+            amount=amount,
+            max_per_period=max_per_period,
         )
         return _parse_data(
             await self._http.patch(
@@ -100,7 +106,7 @@ class AsyncSubscriptionsResource:
     async def topup_balance(
         self, id: str, *, amount: int, idempotency_key: str | None = None
     ) -> BalanceTopup:
-        """Top up a subscription's balance. Charges the customer's payment method for the specified amount."""
+        """Top up a balance subscription. Charges the customer's payment method for the amount plus tax, adds it to the subscription's purchased balance (after paying back any overage owed on the plan balance), creates its invoice and emits `balance.topped_up`. Purchased balance is spent after the plan balance and is kept until the subscription ends. Rejected with 400 when the subscription is not on a balance plan, its plan has top-ups turned off, or the amount is below the effective minimum: the plan's minimum top-up in the subscription currency, raised to the currency's minimum charge."""
         body = build_body(amount=amount)
         return _parse_data(
             await self._http.post(
@@ -351,6 +357,10 @@ class AsyncSubscriptionsResource:
         price_id: str | None = None,
         initial_seats: dict[str, int] | None = None,
         provider: Literal["stripe"] | Literal["commet"] | Literal["dlocal"] | str | None = None,
+        payment_method_types: builtins.list[
+            Literal["card", "oxxo", "mercado_pago", "google_pay", "smartpix"]
+        ]
+        | None = None,
         name: str | None = None,
         start_date: str | None = None,
         success_url: str | None = None,
@@ -372,6 +382,7 @@ class AsyncSubscriptionsResource:
             price_id=price_id,
             initial_seats=initial_seats,
             provider=provider,
+            payment_method_types=payment_method_types,
             name=name,
             start_date=start_date,
             success_url=success_url,

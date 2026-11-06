@@ -194,6 +194,7 @@ Update a customer's name, external ID, or metadata.
 - `email` (`str`, optional)
 - `full_name` (`str`, optional)
 - `tax_document` (`str`, optional)
+- `business_tax_id` (`str | null`, optional) — Business tax ID, such as an EU VAT number or a Peruvian RUC, for the country of the customer's address. Accepted only where Commet collects tax; a valid ID replaces consumer tax with the business treatment. Send null to remove it.
 - `external_id` (`str`, optional)
 - `timezone` (`Timezone`, optional)
 - `metadata` (`dict[str, Any]`, optional)
@@ -260,6 +261,7 @@ Create a new customer. Idempotent when customerId is provided. With planGroupId,
 - `external_id` (`str`, optional)
 - `full_name` (`str`, optional)
 - `tax_document` (`str`, optional)
+- `business_tax_id` (`str`, optional) — Business tax ID, such as an EU VAT number or a Peruvian RUC, for the country of the customer's address. Accepted only where Commet collects tax; a valid ID replaces consumer tax with the business treatment.
 - `address` (`CreateCustomerParamsAddress`, optional)
 - `address_id` (`str`, optional)
 - `email` (`str`, required)

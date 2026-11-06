@@ -467,6 +467,13 @@ class BatchCreateCustomersParamsCustomersItemAddress:
 
 
 @dataclass
+class BusinessTaxId:
+    country: str = field(default="", metadata={"wire_name": "country", "required": True})
+    type: str = field(default="", metadata={"wire_name": "type", "required": True})
+    value: str = field(default="", metadata={"wire_name": "value", "required": True})
+
+
+@dataclass
 class ClaimLink:
     url: str = field(default="", metadata={"wire_name": "url", "required": True})
     expires_at: str = field(default="", metadata={"wire_name": "expiresAt", "required": True})
@@ -776,10 +783,35 @@ class CreateOfferParamsPhasesItemVariant3PricesItem:
 
 
 @dataclass
+class CreatePlanParamsPlanBalanceLimit:
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
 class CreatePlanParamsPlanCreditLimit:
     credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
     interval: Literal["day", "week"] | None = field(
         default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
+class CreatePlanParamsUnusedPlanBalanceVariant1:
+    type: Literal["expire"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class CreatePlanParamsUnusedPlanBalanceVariant2:
+    type: Literal["roll_over"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    max_plan_balance: int | None = field(
+        default=None, metadata={"wire_name": "maxPlanBalance", "required": True}
     )
 
 
@@ -872,6 +904,9 @@ class Customer:
     )
     document_type: str | None = field(
         default=None, metadata={"wire_name": "documentType", "required": True}
+    )
+    business_tax_id: BusinessTaxId | None = field(
+        default=None, metadata={"wire_name": "businessTaxId", "required": True}
     )
     timezone: str | None = field(default=None, metadata={"wire_name": "timezone", "required": True})
     metadata: dict[str, Any] | None = field(
@@ -1928,6 +1963,12 @@ class Plan:
     plan_credit_limit: PlanPlanCreditLimit | None = field(
         default=None, metadata={"wire_name": "planCreditLimit", "required": True}
     )
+    unused_plan_balance: PlanUnusedPlanBalance | None = field(
+        default=None, metadata={"wire_name": "unusedPlanBalance", "required": True}
+    )
+    plan_balance_limit: PlanPlanBalanceLimit | None = field(
+        default=None, metadata={"wire_name": "planBalanceLimit", "required": True}
+    )
     sort_order: int = field(default=0, metadata={"wire_name": "sortOrder", "required": True})
     plan_group_id: str | None = field(
         default=None, metadata={"wire_name": "planGroupId", "required": True}
@@ -2505,6 +2546,14 @@ class PlanGroupsListResult:
 
 
 @dataclass
+class PlanPlanBalanceLimit:
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
 class PlanPlanCreditLimit:
     credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
     interval: Literal["day", "week"] | None = field(
@@ -2659,6 +2708,23 @@ class PlansListResult:
     has_more: bool = field(default=False, metadata={"wire_name": "hasMore", "required": True})
     next_cursor: str | None = field(
         default=None, metadata={"wire_name": "nextCursor", "required": False}
+    )
+
+
+@dataclass
+class PlanUnusedPlanBalanceVariant1:
+    type: Literal["expire"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class PlanUnusedPlanBalanceVariant2:
+    type: Literal["roll_over"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    max_plan_balance: int | None = field(
+        default=None, metadata={"wire_name": "maxPlanBalance", "required": True}
     )
 
 
@@ -3269,6 +3335,7 @@ class SubscriptionAutoTopUp:
         default=None, metadata={"wire_name": "threshold", "required": True}
     )
     quantity: int | None = field(default=None, metadata={"wire_name": "quantity", "required": True})
+    amount: int | None = field(default=None, metadata={"wire_name": "amount", "required": True})
     max_per_period: int | None = field(
         default=None, metadata={"wire_name": "maxPerPeriod", "required": True}
     )
@@ -3294,7 +3361,11 @@ class SubscriptionAutoTopUp:
 class SubscriptionAutoTopUpLastFailure:
     reason: (
         Literal[
-            "payment_declined", "no_payment_method", "quantity_below_minimum", "purchase_failed"
+            "payment_declined",
+            "no_payment_method",
+            "quantity_below_minimum",
+            "amount_below_minimum",
+            "purchase_failed",
         ]
         | None
     ) = field(default=None, metadata={"wire_name": "reason", "required": True})
@@ -3306,6 +3377,9 @@ class SubscriptionBalance:
     remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
     included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
+    plan: float = field(default=0.0, metadata={"wire_name": "plan", "required": True})
+    purchased: float = field(default=0.0, metadata={"wire_name": "purchased", "required": True})
+    total: float = field(default=0.0, metadata={"wire_name": "total", "required": True})
 
 
 @dataclass
@@ -3320,6 +3394,8 @@ class SubscriptionCredits:
     remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
     included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
     purchased: float = field(default=0.0, metadata={"wire_name": "purchased", "required": True})
+    plan: float = field(default=0.0, metadata={"wire_name": "plan", "required": True})
+    total: float = field(default=0.0, metadata={"wire_name": "total", "required": True})
 
 
 @dataclass
@@ -4230,10 +4306,35 @@ class UpdatePlanFeatureParamsOverage:
 
 
 @dataclass
+class UpdatePlanParamsPlanBalanceLimit:
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
 class UpdatePlanParamsPlanCreditLimit:
     credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
     interval: Literal["day", "week"] | None = field(
         default=None, metadata={"wire_name": "interval", "required": True}
+    )
+
+
+@dataclass
+class UpdatePlanParamsUnusedPlanBalanceVariant1:
+    type: Literal["expire"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+
+
+@dataclass
+class UpdatePlanParamsUnusedPlanBalanceVariant2:
+    type: Literal["roll_over"] | None = field(
+        default=None, metadata={"wire_name": "type", "required": True}
+    )
+    max_plan_balance: int | None = field(
+        default=None, metadata={"wire_name": "maxPlanBalance", "required": True}
     )
 
 
@@ -4372,6 +4473,9 @@ class UsageCheckVariant2:
     plan_credit_limit: UsageCheckVariant2PlanCreditLimit | None = field(
         default=None, metadata={"wire_name": "planCreditLimit", "required": True}
     )
+    block_on_exhaustion: bool = field(
+        default=False, metadata={"wire_name": "blockOnExhaustion", "required": True}
+    )
     object: Literal["usage_check"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
     )
@@ -4409,6 +4513,18 @@ class UsageCheckVariant3:
     current_balance: float = field(
         default=0.0, metadata={"wire_name": "currentBalance", "required": True}
     )
+    plan_balance: float = field(
+        default=0.0, metadata={"wire_name": "planBalance", "required": True}
+    )
+    purchased_balance: float = field(
+        default=0.0, metadata={"wire_name": "purchasedBalance", "required": True}
+    )
+    total_balance: float = field(
+        default=0.0, metadata={"wire_name": "totalBalance", "required": True}
+    )
+    plan_balance_limit: UsageCheckVariant3PlanBalanceLimit | None = field(
+        default=None, metadata={"wire_name": "planBalanceLimit", "required": True}
+    )
     block_on_exhaustion: bool = field(
         default=False, metadata={"wire_name": "blockOnExhaustion", "required": True}
     )
@@ -4417,6 +4533,17 @@ class UsageCheckVariant3:
         default=None, metadata={"wire_name": "object", "required": True}
     )
     livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
+class UsageCheckVariant3PlanBalanceLimit:
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+    spent: int = field(default=0, metadata={"wire_name": "spent", "required": True})
+    remaining: int = field(default=0, metadata={"wire_name": "remaining", "required": True})
+    resets_at: str = field(default="", metadata={"wire_name": "resetsAt", "required": True})
 
 
 @dataclass
@@ -4451,6 +4578,20 @@ class UsageEventConsumption:
     plan_credit_limit: UsageEventConsumptionPlanCreditLimit | None = field(
         default=None, metadata={"wire_name": "planCreditLimit", "required": False}
     )
+    plan_balance_limit: UsageEventConsumptionPlanBalanceLimit | None = field(
+        default=None, metadata={"wire_name": "planBalanceLimit", "required": False}
+    )
+
+
+@dataclass
+class UsageEventConsumptionPlanBalanceLimit:
+    amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    interval: Literal["day", "week"] | None = field(
+        default=None, metadata={"wire_name": "interval", "required": True}
+    )
+    spent: int = field(default=0, metadata={"wire_name": "spent", "required": True})
+    remaining: int = field(default=0, metadata={"wire_name": "remaining", "required": True})
+    resets_at: str = field(default="", metadata={"wire_name": "resetsAt", "required": True})
 
 
 @dataclass
@@ -4540,6 +4681,15 @@ class WebhookAddonRef:
 class WebhookBalance:
     current_balance: float = field(
         default=0.0, metadata={"wire_name": "currentBalance", "required": True}
+    )
+    plan_balance: float = field(
+        default=0.0, metadata={"wire_name": "planBalance", "required": True}
+    )
+    purchased_balance: float = field(
+        default=0.0, metadata={"wire_name": "purchasedBalance", "required": True}
+    )
+    total_balance: float = field(
+        default=0.0, metadata={"wire_name": "totalBalance", "required": True}
     )
 
 
@@ -4719,6 +4869,11 @@ SubscriptionOfferApplicationAppliesTo = Union[
 ]
 
 
+CreatePlanParamsUnusedPlanBalance = Union[
+    CreatePlanParamsUnusedPlanBalanceVariant1, CreatePlanParamsUnusedPlanBalanceVariant2
+]
+
+
 CreatePlanParamsUnusedPlanCredits = Union[
     CreatePlanParamsUnusedPlanCreditsVariant1, CreatePlanParamsUnusedPlanCreditsVariant2
 ]
@@ -4734,6 +4889,11 @@ SubscriptionOfferApplicationPhase = Union[
 
 TransactionPaymentContextRecovery = Union[
     TransactionPaymentContextRecoveryVariant1, TransactionPaymentContextRecoveryVariant2
+]
+
+
+UpdatePlanParamsUnusedPlanBalance = Union[
+    UpdatePlanParamsUnusedPlanBalanceVariant1, UpdatePlanParamsUnusedPlanBalanceVariant2
 ]
 
 
@@ -4780,6 +4940,9 @@ SubscriptionFeaturesItem = Union[
 
 
 SubscriptionSummaryPause = Union[SubscriptionSummaryPauseVariant1, SubscriptionSummaryPauseVariant2]
+
+
+PlanUnusedPlanBalance = Union[PlanUnusedPlanBalanceVariant1, PlanUnusedPlanBalanceVariant2]
 
 
 PlanUnusedPlanCredits = Union[PlanUnusedPlanCreditsVariant1, PlanUnusedPlanCreditsVariant2]
@@ -4835,6 +4998,7 @@ _DATACLASS_TYPES.update(
         "BalanceTopup": BalanceTopup,
         "BatchCreateCustomersParamsCustomersItem": BatchCreateCustomersParamsCustomersItem,
         "BatchCreateCustomersParamsCustomersItemAddress": BatchCreateCustomersParamsCustomersItemAddress,
+        "BusinessTaxId": BusinessTaxId,
         "ClaimLink": ClaimLink,
         "CreateApiKeyParamsPermissions": CreateApiKeyParamsPermissions,
         "CreateCustomerParamsAddress": CreateCustomerParamsAddress,
@@ -4852,7 +5016,10 @@ _DATACLASS_TYPES.update(
         "CreateOfferParamsPhasesItemVariant2AmountsItem": CreateOfferParamsPhasesItemVariant2AmountsItem,
         "CreateOfferParamsPhasesItemVariant3": CreateOfferParamsPhasesItemVariant3,
         "CreateOfferParamsPhasesItemVariant3PricesItem": CreateOfferParamsPhasesItemVariant3PricesItem,
+        "CreatePlanParamsPlanBalanceLimit": CreatePlanParamsPlanBalanceLimit,
         "CreatePlanParamsPlanCreditLimit": CreatePlanParamsPlanCreditLimit,
+        "CreatePlanParamsUnusedPlanBalanceVariant1": CreatePlanParamsUnusedPlanBalanceVariant1,
+        "CreatePlanParamsUnusedPlanBalanceVariant2": CreatePlanParamsUnusedPlanBalanceVariant2,
         "CreatePlanParamsUnusedPlanCreditsVariant1": CreatePlanParamsUnusedPlanCreditsVariant1,
         "CreatePlanParamsUnusedPlanCreditsVariant2": CreatePlanParamsUnusedPlanCreditsVariant2,
         "CreditGrant": CreditGrant,
@@ -4961,6 +5128,7 @@ _DATACLASS_TYPES.update(
         "PlanGroupDetail": PlanGroupDetail,
         "PlanGroupDetailPlansItem": PlanGroupDetailPlansItem,
         "PlanGroupsListResult": PlanGroupsListResult,
+        "PlanPlanBalanceLimit": PlanPlanBalanceLimit,
         "PlanPlanCreditLimit": PlanPlanCreditLimit,
         "PlanPrice": PlanPrice,
         "PlanPriceMarketPricesItem": PlanPriceMarketPricesItem,
@@ -4971,6 +5139,8 @@ _DATACLASS_TYPES.update(
         "PlanRegionalPricingOverridesItem": PlanRegionalPricingOverridesItem,
         "PlanRegionalPricingResult": PlanRegionalPricingResult,
         "PlansListResult": PlansListResult,
+        "PlanUnusedPlanBalanceVariant1": PlanUnusedPlanBalanceVariant1,
+        "PlanUnusedPlanBalanceVariant2": PlanUnusedPlanBalanceVariant2,
         "PlanUnusedPlanCreditsVariant1": PlanUnusedPlanCreditsVariant1,
         "PlanUnusedPlanCreditsVariant2": PlanUnusedPlanCreditsVariant2,
         "PortalAccess": PortalAccess,
@@ -5074,7 +5244,10 @@ _DATACLASS_TYPES.update(
         "UpdateOfferParamsPhasesItemVariant3": UpdateOfferParamsPhasesItemVariant3,
         "UpdateOfferParamsPhasesItemVariant3PricesItem": UpdateOfferParamsPhasesItemVariant3PricesItem,
         "UpdatePlanFeatureParamsOverage": UpdatePlanFeatureParamsOverage,
+        "UpdatePlanParamsPlanBalanceLimit": UpdatePlanParamsPlanBalanceLimit,
         "UpdatePlanParamsPlanCreditLimit": UpdatePlanParamsPlanCreditLimit,
+        "UpdatePlanParamsUnusedPlanBalanceVariant1": UpdatePlanParamsUnusedPlanBalanceVariant1,
+        "UpdatePlanParamsUnusedPlanBalanceVariant2": UpdatePlanParamsUnusedPlanBalanceVariant2,
         "UpdatePlanParamsUnusedPlanCreditsVariant1": UpdatePlanParamsUnusedPlanCreditsVariant1,
         "UpdatePlanParamsUnusedPlanCreditsVariant2": UpdatePlanParamsUnusedPlanCreditsVariant2,
         "UpdatePlanPriceParamsMarketPricesItem": UpdatePlanPriceParamsMarketPricesItem,
@@ -5084,8 +5257,10 @@ _DATACLASS_TYPES.update(
         "UsageCheckVariant2": UsageCheckVariant2,
         "UsageCheckVariant2PlanCreditLimit": UsageCheckVariant2PlanCreditLimit,
         "UsageCheckVariant3": UsageCheckVariant3,
+        "UsageCheckVariant3PlanBalanceLimit": UsageCheckVariant3PlanBalanceLimit,
         "UsageEvent": UsageEvent,
         "UsageEventConsumption": UsageEventConsumption,
+        "UsageEventConsumptionPlanBalanceLimit": UsageEventConsumptionPlanBalanceLimit,
         "UsageEventConsumptionPlanCreditLimit": UsageEventConsumptionPlanCreditLimit,
         "UsageEventPropertiesItem": UsageEventPropertiesItem,
         "UsageQuota": UsageQuota,
@@ -5199,6 +5374,14 @@ _UNION_TYPES.update(
             },
             [],
         ),
+        "CreatePlanParamsUnusedPlanBalance": (
+            "type",
+            {
+                "expire": CreatePlanParamsUnusedPlanBalanceVariant1,
+                "roll_over": CreatePlanParamsUnusedPlanBalanceVariant2,
+            },
+            [],
+        ),
         "CreatePlanParamsUnusedPlanCredits": (
             "type",
             {
@@ -5222,6 +5405,14 @@ _UNION_TYPES.update(
             {
                 "payment_recovery": TransactionPaymentContextRecoveryVariant1,
                 "dunning_retry": TransactionPaymentContextRecoveryVariant2,
+            },
+            [],
+        ),
+        "UpdatePlanParamsUnusedPlanBalance": (
+            "type",
+            {
+                "expire": UpdatePlanParamsUnusedPlanBalanceVariant1,
+                "roll_over": UpdatePlanParamsUnusedPlanBalanceVariant2,
             },
             [],
         ),
@@ -5292,6 +5483,11 @@ _UNION_TYPES.update(
                 "scheduled": SubscriptionSummaryPauseVariant1,
                 "active": SubscriptionSummaryPauseVariant2,
             },
+            [],
+        ),
+        "PlanUnusedPlanBalance": (
+            "type",
+            {"expire": PlanUnusedPlanBalanceVariant1, "roll_over": PlanUnusedPlanBalanceVariant2},
             [],
         ),
         "PlanUnusedPlanCredits": (
