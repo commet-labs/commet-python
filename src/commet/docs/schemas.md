@@ -221,6 +221,12 @@ Generated from Commet API version `2026-08-27`.
 - `country` (`str`, required)
 - `region` (`str`, optional)
 
+### BusinessTaxId
+
+- `country` (`str`, required)
+- `type` (`str`, required)
+- `value` (`str`, required)
+
 ### ClaimLink
 
 - `url` (`str`, required)
@@ -411,10 +417,36 @@ Discriminator: `type`
 - `currency` (`str`, required)
 - `amount` (`int`, required) — Amount in the currency's minor unit (for example, cents for USD).
 
+### CreatePlanParamsPlanBalanceLimit
+
+- `amount` (`int`, required) — The most plan balance a subscription spends in one window, in USD cents. Other currencies convert it with the plan's exchange rate unless the dashboard sets a custom amount for that currency.
+- `interval` (`Literal["day", "week"]`, required) — The window length: `day` is 24 hours and `week` is 7 days, starting at the time of day of the subscription's billing anchor.
+
 ### CreatePlanParamsPlanCreditLimit
 
 - `credits` (`int`, required) — The most plan credits a subscription spends in one window.
 - `interval` (`Literal["day", "week"]`, required) — The window length: `day` is 24 hours and `week` is 7 days, starting at the time of day of the subscription's billing anchor.
+
+### CreatePlanParamsUnusedPlanBalance
+
+Variants:
+
+- `CreatePlanParamsUnusedPlanBalanceVariant1`
+- `CreatePlanParamsUnusedPlanBalanceVariant2`
+
+Discriminator: `type`
+
+- `"expire"` → `CreatePlanParamsUnusedPlanBalanceVariant1`
+- `"roll_over"` → `CreatePlanParamsUnusedPlanBalanceVariant2`
+
+### CreatePlanParamsUnusedPlanBalanceVariant1
+
+- `type` (`Literal["expire"]`, required)
+
+### CreatePlanParamsUnusedPlanBalanceVariant2
+
+- `type` (`Literal["roll_over"]`, required)
+- `max_plan_balance` (`int | null`, required) — The most plan balance a subscription holds after a reset, in USD cents, including the balance that reset grants; balance above it expires. At least the included balance of every price. Other currencies convert it with the plan's exchange rate unless the dashboard sets a custom amount for that currency. null means no limit other than the largest storable amount, 2,147,483,647 cents.
 
 ### CreatePlanParamsUnusedPlanCredits
 
@@ -482,6 +514,7 @@ Discriminator: `type`
 - `email` (`str`, required)
 - `tax_document` (`str | null`, required)
 - `document_type` (`str | null`, required)
+- `business_tax_id` (`BusinessTaxId | null`, required)
 - `timezone` (`str | null`, required)
 - `metadata` (`dict[str, Any] | null`, required)
 - `created_at` (`str`, required)
@@ -1122,9 +1155,11 @@ Discriminator: `type`
 - `is_public` (`bool`, required)
 - `is_default` (`bool`, required)
 - `is_free` (`bool`, required)
-- `block_on_exhaustion` (`bool | null`, required)
+- `block_on_exhaustion` (`bool | null`, required) — Credits and balance plans: true stops usage when the plan and purchased amounts run out; false lets usage continue and bills the missing amount as overage at the next renewal (credits at the price per credit). Trials and free plans always stop.
 - `unused_plan_credits` (`PlanUnusedPlanCredits | null`, required) — Credits plans only; null for other consumption models. What happens to unused plan credits at each reset. Purchased credits never expire and never count toward maxPlanCredits.
 - `plan_credit_limit` (`PlanPlanCreditLimit | null`, required) — Credits plans only. The most plan credits a subscription spends per day or per week; null means no limit.
+- `unused_plan_balance` (`PlanUnusedPlanBalance | null`, required) — Balance plans only; null for other consumption models. What happens to unused plan balance at each reset. Purchased balance never expires and never counts toward maxPlanBalance.
+- `plan_balance_limit` (`PlanPlanBalanceLimit | null`, required) — Balance plans only. The most plan balance a subscription spends per day or per week, in USD cents; null means no limit.
 - `sort_order` (`int`, required)
 - `plan_group_id` (`str | null`, required)
 - `metadata` (`dict[str, Any] | null`, required)
@@ -1520,6 +1555,11 @@ Discriminator: `type`
 - `has_more` (`bool`, required)
 - `next_cursor` (`str`, optional)
 
+### PlanPlanBalanceLimit
+
+- `amount` (`int`, required) — The most plan balance a subscription spends in one window, in USD cents. Other currencies convert it with the plan's exchange rate unless the dashboard sets a custom amount for that currency.
+- `interval` (`Literal["day", "week"]`, required) — The window length: `day` is 24 hours and `week` is 7 days, starting at the time of day of the subscription's billing anchor.
+
 ### PlanPlanCreditLimit
 
 - `credits` (`int`, required) — The most plan credits a subscription spends in one window.
@@ -1609,6 +1649,27 @@ Discriminator: `type`
 - `data` (`list[Plan]`, required)
 - `has_more` (`bool`, required)
 - `next_cursor` (`str`, optional)
+
+### PlanUnusedPlanBalance
+
+Variants:
+
+- `PlanUnusedPlanBalanceVariant1`
+- `PlanUnusedPlanBalanceVariant2`
+
+Discriminator: `type`
+
+- `"expire"` → `PlanUnusedPlanBalanceVariant1`
+- `"roll_over"` → `PlanUnusedPlanBalanceVariant2`
+
+### PlanUnusedPlanBalanceVariant1
+
+- `type` (`Literal["expire"]`, required)
+
+### PlanUnusedPlanBalanceVariant2
+
+- `type` (`Literal["roll_over"]`, required)
+- `max_plan_balance` (`int | null`, required) — The most plan balance a subscription holds after a reset, in USD cents, including the balance that reset grants; balance above it expires. At least the included balance of every price. Other currencies convert it with the plan's exchange rate unless the dashboard sets a custom amount for that currency. null means no limit other than the largest storable amount, 2,147,483,647 cents.
 
 ### PlanUnusedPlanCredits
 
@@ -2016,12 +2077,13 @@ Discriminator: `type`
 
 ### SubscriptionAutoTopUp
 
-- `enabled` (`bool`, required) — Whether credits are bought automatically. Always false when the plan does not sell credits.
-- `threshold` (`int | null`, required) — Credits at or below which a top-up is bought, or null when never configured.
-- `quantity` (`int | null`, required) — Credits each top-up buys, or null when never configured.
-- `max_per_period` (`int | null`, required) — Maximum top-ups per credit renewal period, or null when never configured.
-- `status` (`Literal["active", "paused", "off"]`, required) — active buys when credits reach the threshold; paused stops after three consecutive failed top-ups, or after one whose charge could not be refunded, until the payment method changes, a credit purchase succeeds or it is saved enabled again; off buys nothing.
-- `top_ups_this_period` (`int`, required) — Top-ups bought in the current credit renewal period.
+- `enabled` (`bool`, required) — Whether top-ups run automatically: credits bought on a credits plan, balance added on a balance plan. Always false when the plan does not sell credits or has balance top-ups turned off.
+- `threshold` (`int | null`, required) — The available amount at or below which a top-up runs, or null when never configured: credits (plan plus purchased) on a credits plan, minor units of the subscription currency (plan plus purchased balance) on a balance plan.
+- `quantity` (`int | null`, required) — Credits each top-up buys on a credits plan, or null when never configured or on a balance plan.
+- `amount` (`int | null`, required) — Minor units of the subscription currency each top-up adds on a balance plan, charged plus tax, or null when never configured or on a credits plan.
+- `max_per_period` (`int | null`, required) — Maximum top-ups per renewal period, or null when never configured.
+- `status` (`Literal["active", "paused", "off"]`, required) — active tops up when the available amount reaches the threshold; paused stops after three consecutive failed top-ups, or after one whose charge could not be refunded, until the payment method changes, a credit purchase or balance top-up succeeds or it is saved enabled again; off tops up nothing.
+- `top_ups_this_period` (`int`, required) — Top-ups made in the current renewal period.
 - `period_resets_at` (`str | null`, required) — When the top-up count of the period resets, or null before the subscription starts its first period.
 - `last_failure` (`SubscriptionAutoTopUpLastFailure | null`, required) — The last top-up that failed, or null when none has failed.
 - `object` (`Literal["subscription_auto_top_up"]`, required)
@@ -2029,14 +2091,17 @@ Discriminator: `type`
 
 ### SubscriptionAutoTopUpLastFailure
 
-- `reason` (`Literal["payment_declined", "no_payment_method", "quantity_below_minimum", "purchase_failed"]`, required)
+- `reason` (`Literal["payment_declined", "no_payment_method", "quantity_below_minimum", "amount_below_minimum", "purchase_failed"]`, required)
 - `at` (`str`, required)
 
 ### SubscriptionBalance
 
-- `remaining` (`float`, required)
+- `remaining` (`float`, required) — Balance available in minor units of the subscription currency. Kept for compatibility; equal to `total`.
 - `included` (`float`, required)
 - `currency` (`str`, required)
+- `plan` (`float`, required) — Plan balance left this period, in minor units. Spent first and replaced or rolled over at each reset; negative while overage is owed.
+- `purchased` (`float`, required) — Purchased balance in minor units: top-ups and manual adjustments. Spent after the plan balance and kept until the subscription ends.
+- `total` (`float`, required) — Balance available in minor units: `plan` plus `purchased`.
 
 ### SubscriptionCancellation
 
@@ -2046,9 +2111,11 @@ Discriminator: `type`
 
 ### SubscriptionCredits
 
-- `remaining` (`float`, required)
+- `remaining` (`float`, required) — Plan credits left. Kept for compatibility; equal to `plan`.
 - `included` (`float`, required)
-- `purchased` (`float`, required)
+- `purchased` (`float`, required) — Purchased credits: purchases and manual adjustments. Spent after plan credits and kept until the subscription ends.
+- `plan` (`float`, required) — Plan credits left this period. Spent first and replaced or rolled over at each reset; negative while overage is owed.
+- `total` (`float`, required) — Credits available: `plan` plus `purchased`.
 
 ### SubscriptionCurrentPeriod
 
@@ -2635,10 +2702,36 @@ Discriminator: `type`
 - `enabled` (`bool`, optional)
 - `unit_price` (`int`, optional)
 
+### UpdatePlanParamsPlanBalanceLimit
+
+- `amount` (`int`, required) — The most plan balance a subscription spends in one window, in USD cents. Other currencies convert it with the plan's exchange rate unless the dashboard sets a custom amount for that currency.
+- `interval` (`Literal["day", "week"]`, required) — The window length: `day` is 24 hours and `week` is 7 days, starting at the time of day of the subscription's billing anchor.
+
 ### UpdatePlanParamsPlanCreditLimit
 
 - `credits` (`int`, required) — The most plan credits a subscription spends in one window.
 - `interval` (`Literal["day", "week"]`, required) — The window length: `day` is 24 hours and `week` is 7 days, starting at the time of day of the subscription's billing anchor.
+
+### UpdatePlanParamsUnusedPlanBalance
+
+Variants:
+
+- `UpdatePlanParamsUnusedPlanBalanceVariant1`
+- `UpdatePlanParamsUnusedPlanBalanceVariant2`
+
+Discriminator: `type`
+
+- `"expire"` → `UpdatePlanParamsUnusedPlanBalanceVariant1`
+- `"roll_over"` → `UpdatePlanParamsUnusedPlanBalanceVariant2`
+
+### UpdatePlanParamsUnusedPlanBalanceVariant1
+
+- `type` (`Literal["expire"]`, required)
+
+### UpdatePlanParamsUnusedPlanBalanceVariant2
+
+- `type` (`Literal["roll_over"]`, required)
+- `max_plan_balance` (`int | null`, required) — The most plan balance a subscription holds after a reset, in USD cents, including the balance that reset grants; balance above it expires. At least the included balance of every price. Other currencies convert it with the plan's exchange rate unless the dashboard sets a custom amount for that currency. null means no limit other than the largest storable amount, 2,147,483,647 cents.
 
 ### UpdatePlanParamsUnusedPlanCredits
 
@@ -2734,6 +2827,7 @@ Discriminator: `consumption_model`
 - `purchased_credits` (`int`, required)
 - `total_credits` (`int`, required)
 - `plan_credit_limit` (`UsageCheckVariant2PlanCreditLimit | null`, required)
+- `block_on_exhaustion` (`bool`, required) — Whether usage stops when plan and purchased credits run out. False only when the plan allows overage, which is billed at its price per credit; trials and free plans always stop.
 - `object` (`Literal["usage_check"]`, required)
 - `livemode` (`bool`, required)
 
@@ -2756,11 +2850,23 @@ Discriminator: `consumption_model`
 - `consumption_model` (`Literal["balance"]`, required)
 - `unit_price` (`float`, required)
 - `estimated_amount` (`float`, required)
-- `current_balance` (`float`, required)
+- `current_balance` (`float`, required) — The available balance, plan plus purchased, in rate scale (10000 = 1.00 of the subscription currency). Equal to totalBalance.
+- `plan_balance` (`float`, required) — The plan part of the balance in rate scale. Consumed first, replaced or rolled over at each reset, and negative while overage is owed.
+- `purchased_balance` (`float`, required) — The purchased part of the balance in rate scale: top-ups and adjustments. Consumed after the plan part and kept until the subscription ends.
+- `total_balance` (`float`, required) — planBalance plus purchasedBalance, in rate scale.
+- `plan_balance_limit` (`UsageCheckVariant3PlanBalanceLimit | null`, required)
 - `block_on_exhaustion` (`bool`, required)
 - `currency` (`str`, required)
 - `object` (`Literal["usage_check"]`, required)
 - `livemode` (`bool`, required)
+
+### UsageCheckVariant3PlanBalanceLimit
+
+- `amount` (`int`, required) — The most plan balance the subscription spends per window, in rate scale (10000 = 1.00 of the subscription currency).
+- `interval` (`Literal["day", "week"]`, required) — The window length: 24 hours for `day`, 7 days for `week`.
+- `spent` (`int`, required) — Plan balance spent in the current window, in rate scale.
+- `remaining` (`int`, required) — Plan balance the subscription can still spend in the current window, in rate scale. Purchased balance is not limited.
+- `resets_at` (`str`, required) — When the next window starts and spending resets.
 
 ### UsageEvent
 
@@ -2783,6 +2889,15 @@ Discriminator: `consumption_model`
 - `remaining` (`float`, required)
 - `blocked` (`bool`, required)
 - `plan_credit_limit` (`UsageEventConsumptionPlanCreditLimit | null`, optional) — Credits consumption only, omitted for balance. The plan credit limit after this event; null when the plan has no limit.
+- `plan_balance_limit` (`UsageEventConsumptionPlanBalanceLimit | null`, optional) — Balance consumption on a plan with a plan balance limit: the limit after this event. Omitted for credits and for plans without a limit.
+
+### UsageEventConsumptionPlanBalanceLimit
+
+- `amount` (`int`, required) — The most plan balance the subscription spends per window, in rate scale (10000 = 1.00 of the subscription currency).
+- `interval` (`Literal["day", "week"]`, required) — The window length: 24 hours for `day`, 7 days for `week`.
+- `spent` (`int`, required) — Plan balance spent in the current window, in rate scale.
+- `remaining` (`int`, required) — Plan balance the subscription can still spend in the current window, in rate scale. Purchased balance is not limited.
+- `resets_at` (`str`, required) — When the next window starts and spending resets.
 
 ### UsageEventConsumptionPlanCreditLimit
 
@@ -2841,7 +2956,10 @@ Discriminator: `consumption_model`
 
 ### WebhookBalance
 
-- `current_balance` (`float`, required)
+- `current_balance` (`float`, required) — The available balance, plan plus purchased, in rate scale. Equal to totalBalance.
+- `plan_balance` (`float`, required) — The plan part in rate scale: spent first, replaced or rolled over at each reset, negative while overage is owed.
+- `purchased_balance` (`float`, required) — The purchased part in rate scale: top-ups and manual adjustments, spent after the plan part and kept until the subscription ends.
+- `total_balance` (`float`, required) — planBalance plus purchasedBalance, in rate scale.
 
 ### WebhookBankRef
 

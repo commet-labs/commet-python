@@ -504,6 +504,15 @@ Fired when a customer replaces their default payment method through the customer
 - `paymentMethod` (`PaymentMethod`)
 - `card` (`WebhookCardInfo`)
 
+## payment_method.detached
+
+Fired when a saved payment method is removed from a customer: the customer unlinked it at the payment provider (for example, revoking a Mercado Pago authorization), or removed it through the customer portal. Removing a method never changes the customer's subscriptions; a renewal that finds no usable method follows the usual failed-payment recovery.
+
+- `customerId` (`str`)
+- `paymentMethod` (`PaymentMethod`)
+- `card` (`WebhookCardInfo`)
+- `reason` (`Literal["unlinked_at_provider", "removed_by_customer"]`)
+
 ## customer.created
 
 Fired when a customer is created, via the API (including batch create), SDK, or dashboard. The payload is the customer resource exactly as GET /customers returns it.
@@ -514,6 +523,7 @@ Fired when a customer is created, via the API (including batch create), SDK, or 
 - `email` (`str`)
 - `taxDocument` (`str`)
 - `documentType` (`str`)
+- `businessTaxId` (`dict[str, Any]`)
 - `timezone` (`str`)
 - `metadata` (`dict[str, Any]`)
 - `createdAt` (`str`)
@@ -529,6 +539,7 @@ Fired when a customer's details change (email, name, timezone, externalId, or me
 - `email` (`str`)
 - `taxDocument` (`str`)
 - `documentType` (`str`)
+- `businessTaxId` (`dict[str, Any]`)
 - `timezone` (`str`)
 - `metadata` (`dict[str, Any]`)
 - `createdAt` (`str`)
@@ -660,7 +671,7 @@ Fired when a customer buys a credit pack or a chosen quantity of credits through
 
 ## credits.low
 
-Fired when a subscription's remaining credits cross below 10% of the credits granted for the current period. Emitted once per billing period, when the crossing happens.
+Fired when a subscription's available credits (plan plus purchased) cross below 10% of their last refill: a period reset, a purchase or a manual adjustment. Emitted once per crossing, the same rule as balance.low.
 
 - `subscriptionId` (`str`)
 - `customerId` (`str`)
@@ -670,7 +681,7 @@ Fired when a subscription's remaining credits cross below 10% of the credits gra
 
 ## credits.depleted
 
-Fired when a subscription's credits hit zero. Usage requests that need more credits than remain are rejected from this point. Also fires customer.state_changed with trigger credits_depleted.
+Fired each time a subscription's available credits cross to zero or below. Usage that needs more credits than remain is rejected from this point, unless the plan allows overage, which is billed at its price per credit at the next renewal. Also fires customer.state_changed with trigger credits_depleted.
 
 - `subscriptionId` (`str`)
 - `customerId` (`str`)
@@ -684,9 +695,19 @@ Fired at a reset when unused plan credits are discarded. On a plan whose unused 
 - `customerId` (`str`)
 - `expiredCredits` (`float`)
 
+## balance.granted
+
+Fired when non-purchase balance is granted to a subscription: the plan balance at the start of each billing period, or a manual adjustment from the dashboard or the API, which goes to the purchased balance. Balance top-ups fire balance.topped_up instead.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `amount` (`float`)
+- `currency` (`str`)
+- `reason` (`str`)
+
 ## balance.topped_up
 
-Fired when a customer on a balance plan tops up their prepaid balance through the customer portal and the payment succeeds.
+Fired when a balance top-up succeeds: through the API, an automatic top-up or the customer portal. The amount goes to the purchased balance, which is spent after the plan balance and kept until the subscription ends.
 
 - `subscriptionId` (`str`)
 - `customerId` (`str`)
@@ -712,6 +733,15 @@ Fired when a subscription's prepaid balance crosses to zero or below. With block
 - `subscriptionId` (`str`)
 - `customerId` (`str`)
 - `currentBalance` (`float`)
+- `currency` (`str`)
+
+## balance.expired
+
+Fired at a reset when unused plan balance is discarded. On a plan whose unused plan balance expires, all of it expires at each reset. On a plan that rolls it over, a reset keeps it, up to the plan's maxPlanBalance when it has one, and only the excess expires. An overage debt invoiced at the renewal counts as nothing left over. Purchased balance never expires and is not affected.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `expiredAmount` (`float`)
 - `currency` (`str`)
 
 ## quota.threshold_reached

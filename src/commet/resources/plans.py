@@ -10,7 +10,9 @@ from .._shared import build_body
 from ..types import (
     AddPlanFeatureParamsOverage,
     AddPlanPriceParamsMarketPricesItem,
+    CreatePlanParamsPlanBalanceLimit,
     CreatePlanParamsPlanCreditLimit,
+    CreatePlanParamsUnusedPlanBalance,
     CreatePlanParamsUnusedPlanCredits,
     DeletedObject,
     DeletedPlanRegionalPricing,
@@ -24,7 +26,9 @@ from ..types import (
     SetPlanRegionalPricingParamsFeaturesItem,
     SetPlanRegionalPricingParamsPricesItem,
     UpdatePlanFeatureParamsOverage,
+    UpdatePlanParamsPlanBalanceLimit,
     UpdatePlanParamsPlanCreditLimit,
+    UpdatePlanParamsUnusedPlanBalance,
     UpdatePlanParamsUnusedPlanCredits,
     UpdatePlanPriceParamsMarketPricesItem,
     UpsertRegionalPricesParamsOverridesItem,
@@ -260,10 +264,13 @@ class PlansResource:
         is_public: bool | None = None,
         unused_plan_credits: UpdatePlanParamsUnusedPlanCredits | None = None,
         plan_credit_limit: UpdatePlanParamsPlanCreditLimit | None = None,
+        unused_plan_balance: UpdatePlanParamsUnusedPlanBalance | None = None,
+        plan_balance_limit: UpdatePlanParamsPlanBalanceLimit | None = None,
+        block_on_exhaustion: bool | None = None,
         is_default: bool | None = None,
         idempotency_key: str | None = None,
     ) -> Plan:
-        """Update a plan's name, description, visibility, default status, metadata, what happens to its unused plan credits, or its plan credit limit."""
+        """Update a plan's name, description, visibility, default status, metadata, overage behavior, what happens to its unused plan credits or plan balance, or its plan credit or plan balance limit."""
         body = build_body(
             name=name,
             description=description,
@@ -271,6 +278,9 @@ class PlansResource:
             is_public=is_public,
             unused_plan_credits=unused_plan_credits,
             plan_credit_limit=plan_credit_limit,
+            unused_plan_balance=unused_plan_balance,
+            plan_balance_limit=plan_balance_limit,
+            block_on_exhaustion=block_on_exhaustion,
             is_default=is_default,
         )
         return _parse_data(
@@ -307,12 +317,14 @@ class PlansResource:
         block_on_exhaustion: bool | None = None,
         unused_plan_credits: CreatePlanParamsUnusedPlanCredits | None = None,
         plan_credit_limit: CreatePlanParamsPlanCreditLimit | None = None,
+        unused_plan_balance: CreatePlanParamsUnusedPlanBalance | None = None,
+        plan_balance_limit: CreatePlanParamsPlanBalanceLimit | None = None,
         plan_group_id: str | None = None,
         is_default: bool | None = None,
         metadata: dict[str, Any] | None = None,
         idempotency_key: str | None = None,
     ) -> Plan:
-        """Create a new plan with optional consumption model, visibility, and plan group assignment."""
+        """Create a new plan with optional consumption model, visibility, plan group assignment, overage behavior, and the rollover and spend limit of its plan credits or plan balance."""
         body = build_body(
             name=name,
             code=code,
@@ -323,6 +335,8 @@ class PlansResource:
             block_on_exhaustion=block_on_exhaustion,
             unused_plan_credits=unused_plan_credits,
             plan_credit_limit=plan_credit_limit,
+            unused_plan_balance=unused_plan_balance,
+            plan_balance_limit=plan_balance_limit,
             plan_group_id=plan_group_id,
             is_default=is_default,
             metadata=metadata,
