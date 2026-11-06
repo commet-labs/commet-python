@@ -43,7 +43,7 @@ class SubscriptionsResource:
     def activate_addon(
         self, id: str, *, addon_id: str, idempotency_key: str | None = None
     ) -> SubscriptionAddon:
-        """Activate an add-on on a subscription. Charges a prorated amount for the current billing period."""
+        """Activate an add-on on a subscription. Charges a prorated amount for the current billing period. An add-on that the subscription's plan version does not sell is rejected with addon_unavailable."""
         body = build_body(addon_id=addon_id)
         return _parse_data(
             self._http.post(f"/subscriptions/{id}/addons", body, idempotency_key=idempotency_key),
@@ -154,6 +154,23 @@ class SubscriptionsResource:
             "PlanChange",
         )
 
+    def change_version(
+        self,
+        id: str,
+        *,
+        plan_version_id: str,
+        effective: Literal["now", "period_end"],
+        idempotency_key: str | None = None,
+    ) -> Subscription:
+        """Move a subscription to a newer published version of its plan, now or at the end of the period, without proration; an older version is rejected with version_not_newer, and a subscription on a running experiment moves only to a later version of that experiment. The subscription keeps its currency and its price: a destination that does not sell its currency is rejected with missing_regional_price, and one that does not sell the price it pays with price_not_found. A free version moves only to a free version and a paid one only to a paid one (validation_error). A subscription whose usage does not fit the destination, or with an active add-on the destination does not sell, is not moved either, and the error says why. Repeating the same request changes nothing; a new one replaces the pending move."""
+        body = build_body(plan_version_id=plan_version_id, effective=effective)
+        return _parse_data(
+            self._http.post(
+                f"/subscriptions/{id}/change-version", body, idempotency_key=idempotency_key
+            ),
+            Subscription,
+        )
+
     def purchase_credits(
         self,
         id: str,
@@ -162,7 +179,7 @@ class SubscriptionsResource:
         quantity: int | None = None,
         idempotency_key: str | None = None,
     ) -> CreditGrant:
-        """Purchase a fixed credit pack or choose a whole credit quantity at the subscription plan price and minimum. Charges the saved payment method and adds purchased credits."""
+        """Purchase a fixed credit pack or choose a whole credit quantity at the subscription plan price and minimum. Charges the saved payment method and adds purchased credits. A credit pack that the subscription's plan version does not sell is rejected with credit_pack_unavailable."""
         body = build_body(credit_pack_id=credit_pack_id, quantity=quantity)
         return _parse_data(
             self._http.post(f"/subscriptions/{id}/credits", body, idempotency_key=idempotency_key),
@@ -310,6 +327,12 @@ class SubscriptionsResource:
             self._http.delete(f"/subscriptions/{id}/scheduled-plan-change"), Subscription
         )
 
+    def revoke_scheduled_version_change(self, id: str) -> Subscription:
+        """Cancel the move to another plan version pending for the next renewal, so the subscription stays on its version, and send subscription.version_change_canceled with reason canceled_by_merchant. A move made now has nothing pending to revoke. With nothing pending it changes nothing. Returns the subscription."""
+        return _parse_data(
+            self._http.delete(f"/subscriptions/{id}/scheduled-version-change"), Subscription
+        )
+
     def uncancel(self, id: str, *, idempotency_key: str | None = None) -> Subscription:
         """Revert a scheduled cancellation and return the updated subscription. Only works before cancellation takes effect."""
         return _parse_data(
@@ -323,10 +346,14 @@ class SubscriptionsResource:
         return _parse_data(self._http.get("/subscriptions/active", query), Subscription)
 
     def list(
-        self, *, customer_id: str | None = None, status: SubscriptionStatus | None = None
+        self,
+        *,
+        customer_id: str | None = None,
+        status: SubscriptionStatus | None = None,
+        plan_version_id: str | None = None,
     ) -> SubscriptionsListResult:
         """List all subscriptions. Filter by customer ID or status."""
-        query = build_body(customer_id=customer_id, status=status)
+        query = build_body(customer_id=customer_id, status=status, plan_version_id=plan_version_id)
         return _parse_data(self._http.get("/subscriptions", query), SubscriptionsListResult)
 
     def create(
@@ -349,6 +376,7 @@ class SubscriptionsResource:
         success_url: str | None = None,
         prepaid_periods: int | None = None,
         cancel_at_period_end: bool | None = None,
+        plan_version_id: str | None = None,
         offer_id: str | None = None,
         promo_code: str | None = None,
         custom_trial_days: int | None = None,
@@ -371,6 +399,7 @@ class SubscriptionsResource:
             success_url=success_url,
             prepaid_periods=prepaid_periods,
             cancel_at_period_end=cancel_at_period_end,
+            plan_version_id=plan_version_id,
             offer_id=offer_id,
             promo_code=promo_code,
             custom_trial_days=custom_trial_days,

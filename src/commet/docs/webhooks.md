@@ -189,6 +189,26 @@ Fired when a scheduled plan change will no longer take effect: it was revoked th
 - `billingInterval` (`str`)
 - `revokedBillingInterval` (`str`)
 
+## subscription.version_changed
+
+Fired when a subscription moves to another version of its plan: a move applied now or a scheduled move that took effect at renewal. Making an experiment current moves nobody, so it sends none. The plan stays the same; the version's prices and features apply from now on.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `fromVersionId` (`str`)
+- `toVersionId` (`str`)
+- `currency` (`str`)
+- `billingInterval` (`str`)
+
+## subscription.version_change_canceled
+
+Fired when a scheduled move to another plan version will no longer take effect because the subscription no longer fit the version at its renewal, or because the merchant revoked the scheduled version change or canceled the plan move. A new move that replaces it, a move made now, a plan change or an immediate cancellation sends none. The subscription stays on its version; reason says why.
+
+- `subscriptionId` (`str`)
+- `customerId` (`str`)
+- `toVersionId` (`str`)
+- `reason` (`str`)
+
 ## subscription.past_due
 
 Fired when a recurring payment fails on a previously paid subscription and its status becomes past_due. past_due is a grace window, not a cutoff: usage and seats keep working while new purchases are blocked, and dunning retries the charge — use this to notify the customer and recover the payment.
