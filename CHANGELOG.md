@@ -1,5 +1,15 @@
 # Changelog
 
+## 9.9.0
+
+- Subscriptions on a balance plan split their balance in two parts: the plan balance (spent first, replaced or rolled over at each reset) and the purchased balance (top-ups and manual adjustments, kept until the subscription ends), plus the total. Credits subscriptions add their plan credits and total. The existing remaining amount keeps its meaning.
+- `plans.create` and `plans.update` accept `unused_plan_balance` (expire or roll over up to a maximum plan balance) and `plan_balance_limit` (the most plan balance spent per day or week), and `plans.update` accepts `block_on_exhaustion` to turn overage on or off. Plans return both settings.
+- `subscriptions.update_auto_top_up` accepts `amount` for balance plans and `subscriptions.get_auto_top_up` returns it, so balance subscriptions top up automatically; `amount_below_minimum` is a new failure reason.
+- Usage checks, usage events and the `customer.state_changed` balance add the plan balance limit window and the plan, purchased and total balance parts.
+- New webhook events `balance.granted`, `balance.expired` and `payment_method.detached`.
+- `customers.create` and `customers.update` accept `business_tax_id`, and customers return it.
+- `subscriptions.create` accepts `payment_method_types` to limit the payment methods its initial checkout offers.
+
 ## 9.8.0
 
 - `subscriptions.purchase_credits` buys a chosen `quantity` of credits at the plan's price, besides a `credit_pack_id`.
