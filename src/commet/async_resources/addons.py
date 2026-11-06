@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from typing import Literal
 
 from .._async_http import AsyncCommetHTTPClient
@@ -37,15 +38,17 @@ class AsyncAddonsResource:
         base_price: int | None = None,
         included_units: int | None = None,
         overage_rate: int | None = None,
+        plan_ids: builtins.list[str] | None = None,
         idempotency_key: str | None = None,
     ) -> Addon:
-        """Update an add-on's name, description, or pricing."""
+        """Update an add-on's name, description, pricing, or the plans that sell it."""
         body = build_body(
             name=name,
             description=description,
             base_price=base_price,
             included_units=included_units,
             overage_rate=overage_rate,
+            plan_ids=plan_ids,
         )
         return _parse_data(
             await self._http.patch(f"/addons/{id}", body, idempotency_key=idempotency_key), Addon
@@ -70,6 +73,7 @@ class AsyncAddonsResource:
         feature_id: str,
         consumption_model: Literal["boolean", "metered", "credits", "balance"],
         description: str | None = None,
+        plan_ids: builtins.list[str] | None = None,
         included_units: int | None = None,
         overage_rate: int | None = None,
         credit_cost: int | None = None,
@@ -81,6 +85,7 @@ class AsyncAddonsResource:
             description=description,
             base_price=base_price,
             feature_id=feature_id,
+            plan_ids=plan_ids,
             consumption_model=consumption_model,
             included_units=included_units,
             overage_rate=overage_rate,
