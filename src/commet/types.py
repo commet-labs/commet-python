@@ -3894,7 +3894,7 @@ class SubscriberNeedingAChange:
     subscription_id: str = field(
         default="", metadata={"wire_name": "subscriptionId", "required": True}
     )
-    move_id: str | None = field(default=None, metadata={"wire_name": "moveId", "required": True})
+    move_id: str = field(default="", metadata={"wire_name": "moveId", "required": True})
     from_version_id: str = field(
         default="", metadata={"wire_name": "fromVersionId", "required": True}
     )

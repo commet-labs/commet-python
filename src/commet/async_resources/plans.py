@@ -316,7 +316,7 @@ class AsyncPlansResource:
         )
 
     async def list_moves(self, id: str) -> PlansListMovesResult:
-        """List a plan's latest moves of subscribers between versions, newest first, with how many are moving, moved, need a change, were left out, canceled or kept on their version."""
+        """List a plan's latest moves of subscribers between versions, newest first, including the change of a single subscription, with how many are moving, moved, need a change, were left out, canceled or kept on their version."""
         return _parse_data(await self._http.get(f"/plans/{id}/moves"), PlansListMovesResult)
 
     async def create_move(
