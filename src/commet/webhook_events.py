@@ -39,6 +39,8 @@ class WebhookEventType:
     SUBSCRIPTION_CANCELLATION_REVOKED = "subscription.cancellation_revoked"
     SUBSCRIPTION_PLAN_CHANGE_SCHEDULED = "subscription.plan_change_scheduled"
     SUBSCRIPTION_PLAN_CHANGE_REVOKED = "subscription.plan_change_revoked"
+    SUBSCRIPTION_VERSION_CHANGED = "subscription.version_changed"
+    SUBSCRIPTION_VERSION_CHANGE_CANCELED = "subscription.version_change_canceled"
     SUBSCRIPTION_PAST_DUE = "subscription.past_due"
     TRIAL_STARTED = "trial.started"
     TRIAL_CONVERTED = "trial.converted"
@@ -293,6 +295,28 @@ class SubscriptionPlanChangeRevokedData:
     revokedPlan: WebhookPlanRef = field(default_factory=WebhookPlanRef)
     billingInterval: str | None = None
     revokedBillingInterval: str | None = None
+
+
+@dataclass
+class SubscriptionVersionChangedData:
+    """Fired when a subscription moves to another version of its plan: a move applied now or a scheduled move that took effect at renewal. Making an experiment current moves nobody, so it sends none. The plan stays the same; the version's prices and features apply from now on."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    fromVersionId: str = ""
+    toVersionId: str = ""
+    currency: str = ""
+    billingInterval: str = ""
+
+
+@dataclass
+class SubscriptionVersionChangeCanceledData:
+    """Fired when a scheduled move to another plan version will no longer take effect because the subscription no longer fit the version at its renewal, or because the merchant revoked the scheduled version change or canceled the plan move. A new move that replaces it, a move made now, a plan change or an immediate cancellation sends none. The subscription stays on its version; reason says why."""
+
+    subscriptionId: str = ""
+    customerId: str = ""
+    toVersionId: str = ""
+    reason: str = ""
 
 
 @dataclass
@@ -1082,6 +1106,12 @@ class WebhookEvent:
     def as_subscription_plan_change_revoked(self) -> SubscriptionPlanChangeRevokedData:
         return _from_dict(SubscriptionPlanChangeRevokedData, self.data)
 
+    def as_subscription_version_changed(self) -> SubscriptionVersionChangedData:
+        return _from_dict(SubscriptionVersionChangedData, self.data)
+
+    def as_subscription_version_change_canceled(self) -> SubscriptionVersionChangeCanceledData:
+        return _from_dict(SubscriptionVersionChangeCanceledData, self.data)
+
     def as_subscription_past_due(self) -> SubscriptionPastDueData:
         return _from_dict(SubscriptionPastDueData, self.data)
 
@@ -1260,6 +1290,8 @@ _DATACLASS_TYPES.update(
         "SubscriptionCancellationRevokedData": SubscriptionCancellationRevokedData,
         "SubscriptionPlanChangeScheduledData": SubscriptionPlanChangeScheduledData,
         "SubscriptionPlanChangeRevokedData": SubscriptionPlanChangeRevokedData,
+        "SubscriptionVersionChangedData": SubscriptionVersionChangedData,
+        "SubscriptionVersionChangeCanceledData": SubscriptionVersionChangeCanceledData,
         "SubscriptionPastDueData": SubscriptionPastDueData,
         "TrialStartedData": TrialStartedData,
         "TrialConvertedData": TrialConvertedData,

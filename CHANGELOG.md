@@ -1,5 +1,14 @@
 # Changelog
 
+## 9.10.0
+
+- Plans have versions. Editing a plan publishes a new version, and existing subscriptions stay on theirs until moved. `plans.list_versions`, `plans.get_version`, `plans.compare_versions` and `plans.create_version` read and publish versions; `plans.create_draft`, `plans.update_draft`, `plans.publish_draft` and the other draft methods prepare one; `plans.create_experiment`, `plans.make_experiment_current`, `plans.archive_experiment` and the other experiment methods sell a version through its own code; `plans.create_move`, `plans.cancel_move` and the other move methods move subscribers to a newer version; `plans.list_subscribers_needing_a_change` and `plans.keep_subscriber_on_version` handle the subscribers that do not fit it.
+- `subscriptions.change_version` moves one subscription to a newer version of its plan, now or at the end of the period, and `subscriptions.revoke_scheduled_version_change` cancels a pending move. Subscriptions return `plan_version` and `scheduled_version_change`.
+- `subscriptions.create` accepts `plan_version_id`, and `plan_code` as `<plan code>:<experiment code>` to sell an experiment. `subscriptions.list` filters by `plan_version_id`.
+- Plans return `countries`. `addons.create`, `addons.update`, `credit_packs.create` and `credit_packs.update` accept `plan_ids`, and add-ons and credit packs return them. `subscriptions.preview_change` returns `deactivated_addons`.
+- New webhook events `subscription.version_changed` and `subscription.version_change_canceled`.
+- New errors `plan_version_not_found`, `plan_experiment_not_found`, `subscribers_do_not_fit`, `version_not_newer`, `addon_unavailable` and `credit_pack_unavailable`.
+
 ## 9.9.0
 
 - Subscriptions on a balance plan split their balance in two parts: the plan balance (spent first, replaced or rolled over at each reset) and the purchased balance (top-ups and manual adjustments, kept until the subscription ends), plus the total. Credits subscriptions add their plan credits and total. The existing remaining amount keeps its meaning.
