@@ -476,6 +476,7 @@ class PaymentRefundedData:
     invoiceNumber: str | None = None
     customerId: str | None = None
     subscriptionId: str | None = None
+    amountRefunded: int = 0
     refundAmount: float = 0.0
     currency: str = ""
 

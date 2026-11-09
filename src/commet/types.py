@@ -4737,6 +4737,9 @@ class Transaction:
     presentment_amount: int | None = field(
         default=None, metadata={"wire_name": "presentmentAmount", "required": True}
     )
+    amount_refunded: int = field(
+        default=0, metadata={"wire_name": "amountRefunded", "required": True}
+    )
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     provider: PaymentProvider | None = field(
         default=None, metadata={"wire_name": "provider", "required": True}
@@ -4786,6 +4789,9 @@ class TransactionListItem:
     )
     presentment_amount: int | None = field(
         default=None, metadata={"wire_name": "presentmentAmount", "required": True}
+    )
+    amount_refunded: int = field(
+        default=0, metadata={"wire_name": "amountRefunded", "required": True}
     )
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     provider: PaymentProvider | None = field(

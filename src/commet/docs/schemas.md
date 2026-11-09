@@ -2923,6 +2923,7 @@ Discriminator: `status`
 - `subtotal` (`int | null`, required) — Subtotal in USD cents (gross minus tax). Null when grossAmount is null.
 - `tax_amount` (`int | null`, required)
 - `presentment_amount` (`int | null`, required) — Amount in the charge currency's smallest unit, as presented to the customer. Set for non-USD charges; null when the charge was made in USD.
+- `amount_refunded` (`int`, required) — Cumulative confirmed refunds in the payment currency’s smallest unit.
 - `currency` (`str`, required)
 - `provider` (`PaymentProvider`, required) — The payment provider the charge was routed to: stripe, commet, or dlocal.
 - `payment_method` (`PaymentMethod | null`, required) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
@@ -2946,6 +2947,7 @@ Discriminator: `status`
 - `subtotal` (`int | null`, required) — Subtotal in USD cents (gross minus tax). Null when grossAmount is null.
 - `tax_amount` (`int | null`, required)
 - `presentment_amount` (`int | null`, required) — Amount in the charge currency's smallest unit, as presented to the customer. Set for non-USD charges; null when the charge was made in USD.
+- `amount_refunded` (`int`, required) — Cumulative confirmed refunds in the payment currency’s smallest unit.
 - `currency` (`str`, required)
 - `provider` (`PaymentProvider`, required) — The payment provider the charge was routed to: stripe, commet, or dlocal.
 - `payment_method` (`PaymentMethod | null`, required) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
