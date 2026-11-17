@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "package": "commet-sdk",
-  "packageVersion": "9.10.0",
+  "packageVersion": "9.11.0",
   "apiVersion": "2026-08-27",
   "entrypoint": "README.md",
   "gettingStarted": "getting-started.md",
@@ -117,7 +117,7 @@
   },
   "errorReferences": {
     "index": "errors/index.md",
-    "count": 94,
+    "count": 100,
     "entries": [
       {
         "code": "validation_error",
@@ -322,6 +322,42 @@
         "type": "billing_error",
         "documentation": "errors/missing_regional_price.md",
         "canonicalUrl": "/docs/api-reference/2026-08-27/errors/missing_regional_price.md"
+      },
+      {
+        "code": "currency_held_by_payment_method",
+        "type": "billing_error",
+        "documentation": "errors/currency_held_by_payment_method.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/currency_held_by_payment_method.md"
+      },
+      {
+        "code": "currency_held_by_customer_credit",
+        "type": "billing_error",
+        "documentation": "errors/currency_held_by_customer_credit.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/currency_held_by_customer_credit.md"
+      },
+      {
+        "code": "currency_held_by_balance_plan",
+        "type": "billing_error",
+        "documentation": "errors/currency_held_by_balance_plan.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/currency_held_by_balance_plan.md"
+      },
+      {
+        "code": "currency_held_by_fixed_amount_discount",
+        "type": "billing_error",
+        "documentation": "errors/currency_held_by_fixed_amount_discount.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/currency_held_by_fixed_amount_discount.md"
+      },
+      {
+        "code": "currency_held_by_prepaid_period",
+        "type": "billing_error",
+        "documentation": "errors/currency_held_by_prepaid_period.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/currency_held_by_prepaid_period.md"
+      },
+      {
+        "code": "currency_held_by_scheduled_pause",
+        "type": "billing_error",
+        "documentation": "errors/currency_held_by_scheduled_pause.md",
+        "canonicalUrl": "/docs/api-reference/2026-08-27/errors/currency_held_by_scheduled_pause.md"
       },
       {
         "code": "payment_failed",

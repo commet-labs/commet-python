@@ -431,6 +431,9 @@ class ArchivePlanExperimentParamsChangesItem:
     remove_addon_ids: list[str] | None = field(
         default=None, metadata={"wire_name": "removeAddonIds", "required": False}
     )
+    currency: str | None = field(
+        default=None, metadata={"wire_name": "currency", "required": False}
+    )
 
 
 @dataclass
@@ -447,6 +450,9 @@ class BalanceAdjustment:
 @dataclass
 class BalanceTopup:
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
+    status: Literal["succeeded", "processing"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
     object: Literal["balance_topup"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
     )
@@ -465,6 +471,9 @@ class BatchCreateCustomersParamsCustomersItem:
     )
     tax_document: str | None = field(
         default=None, metadata={"wire_name": "taxDocument", "required": False}
+    )
+    business_tax_id: str | None = field(
+        default=None, metadata={"wire_name": "businessTaxId", "required": False}
     )
     timezone: Timezone | None = field(
         default=None, metadata={"wire_name": "timezone", "required": False}
@@ -898,6 +907,9 @@ class CreatePlanMoveParamsChangesItem:
     remove_addon_ids: list[str] | None = field(
         default=None, metadata={"wire_name": "removeAddonIds", "required": False}
     )
+    currency: str | None = field(
+        default=None, metadata={"wire_name": "currency", "required": False}
+    )
 
 
 @dataclass
@@ -987,6 +999,9 @@ class CreatePlanVersionParamsPricesItemRegionalPricesItem:
 @dataclass
 class CreditGrant:
     credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
+    status: Literal["succeeded", "processing"] | None = field(
+        default=None, metadata={"wire_name": "status", "required": True}
+    )
     object: Literal["credit_grant"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
     )
@@ -1113,6 +1128,9 @@ class CustomerBatchFailedItemData:
     )
     tax_document: str | None = field(
         default=None, metadata={"wire_name": "taxDocument", "required": False}
+    )
+    business_tax_id: str | None = field(
+        default=None, metadata={"wire_name": "businessTaxId", "required": False}
     )
     timezone: str | None = field(
         default=None, metadata={"wire_name": "timezone", "required": False}
@@ -1432,8 +1450,9 @@ class FeatureAccessVariant2ConsumptionVariant2:
     credits_consumed: float = field(
         default=0.0, metadata={"wire_name": "creditsConsumed", "required": True}
     )
-    available_units: int = field(
-        default=0, metadata={"wire_name": "availableUnits", "required": True}
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    available_units: int | None = field(
+        default=None, metadata={"wire_name": "availableUnits", "required": False}
     )
 
 
@@ -1455,6 +1474,7 @@ class FeatureAccessVariant2ConsumptionVariant3:
     spent: FeatureAccessVariant2ConsumptionVariant3Spent | None = field(
         default=None, metadata={"wire_name": "spent", "required": True}
     )
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
     available_units: int | None = field(
         default=None, metadata={"wire_name": "availableUnits", "required": False}
     )
@@ -2132,11 +2152,17 @@ class Plan:
     unused_plan_credits: PlanUnusedPlanCredits | None = field(
         default=None, metadata={"wire_name": "unusedPlanCredits", "required": True}
     )
+    unlimited_plan_credits: bool | None = field(
+        default=None, metadata={"wire_name": "unlimitedPlanCredits", "required": True}
+    )
     plan_credit_limit: PlanPlanCreditLimit | None = field(
         default=None, metadata={"wire_name": "planCreditLimit", "required": True}
     )
     unused_plan_balance: PlanUnusedPlanBalance | None = field(
         default=None, metadata={"wire_name": "unusedPlanBalance", "required": True}
+    )
+    unlimited_plan_balance: bool | None = field(
+        default=None, metadata={"wire_name": "unlimitedPlanBalance", "required": True}
     )
     plan_balance_limit: PlanPlanBalanceLimit | None = field(
         default=None, metadata={"wire_name": "planBalanceLimit", "required": True}
@@ -3597,6 +3623,9 @@ class PublishPlanDraftParamsChangesItem:
     remove_addon_ids: list[str] | None = field(
         default=None, metadata={"wire_name": "removeAddonIds", "required": False}
     )
+    currency: str | None = field(
+        default=None, metadata={"wire_name": "currency", "required": False}
+    )
 
 
 @dataclass
@@ -3992,7 +4021,7 @@ class Subscription:
 @dataclass
 class SubscriptionAddon:
     addon_id: str = field(default="", metadata={"wire_name": "addonId", "required": True})
-    status: Literal["active"] | None = field(
+    status: Literal["active", "processing"] | None = field(
         default=None, metadata={"wire_name": "status", "required": True}
     )
     prorated_charge: int = field(
@@ -4050,12 +4079,15 @@ class SubscriptionAutoTopUpLastFailure:
 
 @dataclass
 class SubscriptionBalance:
-    remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    remaining: float | None = field(
+        default=None, metadata={"wire_name": "remaining", "required": False}
+    )
     included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
-    plan: float = field(default=0.0, metadata={"wire_name": "plan", "required": True})
+    plan: float | None = field(default=None, metadata={"wire_name": "plan", "required": False})
     purchased: float = field(default=0.0, metadata={"wire_name": "purchased", "required": True})
-    total: float = field(default=0.0, metadata={"wire_name": "total", "required": True})
+    total: float | None = field(default=None, metadata={"wire_name": "total", "required": False})
 
 
 @dataclass
@@ -4067,11 +4099,14 @@ class SubscriptionCancellation:
 
 @dataclass
 class SubscriptionCredits:
-    remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    remaining: float | None = field(
+        default=None, metadata={"wire_name": "remaining", "required": False}
+    )
     included: float = field(default=0.0, metadata={"wire_name": "included", "required": True})
     purchased: float = field(default=0.0, metadata={"wire_name": "purchased", "required": True})
-    plan: float = field(default=0.0, metadata={"wire_name": "plan", "required": True})
-    total: float = field(default=0.0, metadata={"wire_name": "total", "required": True})
+    plan: float | None = field(default=None, metadata={"wire_name": "plan", "required": False})
+    total: float | None = field(default=None, metadata={"wire_name": "total", "required": False})
 
 
 @dataclass
@@ -4435,6 +4470,7 @@ class SubscriptionScheduledVersionChange:
     )
     label: str = field(default="", metadata={"wire_name": "label", "required": True})
     effective_at: str = field(default="", metadata={"wire_name": "effectiveAt", "required": True})
+    currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
 
 
 @dataclass
@@ -4737,6 +4773,9 @@ class Transaction:
     presentment_amount: int | None = field(
         default=None, metadata={"wire_name": "presentmentAmount", "required": True}
     )
+    amount_refunded: int = field(
+        default=0, metadata={"wire_name": "amountRefunded", "required": True}
+    )
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     provider: PaymentProvider | None = field(
         default=None, metadata={"wire_name": "provider", "required": True}
@@ -4786,6 +4825,9 @@ class TransactionListItem:
     )
     presentment_amount: int | None = field(
         default=None, metadata={"wire_name": "presentmentAmount", "required": True}
+    )
+    amount_refunded: int = field(
+        default=0, metadata={"wire_name": "amountRefunded", "required": True}
     )
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
     provider: PaymentProvider | None = field(
@@ -5114,6 +5156,9 @@ class UpdatePlanDraftParamsRules:
     max_plan_credits: int | None = field(
         default=None, metadata={"wire_name": "maxPlanCredits", "required": False}
     )
+    unlimited_plan_credits: bool | None = field(
+        default=None, metadata={"wire_name": "unlimitedPlanCredits", "required": False}
+    )
     plan_credit_limit: int | None = field(
         default=None, metadata={"wire_name": "planCreditLimit", "required": False}
     )
@@ -5125,6 +5170,9 @@ class UpdatePlanDraftParamsRules:
     )
     max_plan_balance: int | None = field(
         default=None, metadata={"wire_name": "maxPlanBalance", "required": False}
+    )
+    unlimited_plan_balance: bool | None = field(
+        default=None, metadata={"wire_name": "unlimitedPlanBalance", "required": False}
     )
     plan_balance_limit: int | None = field(
         default=None, metadata={"wire_name": "planBalanceLimit", "required": False}
@@ -5317,11 +5365,16 @@ class UsageCheckVariant2:
     estimated_credits: int = field(
         default=0, metadata={"wire_name": "estimatedCredits", "required": True}
     )
-    plan_credits: int = field(default=0, metadata={"wire_name": "planCredits", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    plan_credits: int | None = field(
+        default=None, metadata={"wire_name": "planCredits", "required": False}
+    )
     purchased_credits: int = field(
         default=0, metadata={"wire_name": "purchasedCredits", "required": True}
     )
-    total_credits: int = field(default=0, metadata={"wire_name": "totalCredits", "required": True})
+    total_credits: int | None = field(
+        default=None, metadata={"wire_name": "totalCredits", "required": False}
+    )
     plan_credit_limit: UsageCheckVariant2PlanCreditLimit | None = field(
         default=None, metadata={"wire_name": "planCreditLimit", "required": True}
     )
@@ -5362,17 +5415,18 @@ class UsageCheckVariant3:
     estimated_amount: float = field(
         default=0.0, metadata={"wire_name": "estimatedAmount", "required": True}
     )
-    current_balance: float = field(
-        default=0.0, metadata={"wire_name": "currentBalance", "required": True}
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    current_balance: float | None = field(
+        default=None, metadata={"wire_name": "currentBalance", "required": False}
     )
-    plan_balance: float = field(
-        default=0.0, metadata={"wire_name": "planBalance", "required": True}
+    plan_balance: float | None = field(
+        default=None, metadata={"wire_name": "planBalance", "required": False}
     )
     purchased_balance: float = field(
         default=0.0, metadata={"wire_name": "purchasedBalance", "required": True}
     )
-    total_balance: float = field(
-        default=0.0, metadata={"wire_name": "totalBalance", "required": True}
+    total_balance: float | None = field(
+        default=None, metadata={"wire_name": "totalBalance", "required": False}
     )
     plan_balance_limit: UsageCheckVariant3PlanBalanceLimit | None = field(
         default=None, metadata={"wire_name": "planBalanceLimit", "required": True}
@@ -5425,7 +5479,10 @@ class UsageEventConsumption:
         default=None, metadata={"wire_name": "model", "required": True}
     )
     deducted: float = field(default=0.0, metadata={"wire_name": "deducted", "required": True})
-    remaining: float = field(default=0.0, metadata={"wire_name": "remaining", "required": True})
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    remaining: float | None = field(
+        default=None, metadata={"wire_name": "remaining", "required": False}
+    )
     blocked: bool = field(default=False, metadata={"wire_name": "blocked", "required": True})
     plan_credit_limit: UsageEventConsumptionPlanCreditLimit | None = field(
         default=None, metadata={"wire_name": "planCreditLimit", "required": False}
@@ -5531,17 +5588,18 @@ class WebhookAddonRef:
 
 @dataclass
 class WebhookBalance:
-    current_balance: float = field(
-        default=0.0, metadata={"wire_name": "currentBalance", "required": True}
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    current_balance: float | None = field(
+        default=None, metadata={"wire_name": "currentBalance", "required": False}
     )
-    plan_balance: float = field(
-        default=0.0, metadata={"wire_name": "planBalance", "required": True}
+    plan_balance: float | None = field(
+        default=None, metadata={"wire_name": "planBalance", "required": False}
     )
     purchased_balance: float = field(
         default=0.0, metadata={"wire_name": "purchasedBalance", "required": True}
     )
-    total_balance: float = field(
-        default=0.0, metadata={"wire_name": "totalBalance", "required": True}
+    total_balance: float | None = field(
+        default=None, metadata={"wire_name": "totalBalance", "required": False}
     )
 
 
@@ -5563,14 +5621,15 @@ class WebhookCardInfo:
 
 @dataclass
 class WebhookCreditsBalance:
-    plan_credits: float = field(
-        default=0.0, metadata={"wire_name": "planCredits", "required": True}
+    unlimited: bool = field(default=False, metadata={"wire_name": "unlimited", "required": True})
+    plan_credits: float | None = field(
+        default=None, metadata={"wire_name": "planCredits", "required": False}
     )
     purchased_credits: float = field(
         default=0.0, metadata={"wire_name": "purchasedCredits", "required": True}
     )
-    total_credits: float = field(
-        default=0.0, metadata={"wire_name": "totalCredits", "required": True}
+    total_credits: float | None = field(
+        default=None, metadata={"wire_name": "totalCredits", "required": False}
     )
 
 

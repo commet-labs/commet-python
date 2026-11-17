@@ -355,6 +355,7 @@ Fired when a payment is refunded, fully or partially. A refund does not change t
 - `invoiceNumber` (`str`)
 - `customerId` (`str`)
 - `subscriptionId` (`str`)
+- `amountRefunded` (`int`)
 - `refundAmount` (`float`)
 - `currency` (`str`)
 
@@ -463,7 +464,7 @@ Fired when a new invoice is generated for a subscription, typically at the start
 
 ## invoice.voided
 
-Fired when an invoice is voided — nullified before collection, either manually or automatically when its subscription is canceled. Voiding is terminal: a void invoice is never retried or collected.
+Fired when an invoice is voided — nullified before collection, for example when its subscription is canceled. Voiding is terminal: a void invoice is never retried or collected.
 
 - `invoiceId` (`str`)
 - `invoiceNumber` (`str`)
