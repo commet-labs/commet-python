@@ -11,6 +11,7 @@ from ..types import (
     InvoiceDownload,
     InvoicesListResult,
     SentInvoice,
+    _data,
     _parse_data,
 )
 
@@ -36,15 +37,12 @@ class InvoicesResource:
             self._http.post(f"/invoices/{id}/send", idempotency_key=idempotency_key), SentInvoice
         )
 
-    def update_status(
-        self, id: str, *, status: Literal["paid", "void"], idempotency_key: str | None = None
-    ) -> Invoice:
-        """Mark an outstanding invoice as "paid" or "void" and return the updated invoice. Cannot change the status of already paid or voided invoices."""
-        body = build_body(status=status)
-        return _parse_data(
-            self._http.patch(f"/invoices/{id}/status", body, idempotency_key=idempotency_key),
-            Invoice,
-        )
+    def update_status(self, id: str, *, idempotency_key: str | None = None) -> None:
+        """
+        Deprecated. No longer changes the invoice. An invoice is paid when its charge settles: to collect a past-due subscription, reactivate it or send the customer a recovery link.
+        Deprecated.
+        """
+        return _data(self._http.patch(f"/invoices/{id}/status", idempotency_key=idempotency_key))
 
     def list(
         self,

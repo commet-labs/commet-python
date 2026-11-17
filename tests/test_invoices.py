@@ -94,15 +94,15 @@ def test_create_adjustment_returns_invoice(mock_api: respx.MockRouter) -> None:
     }
 
 
-def test_update_status_uses_patch(mock_api: respx.MockRouter) -> None:
+def test_deprecated_update_status_sends_no_status(mock_api: respx.MockRouter) -> None:
     route = mock_api.patch("/invoices/inv_1/status").mock(
-        return_value=Response(200, json=invoice_payload())
+        return_value=Response(200, json={"object": "invoice", "livemode": False})
     )
     with Commet(api_key="ck_test_123") as client:
-        invoice = client.invoices.update_status("inv_1", status="paid")
+        client.invoices.update_status("inv_1")
 
-    assert invoice.status == "paid"
-    assert json.loads(route.calls.last.request.content) == {"status": "paid"}
+    assert route.called
+    assert b"status" not in route.calls.last.request.content
 
 
 @pytest.mark.asyncio

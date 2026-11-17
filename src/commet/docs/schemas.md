@@ -194,6 +194,7 @@ Generated from Commet API version `2026-08-27`.
 - `billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"]`, optional)
 - `seat_limit` (`Literal[True]`, optional) — Lower its seats to the version's limit at renewal.
 - `remove_addon_ids` (`list[str]`, optional) — Add-ons it stops paying at renewal.
+- `currency` (`str`, optional) — usd to charge it in USD from its renewal when the version does not sell the currency it pays, or the USD price of its country.
 
 ### BalanceAdjustment
 
@@ -206,6 +207,7 @@ Generated from Commet API version `2026-08-27`.
 ### BalanceTopup
 
 - `amount` (`int`, required)
+- `status` (`Literal["succeeded", "processing"]`, required) — `succeeded` when the payment was confirmed and the balance was added. `processing` when the payment method confirms later: the balance is added once the payment is confirmed, and nothing is added if it is declined.
 - `object` (`Literal["balance_topup"]`, required)
 - `livemode` (`bool`, required)
 
@@ -216,6 +218,7 @@ Generated from Commet API version `2026-08-27`.
 - `external_id` (`str`, optional)
 - `full_name` (`str`, optional)
 - `tax_document` (`str`, optional)
+- `business_tax_id` (`str`, optional) — Business tax ID, such as an EU VAT number, a Peruvian RUC or an Argentine CUIT, for the country of the customer's address; its type comes from that country. Where Commet collects tax and that ID exempts business buyers, a valid ID replaces consumer tax with the business treatment; elsewhere it is stored as sent and does not change any charge.
 - `timezone` (`Timezone`, optional)
 - `metadata` (`dict[str, Any]`, optional)
 - `address` (`BatchCreateCustomersParamsCustomersItemAddress`, optional)
@@ -477,6 +480,7 @@ Discriminator: `type`
 - `billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"]`, optional)
 - `seat_limit` (`Literal[True]`, optional) — Lower its seats to the version's limit at renewal.
 - `remove_addon_ids` (`list[str]`, optional) — Add-ons it stops paying at renewal.
+- `currency` (`str`, optional) — usd to charge it in USD from its renewal when the version does not sell the currency it pays, or the USD price of its country.
 
 ### CreatePlanParamsPlanBalanceLimit
 
@@ -552,6 +556,7 @@ Discriminator: `type`
 ### CreditGrant
 
 - `credits` (`int`, required)
+- `status` (`Literal["succeeded", "processing"]`, required) — `succeeded` when the payment was confirmed and the credits were added. `processing` when the payment method confirms later: the credits are added once the payment is confirmed, and nothing is added if it is declined.
 - `object` (`Literal["credit_grant"]`, required)
 - `livemode` (`bool`, required)
 
@@ -624,6 +629,7 @@ Discriminator: `type`
 - `email` (`str`, required)
 - `full_name` (`str | null`, optional)
 - `tax_document` (`str | null`, optional)
+- `business_tax_id` (`str`, optional)
 - `timezone` (`str`, optional)
 - `metadata` (`dict[str, Any] | null`, optional)
 - `address` (`CustomerBatchFailedItemDataAddress`, optional)
@@ -834,7 +840,8 @@ Discriminator: `model`
 - `units_used` (`float`, required) — Product units recorded during the period.
 - `credits_per_unit` (`int`, required) — Credits deducted for each product unit.
 - `credits_consumed` (`float`, required) — Actual credits deducted by this feature during the period.
-- `available_units` (`int`, required) — Additional product units available from the current shared credit pool at this feature's conversion rate.
+- `unlimited` (`bool`, required) — Whether the plan credits are unlimited: usage never spends them and only the plan credit limit caps it.
+- `available_units` (`int`, optional) — Additional product units available from the current shared credit pool at this feature's conversion rate. Absent when unlimited is true.
 
 ### FeatureAccessVariant2ConsumptionVariant2Period
 
@@ -847,7 +854,8 @@ Discriminator: `model`
 - `period` (`FeatureAccessVariant2ConsumptionVariant3Period`, required) — Time range used to calculate this feature's consumption.
 - `units_used` (`float`, required) — Product units recorded during the period.
 - `spent` (`FeatureAccessVariant2ConsumptionVariant3Spent`, required) — Actual money deducted for this feature during the period.
-- `available_units` (`int`, optional) — Estimated additional units available from the current shared balance at this feature's fixed price. Absent for dynamic pricing.
+- `unlimited` (`bool`, required) — Whether the plan balance is unlimited: usage never spends it and only the plan balance limit caps it.
+- `available_units` (`int`, optional) — Estimated additional units available from the current shared balance at this feature's fixed price. Absent for dynamic pricing and when unlimited is true.
 - `unit_price` (`FeatureAccessVariant2ConsumptionVariant3UnitPrice`, optional) — Price for one additional product unit.
 
 ### FeatureAccessVariant2ConsumptionVariant3Period
@@ -1246,8 +1254,10 @@ Discriminator: `type`
 - `is_free` (`bool`, required)
 - `block_on_exhaustion` (`bool | null`, required) — Credits and balance plans: true stops usage when the plan and purchased amounts run out; false lets usage continue and bills the missing amount as overage at the next renewal (credits at the price per credit). Trials and free plans always stop.
 - `unused_plan_credits` (`PlanUnusedPlanCredits | null`, required) — Credits plans only; null for other consumption models. What happens to unused plan credits at each reset. Purchased credits never expire and never count toward maxPlanCredits.
+- `unlimited_plan_credits` (`bool | null`, required) — Credits plans only; null for other consumption models. true when the plan credits are unlimited: usage never spends them and only planCreditLimit caps it.
 - `plan_credit_limit` (`PlanPlanCreditLimit | null`, required) — Credits plans only. The most plan credits a subscription spends per day or per week; null means no limit.
 - `unused_plan_balance` (`PlanUnusedPlanBalance | null`, required) — Balance plans only; null for other consumption models. What happens to unused plan balance at each reset. Purchased balance never expires and never counts toward maxPlanBalance.
+- `unlimited_plan_balance` (`bool | null`, required) — Balance plans only; null for other consumption models. true when the plan balance is unlimited: usage never spends it and only planBalanceLimit caps it.
 - `plan_balance_limit` (`PlanPlanBalanceLimit | null`, required) — Balance plans only. The most plan balance a subscription spends per day or per week, in USD cents; null means no limit.
 - `sort_order` (`int`, required)
 - `plan_group_id` (`str | null`, required)
@@ -2190,6 +2200,7 @@ Discriminator: `type`
 - `billing_interval` (`Literal["weekly", "monthly", "quarterly", "semiannual", "yearly"]`, optional)
 - `seat_limit` (`Literal[True]`, optional) — Lower its seats to the version's limit at renewal.
 - `remove_addon_ids` (`list[str]`, optional) — Add-ons it stops paying at renewal.
+- `currency` (`str`, optional) — usd to charge it in USD from its renewal when the version does not sell the currency it pays, or the USD price of its country.
 
 ### QuotaGetAllResult
 
@@ -2441,7 +2452,7 @@ Discriminator: `type`
 ### SubscriptionAddon
 
 - `addon_id` (`str`, required)
-- `status` (`Literal["active"]`, required)
+- `status` (`Literal["active", "processing"]`, required) — `active` when the add-on is active. `processing` when the payment method confirms later: the add-on is activated once the payment is confirmed, and stays inactive if it is declined.
 - `prorated_charge` (`int`, required)
 - `object` (`Literal["subscription_addon"]`, required)
 - `livemode` (`bool`, required)
@@ -2467,12 +2478,13 @@ Discriminator: `type`
 
 ### SubscriptionBalance
 
-- `remaining` (`float`, required) — Balance available in minor units of the subscription currency. Kept for compatibility; equal to `total`.
+- `unlimited` (`bool`, required) — true when the plan balance is unlimited: usage never spends it and only the plan balance limit caps it.
+- `remaining` (`float`, optional) — Balance available in minor units of the subscription currency. Kept for compatibility; equal to `total`. Omitted when `unlimited` is true.
 - `included` (`float`, required)
 - `currency` (`str`, required)
-- `plan` (`float`, required) — Plan balance left this period, in minor units. Spent first and replaced or rolled over at each reset; negative while overage is owed.
+- `plan` (`float`, optional) — Plan balance left this period, in minor units. Spent first and replaced or rolled over at each reset; negative while overage is owed. Omitted when `unlimited` is true.
 - `purchased` (`float`, required) — Purchased balance in minor units: top-ups and manual adjustments. Spent after the plan balance and kept until the subscription ends.
-- `total` (`float`, required) — Balance available in minor units: `plan` plus `purchased`.
+- `total` (`float`, optional) — Balance available in minor units: `plan` plus `purchased`. Omitted when `unlimited` is true.
 
 ### SubscriptionCancellation
 
@@ -2482,11 +2494,12 @@ Discriminator: `type`
 
 ### SubscriptionCredits
 
-- `remaining` (`float`, required) — Plan credits left. Kept for compatibility; equal to `plan`.
+- `unlimited` (`bool`, required) — true when the plan credits are unlimited: usage never spends them and only the plan credit limit caps it.
+- `remaining` (`float`, optional) — Plan credits left. Kept for compatibility; equal to `plan`. Omitted when `unlimited` is true.
 - `included` (`float`, required)
 - `purchased` (`float`, required) — Purchased credits: purchases and manual adjustments. Spent after plan credits and kept until the subscription ends.
-- `plan` (`float`, required) — Plan credits left this period. Spent first and replaced or rolled over at each reset; negative while overage is owed.
-- `total` (`float`, required) — Credits available: `plan` plus `purchased`.
+- `plan` (`float`, optional) — Plan credits left this period. Spent first and replaced or rolled over at each reset; negative while overage is owed. Omitted when `unlimited` is true.
+- `total` (`float`, optional) — Credits available: `plan` plus `purchased`. Omitted when `unlimited` is true.
 
 ### SubscriptionCurrentPeriod
 
@@ -2753,6 +2766,7 @@ Discriminator: `status`
 - `plan_version_id` (`str`, required)
 - `label` (`str`, required)
 - `effective_at` (`str`, required)
+- `currency` (`str`, required) — The currency the subscription pays from the move on: its own, or usd when the move charges it in USD.
 
 ### SubscriptionsListResult
 
@@ -2923,6 +2937,7 @@ Discriminator: `status`
 - `subtotal` (`int | null`, required) — Subtotal in USD cents (gross minus tax). Null when grossAmount is null.
 - `tax_amount` (`int | null`, required)
 - `presentment_amount` (`int | null`, required) — Amount in the charge currency's smallest unit, as presented to the customer. Set for non-USD charges; null when the charge was made in USD.
+- `amount_refunded` (`int`, required) — Cumulative confirmed refunds in the payment currency’s smallest unit.
 - `currency` (`str`, required)
 - `provider` (`PaymentProvider`, required) — The payment provider the charge was routed to: stripe, commet, or dlocal.
 - `payment_method` (`PaymentMethod | null`, required) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
@@ -2946,6 +2961,7 @@ Discriminator: `status`
 - `subtotal` (`int | null`, required) — Subtotal in USD cents (gross minus tax). Null when grossAmount is null.
 - `tax_amount` (`int | null`, required)
 - `presentment_amount` (`int | null`, required) — Amount in the charge currency's smallest unit, as presented to the customer. Set for non-USD charges; null when the charge was made in USD.
+- `amount_refunded` (`int`, required) — Cumulative confirmed refunds in the payment currency’s smallest unit.
 - `currency` (`str`, required)
 - `provider` (`PaymentProvider`, required) — The payment provider the charge was routed to: stripe, commet, or dlocal.
 - `payment_method` (`PaymentMethod | null`, required) — The method used for this charge: card, oxxo, or mercado_pago. Null when unknown.
@@ -3165,10 +3181,12 @@ Variants:
 - `free_included_balance` (`int | null`, optional) — Balance a free plan includes each month, in cents.
 - `unused_plan_credits` (`Literal["expire", "roll_over"]`, optional)
 - `max_plan_credits` (`int | null`, optional)
+- `unlimited_plan_credits` (`bool`, optional) — Credits plans only. true makes the plan credits unlimited: usage never spends them, only planCreditLimit caps it, and every price and the free plan include 0 credits.
 - `plan_credit_limit` (`int | null`, optional)
 - `plan_credit_limit_interval` (`Literal["day", "week"] | null`, optional)
 - `unused_plan_balance` (`Literal["expire", "roll_over"]`, optional)
 - `max_plan_balance` (`int | null`, optional)
+- `unlimited_plan_balance` (`bool`, optional) — Balance plans only. true makes the plan balance unlimited: usage never spends it, only planBalanceLimit caps it, and every price, country and the free plan include no balance.
 - `plan_balance_limit` (`int | null`, optional)
 - `plan_balance_limit_interval` (`Literal["day", "week"] | null`, optional)
 - `block_on_exhaustion` (`bool`, optional)
@@ -3303,9 +3321,10 @@ Discriminator: `consumption_model`
 - `consumption_model` (`Literal["credits"]`, required)
 - `credits_per_unit` (`int`, required)
 - `estimated_credits` (`int`, required)
-- `plan_credits` (`int`, required)
+- `unlimited` (`bool`, required) — true when the plan credits are unlimited: usage never spends them and only planCreditLimit caps it.
+- `plan_credits` (`int`, optional) — Plan credits left. Omitted when unlimited is true.
 - `purchased_credits` (`int`, required)
-- `total_credits` (`int`, required)
+- `total_credits` (`int`, optional) — planCredits plus purchasedCredits. Omitted when unlimited is true.
 - `plan_credit_limit` (`UsageCheckVariant2PlanCreditLimit | null`, required)
 - `block_on_exhaustion` (`bool`, required) — Whether usage stops when plan and purchased credits run out. False only when the plan allows overage, which is billed at its price per credit; trials and free plans always stop.
 - `object` (`Literal["usage_check"]`, required)
@@ -3330,10 +3349,11 @@ Discriminator: `consumption_model`
 - `consumption_model` (`Literal["balance"]`, required)
 - `unit_price` (`float`, required)
 - `estimated_amount` (`float`, required)
-- `current_balance` (`float`, required) — The available balance, plan plus purchased, in rate scale (10000 = 1.00 of the subscription currency). Equal to totalBalance.
-- `plan_balance` (`float`, required) — The plan part of the balance in rate scale. Consumed first, replaced or rolled over at each reset, and negative while overage is owed.
+- `unlimited` (`bool`, required) — true when the plan balance is unlimited: usage never spends it and only planBalanceLimit caps it.
+- `current_balance` (`float`, optional) — The available balance, plan plus purchased, in rate scale (10000 = 1.00 of the subscription currency). Equal to totalBalance. Omitted when unlimited is true.
+- `plan_balance` (`float`, optional) — The plan part of the balance in rate scale. Consumed first, replaced or rolled over at each reset, and negative while overage is owed. Omitted when unlimited is true.
 - `purchased_balance` (`float`, required) — The purchased part of the balance in rate scale: top-ups and adjustments. Consumed after the plan part and kept until the subscription ends.
-- `total_balance` (`float`, required) — planBalance plus purchasedBalance, in rate scale.
+- `total_balance` (`float`, optional) — planBalance plus purchasedBalance, in rate scale. Omitted when unlimited is true.
 - `plan_balance_limit` (`UsageCheckVariant3PlanBalanceLimit | null`, required)
 - `block_on_exhaustion` (`bool`, required)
 - `currency` (`str`, required)
@@ -3366,7 +3386,8 @@ Discriminator: `consumption_model`
 
 - `model` (`Literal["credits", "balance"]`, required)
 - `deducted` (`float`, required)
-- `remaining` (`float`, required)
+- `unlimited` (`bool`, required) — true when the plan credits or plan balance are unlimited: usage never spends them and only the plan limit caps it.
+- `remaining` (`float`, optional) — Plan plus purchased amount left after this event. Omitted when unlimited is true.
 - `blocked` (`bool`, required)
 - `plan_credit_limit` (`UsageEventConsumptionPlanCreditLimit | null`, optional) — Credits consumption only, omitted for balance. The plan credit limit after this event; null when the plan has no limit.
 - `plan_balance_limit` (`UsageEventConsumptionPlanBalanceLimit | null`, optional) — Balance consumption on a plan with a plan balance limit: the limit after this event. Omitted for credits and for plans without a limit.
@@ -3436,10 +3457,11 @@ Discriminator: `consumption_model`
 
 ### WebhookBalance
 
-- `current_balance` (`float`, required) — The available balance, plan plus purchased, in rate scale. Equal to totalBalance.
-- `plan_balance` (`float`, required) — The plan part in rate scale: spent first, replaced or rolled over at each reset, negative while overage is owed.
+- `unlimited` (`bool`, required) — true when the plan balance is unlimited: usage never spends it and only the plan balance limit caps it.
+- `current_balance` (`float`, optional) — The available balance, plan plus purchased, in rate scale. Equal to totalBalance. Omitted when unlimited is true.
+- `plan_balance` (`float`, optional) — The plan part in rate scale: spent first, replaced or rolled over at each reset, negative while overage is owed. Omitted when unlimited is true.
 - `purchased_balance` (`float`, required) — The purchased part in rate scale: top-ups and manual adjustments, spent after the plan part and kept until the subscription ends.
-- `total_balance` (`float`, required) — planBalance plus purchasedBalance, in rate scale.
+- `total_balance` (`float`, optional) — planBalance plus purchasedBalance, in rate scale. Omitted when unlimited is true.
 
 ### WebhookBankRef
 
@@ -3455,9 +3477,10 @@ Discriminator: `consumption_model`
 
 ### WebhookCreditsBalance
 
-- `plan_credits` (`float`, required)
+- `unlimited` (`bool`, required) — true when the plan credits are unlimited: usage never spends them and only the plan credit limit caps it.
+- `plan_credits` (`float`, optional) — Plan credits left. Omitted when unlimited is true.
 - `purchased_credits` (`float`, required)
-- `total_credits` (`float`, required)
+- `total_credits` (`float`, optional) — planCredits plus purchasedCredits. Omitted when unlimited is true.
 
 ### WebhookPlanGrantTimelineEvent
 

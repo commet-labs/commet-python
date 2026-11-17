@@ -1,5 +1,14 @@
 # Changelog
 
+## 9.11.0
+
+- Plans can give unlimited plan credits or plan balance. `plans.create` and `plans.update` accept `unlimited_plan_credits` and `unlimited_plan_balance`, draft rules accept them too, and plans return them. Subscriptions, usage checks, usage events and feature access return `unlimited`, and omit the plan and total amounts when it is true.
+- Credit purchases, balance top-ups and add-on activations return a `status`: `processing` when the payment method confirms later, and the credits, balance or add-on arrive once it is confirmed.
+- Transactions return `amount_refunded`, and `transactions.refund` accepts `amount` for a partial refund.
+- A version move can charge a subscriber in USD: `subscriptions.change_version`, `plans.create_move`, `plans.publish_draft` and `plans.archive_experiment` accept `currency`, and the scheduled version change returns it. New errors `currency_held_by_payment_method`, `currency_held_by_customer_credit`, `currency_held_by_balance_plan`, `currency_held_by_fixed_amount_discount`, `currency_held_by_prepaid_period` and `currency_held_by_scheduled_pause`.
+- `customers.create_batch` accepts `business_tax_id` for each customer.
+- `invoices.update_status` is deprecated and no longer takes a status: the API no longer changes the invoice, which is paid when its charge settles.
+
 ## 9.10.0
 
 - Plans have versions. Editing a plan publishes a new version, and existing subscriptions stay on theirs until moved. `plans.list_versions`, `plans.get_version`, `plans.compare_versions` and `plans.create_version` read and publish versions; `plans.create_draft`, `plans.update_draft`, `plans.publish_draft` and the other draft methods prepare one; `plans.create_experiment`, `plans.make_experiment_current`, `plans.archive_experiment` and the other experiment methods sell a version through its own code; `plans.create_move`, `plans.cancel_move` and the other move methods move subscribers to a newer version; `plans.list_subscribers_needing_a_change` and `plans.keep_subscriber_on_version` handle the subscribers that do not fit it.

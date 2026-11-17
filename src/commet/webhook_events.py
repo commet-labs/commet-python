@@ -476,6 +476,7 @@ class PaymentRefundedData:
     invoiceNumber: str | None = None
     customerId: str | None = None
     subscriptionId: str | None = None
+    amountRefunded: int = 0
     refundAmount: float = 0.0
     currency: str = ""
 
@@ -592,7 +593,7 @@ class InvoiceCreatedData:
 
 @dataclass
 class InvoiceVoidedData:
-    """Fired when an invoice is voided — nullified before collection, either manually or automatically when its subscription is canceled. Voiding is terminal: a void invoice is never retried or collected."""
+    """Fired when an invoice is voided — nullified before collection, for example when its subscription is canceled. Voiding is terminal: a void invoice is never retried or collected."""
 
     invoiceId: str = ""
     invoiceNumber: str = ""

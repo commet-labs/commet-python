@@ -3,7 +3,7 @@
 Generated from Commet API version `2026-08-27`.
 
 - [Schemas](../schemas.md)
-- [API errors](../errors/index.md) — 94 references
+- [API errors](../errors/index.md) — 100 references
 - [Addons](./addons.md) — 6 operations
 - [Api Keys](./api-keys.md) — 3 operations
 - [Provisioning](./provisioning.md) — 1 operations
