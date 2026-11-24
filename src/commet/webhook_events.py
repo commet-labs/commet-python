@@ -128,7 +128,7 @@ class SubscriptionActivatedData:
 
 @dataclass
 class SubscriptionReactivatedData:
-    """Fired when a canceled subscription is reactivated and its reactivation charge succeeds. The subscription returns to active with a fresh invoice and a billing period anchored to the reactivation date. Distinct from subscription.activated (first activation) and payment.recovered (past_due recovery, which keeps the original anchor)."""
+    """Fired when a canceled subscription is reactivated: its reactivation charge succeeds, or its reactivation invoice totals zero and is paid without a charge. The subscription returns to active with a fresh invoice and a billing period anchored to the reactivation date. Distinct from subscription.activated (first activation) and payment.recovered (past_due recovery, which keeps the original anchor)."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -367,7 +367,7 @@ class TrialExpiredData:
 
 @dataclass
 class TrialWillEndData:
-    """Predictive event fired once, 3 days before a trial ends. Use it to remind the customer that billing starts soon. Emitted by a daily scan with a deterministic idempotency key, so it never fires twice for the same trial end date."""
+    """Predictive event fired once, 3 days before a trial ends. Use it to remind the customer that billing starts soon. Emitted by a recurring scan with a deterministic idempotency key, so it never fires twice for the same trial end date."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -611,7 +611,7 @@ class InvoiceVoidedData:
 
 @dataclass
 class InvoiceOverdueData:
-    """Fired once when an outstanding invoice passes its due date without payment. The invoice keeps its outstanding status — overdue is a fact about the due date, not a new status. Use it to start your own dunning flow."""
+    """Fired once when an invoice is still outstanding 24 hours after its due date. The invoice keeps its outstanding status — overdue is a fact about the due date, not a new status. Use it to start your own dunning flow."""
 
     invoiceId: str = ""
     invoiceNumber: str = ""
@@ -629,7 +629,7 @@ class InvoiceOverdueData:
 
 @dataclass
 class InvoiceUpcomingData:
-    """Predictive event fired once, 3 days before an active subscription renews. Use it to notify the customer before they are charged. Carries no amount — usage-based charges are only final at renewal, when invoice.created delivers the actual invoice."""
+    """Predictive event fired once, 3 days before an active subscription renews. A subscription on a free plan issues no renewal invoice and does not fire it. Use it to notify the customer before they are charged. Carries no amount — usage-based charges are only final at renewal, when invoice.created delivers the actual invoice."""
 
     subscriptionId: str = ""
     customerId: str = ""
@@ -856,7 +856,7 @@ class CreditsDepletedData:
 
 @dataclass
 class CreditsExpiredData:
-    """Fired at a reset when unused plan credits are discarded. On a plan whose unused plan credits expire, every unused plan credit expires at each reset. On a plan that rolls them over, a reset keeps them, up to the plan's maxPlanCredits when it has one, and only the excess expires. A change to another credits plan applies the new plan's terms the same way. Purchased credits never expire and are not affected."""
+    """Fired at a reset when unused plan credits are discarded. On a plan whose unused plan credits expire, every unused plan credit expires at each reset. On a plan that rolls them over, a reset keeps them, up to the plan's maxPlanCredits when it has one, and only the excess expires. A change to another credits plan applies the new plan's terms the same way, and an immediate change also discards the credits the previous plan gave for the period it cuts short. Purchased credits never expire and are not affected."""
 
     subscriptionId: str = ""
     customerId: str = ""
