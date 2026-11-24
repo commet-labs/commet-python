@@ -191,6 +191,8 @@ class PaymentMethod(str, Enum):
     MERCADO_PAGO = "mercado_pago"
     GOOGLE_PAY = "google_pay"
     SMARTPIX = "smartpix"
+    APPLE_PAY = "apple_pay"
+    LINK = "link"
 
 
 class PaymentProvider(str, Enum):
@@ -450,8 +452,11 @@ class BalanceAdjustment:
 @dataclass
 class BalanceTopup:
     amount: int = field(default=0, metadata={"wire_name": "amount", "required": True})
-    status: Literal["succeeded", "processing"] | None = field(
+    status: Literal["succeeded", "processing", "requires_checkout"] | None = field(
         default=None, metadata={"wire_name": "status", "required": True}
+    )
+    checkout_url: str | None = field(
+        default=None, metadata={"wire_name": "checkoutUrl", "required": False}
     )
     object: Literal["balance_topup"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
@@ -999,8 +1004,11 @@ class CreatePlanVersionParamsPricesItemRegionalPricesItem:
 @dataclass
 class CreditGrant:
     credits: int = field(default=0, metadata={"wire_name": "credits", "required": True})
-    status: Literal["succeeded", "processing"] | None = field(
+    status: Literal["succeeded", "processing", "requires_checkout"] | None = field(
         default=None, metadata={"wire_name": "status", "required": True}
+    )
+    checkout_url: str | None = field(
+        default=None, metadata={"wire_name": "checkoutUrl", "required": False}
     )
     object: Literal["credit_grant"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
@@ -2540,6 +2548,18 @@ class PlanChangeVariant3PreviousPlan:
 
 
 @dataclass
+class PlanChangeVariant4:
+    outcome: Literal["processing"] | None = field(
+        default=None, metadata={"wire_name": "outcome", "required": True}
+    )
+    invoice_id: str = field(default="", metadata={"wire_name": "invoiceId", "required": True})
+    object: Literal["plan_change"] | None = field(
+        default=None, metadata={"wire_name": "object", "required": True}
+    )
+    livemode: bool = field(default=False, metadata={"wire_name": "livemode", "required": True})
+
+
+@dataclass
 class PlanCountriesItem:
     country: str = field(default="", metadata={"wire_name": "country", "required": True})
     currency: str = field(default="", metadata={"wire_name": "currency", "required": True})
@@ -4021,11 +4041,14 @@ class Subscription:
 @dataclass
 class SubscriptionAddon:
     addon_id: str = field(default="", metadata={"wire_name": "addonId", "required": True})
-    status: Literal["active", "processing"] | None = field(
+    status: Literal["active", "processing", "requires_checkout"] | None = field(
         default=None, metadata={"wire_name": "status", "required": True}
     )
     prorated_charge: int = field(
         default=0, metadata={"wire_name": "proratedCharge", "required": True}
+    )
+    checkout_url: str | None = field(
+        default=None, metadata={"wire_name": "checkoutUrl", "required": False}
     )
     object: Literal["subscription_addon"] | None = field(
         default=None, metadata={"wire_name": "object", "required": True}
@@ -5888,7 +5911,7 @@ FeatureAccess = Union[
 ]
 
 
-PlanChange = Union[PlanChangeVariant1, PlanChangeVariant2, PlanChangeVariant3]
+PlanChange = Union[PlanChangeVariant1, PlanChangeVariant2, PlanChangeVariant3, PlanChangeVariant4]
 
 
 UsageCheck = Union[UsageCheckVariant1, UsageCheckVariant2, UsageCheckVariant3]
@@ -6058,6 +6081,7 @@ _DATACLASS_TYPES.update(
         "PlanChangeVariant3OfferApplicationPhasesItemVariant3": PlanChangeVariant3OfferApplicationPhasesItemVariant3,
         "PlanChangeVariant3OfferApplicationPhasesItemVariant4": PlanChangeVariant3OfferApplicationPhasesItemVariant4,
         "PlanChangeVariant3PreviousPlan": PlanChangeVariant3PreviousPlan,
+        "PlanChangeVariant4": PlanChangeVariant4,
         "PlanCountriesItem": PlanCountriesItem,
         "PlanCountriesItemAddonsItem": PlanCountriesItemAddonsItem,
         "PlanCountriesItemCreditPacksItem": PlanCountriesItemCreditPacksItem,
@@ -6536,6 +6560,7 @@ _UNION_TYPES.update(
                 "requires_checkout": PlanChangeVariant1,
                 "scheduled": PlanChangeVariant2,
                 "completed": PlanChangeVariant3,
+                "processing": PlanChangeVariant4,
             },
             [],
         ),

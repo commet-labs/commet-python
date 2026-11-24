@@ -41,10 +41,15 @@ class SubscriptionsResource:
         )
 
     def activate_addon(
-        self, id: str, *, addon_id: str, idempotency_key: str | None = None
+        self,
+        id: str,
+        *,
+        addon_id: str,
+        success_url: str | None = None,
+        idempotency_key: str | None = None,
     ) -> SubscriptionAddon:
-        """Activate an add-on on a subscription. Creates the activation invoice and charges a prorated amount for the current billing period; the add-on is active once the payment is confirmed. Rejected with 409 while the add-on is active or an activation of it is still processing. An add-on that the subscription's plan version does not sell is rejected with addon_unavailable."""
-        body = build_body(addon_id=addon_id)
+        """Activate an add-on on a subscription. Creates the activation invoice and charges a prorated amount for the current billing period; the add-on is active once the payment is confirmed. Without a saved payment method, send successUrl to receive a checkout that charges the activation and saves the method. Rejected with 409 while the add-on is active or an activation of it is still processing. An add-on that the subscription's plan version does not sell is rejected with addon_unavailable."""
+        body = build_body(addon_id=addon_id, success_url=success_url)
         return _parse_data(
             self._http.post(f"/subscriptions/{id}/addons", body, idempotency_key=idempotency_key),
             SubscriptionAddon,
@@ -101,10 +106,15 @@ class SubscriptionsResource:
         )
 
     def topup_balance(
-        self, id: str, *, amount: int, idempotency_key: str | None = None
+        self,
+        id: str,
+        *,
+        amount: int,
+        success_url: str | None = None,
+        idempotency_key: str | None = None,
     ) -> BalanceTopup:
-        """Top up a balance subscription. Creates the top-up invoice and charges the customer's payment method for the amount plus tax. Once the payment is confirmed, adds the amount to the subscription's purchased balance (after paying back any overage owed on the plan balance), marks the invoice paid and emits `balance.topped_up`. Purchased balance is spent after the plan balance and is kept until the subscription ends. Rejected with 400 when the subscription is not on a balance plan, its plan has top-ups turned off, or the amount is below the effective minimum: the plan's minimum top-up in the subscription currency, raised to the currency's minimum charge."""
-        body = build_body(amount=amount)
+        """Top up a balance subscription. Creates the top-up invoice and charges the customer's payment method for the amount plus tax. Once the payment is confirmed, adds the amount to the subscription's purchased balance (after paying back any overage owed on the plan balance), marks the invoice paid and emits `balance.topped_up`. Purchased balance is spent after the plan balance and is kept until the subscription ends. Without a saved payment method, send successUrl to receive a checkout that charges the top-up and saves the method. Rejected with 400 when the subscription is not on a balance plan, its plan has top-ups turned off, or the amount is below the effective minimum: the plan's minimum top-up in the subscription currency, raised to the currency's minimum charge."""
+        body = build_body(amount=amount, success_url=success_url)
         return _parse_data(
             self._http.post(
                 f"/subscriptions/{id}/balance/topup", body, idempotency_key=idempotency_key
@@ -178,10 +188,11 @@ class SubscriptionsResource:
         *,
         credit_pack_id: str | None = None,
         quantity: int | None = None,
+        success_url: str | None = None,
         idempotency_key: str | None = None,
     ) -> CreditGrant:
-        """Purchase a fixed credit pack or choose a whole credit quantity at the subscription plan price and minimum. Creates the purchase invoice, charges the saved payment method and adds the purchased credits once the payment is confirmed. A credit pack that the subscription's plan version does not sell is rejected with credit_pack_unavailable."""
-        body = build_body(credit_pack_id=credit_pack_id, quantity=quantity)
+        """Purchase a fixed credit pack or choose a whole credit quantity at the subscription plan price and minimum. Creates the purchase invoice, charges the saved payment method and adds the purchased credits once the payment is confirmed. Without a saved payment method, send successUrl to receive a checkout that charges the purchase and saves the method. A credit pack that the subscription's plan version does not sell is rejected with credit_pack_unavailable."""
+        body = build_body(credit_pack_id=credit_pack_id, quantity=quantity, success_url=success_url)
         return _parse_data(
             self._http.post(f"/subscriptions/{id}/credits", body, idempotency_key=idempotency_key),
             CreditGrant,
@@ -295,7 +306,7 @@ class SubscriptionsResource:
     def reactivate(
         self, id: str, *, offer_id: str | None = None, idempotency_key: str | None = None
     ) -> ReactivatedSubscription:
-        """Reactivates a subscription. A past_due subscription retries its outstanding renewal charge (recovering to active on success). A canceled subscription generates a fresh invoice, charges the saved card, and resets the billing period. On a successful charge the subscription becomes active; a declined charge returns an error with a recoveryUrl in the error details that can be sent to the customer to update their card. A canceled subscription may apply an Offer by offerId; past-due recovery cannot."""
+        """Reactivates a subscription. A past_due subscription retries its outstanding renewal charge (recovering to active on success). A canceled subscription generates a fresh invoice, charges the saved card, and resets the billing period; when that invoice totals zero, for example under an Offer, it is marked paid without a charge and the subscription becomes active at once, still requiring a saved payment method. On a successful charge the subscription becomes active; a declined charge returns an error with a recoveryUrl in the error details that can be sent to the customer to update their card. A canceled subscription may apply an Offer by offerId; past-due recovery cannot."""
         body = build_body(offer_id=offer_id)
         return _parse_data(
             self._http.post(
@@ -369,7 +380,7 @@ class SubscriptionsResource:
         initial_seats: dict[str, int] | None = None,
         provider: Literal["stripe"] | Literal["commet"] | Literal["dlocal"] | str | None = None,
         payment_method_types: builtins.list[
-            Literal["card", "oxxo", "mercado_pago", "google_pay", "smartpix"]
+            Literal["card", "mercado_pago", "oxxo", "google_pay", "smartpix", "apple_pay", "link"]
         ]
         | None = None,
         name: str | None = None,
